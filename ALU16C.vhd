@@ -23,9 +23,14 @@ begin
     Bfr <= to_float(B[15:0], Bfr);
     Bfi <= to_float(B[31:16], Bfi);
 
-    with func select Rf <=
-        A + B when "00",
-        A - B when "01",
-        A * B when others;
+    with func select Rfr <=
+        Afr + Bfr when "00",
+        Afr - Bfr when "01",
+        (Afr * Bfr) + (Afi * Bfi) when others;
+
+    with func select Rfi <=
+        Afi + Bfi when "00",
+        Afi - Bfi when "01",
+        (Afr * Bfi) + (Afi * Bfr) when others;
 
 end architecture;
