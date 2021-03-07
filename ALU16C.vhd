@@ -11,7 +11,7 @@ entity ALU16C is
     );
 end entity;
 
-architecture arc is
+architecture arc of ALU16C is
 subtype float16 is float(5 downto -10);
 signal Afr, Afi, Bfr, Bfi, Rfr, Rfi : float16;
 begin
