@@ -114,7 +114,7 @@ endfunction
 
 function shortreal rmulcc (input    complex a, b);
     begin
-        rmulcc.r = (a.r * b.r) - (a.i * b.i);
+        rmulcc = (a.r * b.r) - (a.i * b.i);
     end
 endfunction
 
@@ -135,7 +135,7 @@ function logic[63:0] ctol (input complex a);
     ctol[31:0] = $shortrealtobits(a.i);
 endfunction
 
-// Overload declarations
+/*// Overload declarations
 bind + function complex caddcc(complex, complex);
 bind + function complex caddrc(shortreal, complex);
 bind + function complex caddcr(complex, shortreal);
@@ -152,3 +152,4 @@ bind - function shortreal rsubrc(shortreal, complex);
 bind - function shortreal rsubcr(complex, shortreal);
 bind * function complex cmulcc(complex, complex);
 bind = function complex rtoc (shortreal);
+*/
