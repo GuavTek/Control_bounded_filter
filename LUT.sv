@@ -8,7 +8,9 @@ module LUT #(
     always_comb begin : select
         if (sel)
             result = factor;
-        else
-            result = 0-factor;
+        else begin
+            result.r = -factor.r;
+            result.i = -factor.i;
+        end
     end
 endmodule

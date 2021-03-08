@@ -14,8 +14,8 @@ module RecursionModule #(
     assign out = sum;
 
     always_comb begin : calc
-        prod = prev * factorR;
-        sum = prod + in;
+        prod = cmulcc(prev, factorR);   // prod = prev * factorR;
+        sum = caddcc(prod, in);         // sum = prod + in
     end
 
     always_ff @(posedge clk) begin : recurse
