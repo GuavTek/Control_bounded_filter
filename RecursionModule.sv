@@ -10,10 +10,13 @@ module RecursionModule #(
     output complex out
 );
     complex prod, sum, prev;
-    ALU16C a1 (.A(in), .B(prod), .R(sum), .func(ALU_ADD));
-    ALU16C a2 (.A(factorR), .B(prev), .R(prod), .func(ALU_MULT));
 
     assign out = sum;
+
+    always_comb begin : calc
+        prod = prev * factorR;
+        sum = prod + in;
+    end
 
     always_ff @(posedge clk) begin : recurse
         if (!rst)
