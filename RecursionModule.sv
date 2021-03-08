@@ -9,12 +9,12 @@ module RecursionModule #(
     output complex out
 );
     complex prod, sum, prev, factor;
-    factor.r = factorR;
-    factor.i = factorI;
 
     assign out = sum;
 
     always_comb begin : calc
+        factor.r = factorR;
+        factor.i = factorI;
         prod = cmulcc(prev, factor);   // prod = prev * factorR;
         sum = caddcc(prod, in);         // sum = prod + in
     end
