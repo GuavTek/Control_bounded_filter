@@ -5,7 +5,8 @@ use IEEE.float_pkg.all;
 
 entity LUT is
     generic(
-		re, im	: real;
+		re	: real; 
+		im	: real
 	);
 	port(
         sel 	: in std_logic;
