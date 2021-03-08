@@ -1,4 +1,3 @@
-`include "ComplexType.sv"
 
 module LUT #(
     parameter   re = 0.0,
