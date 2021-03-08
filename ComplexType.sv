@@ -1,5 +1,5 @@
 
-typedef struct packed {
+typedef struct {
     shortreal r;
     shortreal i;
 } complex;
