@@ -1,3 +1,5 @@
+`include "ComplexType.sv"
+
 module LUT #(
     parameter   re = 0.0,
                 im = 0.0
