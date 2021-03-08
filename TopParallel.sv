@@ -1,6 +1,6 @@
-`include "Util.sv"
-`include "RecursionModule.sv"
-`include "LUT.vhd"
+//`include "Util.sv"
+//`include "RecursionModule.sv"
+//`include "LUT.vhd"
 
 module Parallel_top #(
     parameter stages = 32,
