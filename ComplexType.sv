@@ -120,8 +120,8 @@ endfunction
 
 function complex rtoc (input  shortreal a);
     begin
-        ccopr.r = a;
-        ccopr.i = 0;
+        rtoc.r = a;
+        rtoc.i = 0;
     end
 endfunction
 
