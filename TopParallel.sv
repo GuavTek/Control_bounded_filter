@@ -12,11 +12,8 @@ module Parallel_top #(
     output logic [width-1:0] out
 );
     complex w1, w2;
-    complex f1;
-    f1.r = 0.1;
-    f1.i = 0.0;
 
     assign out = w2.r;
-    LUT #(.factor(f1)) l1 (.sel(in[0]), .Result(w1));
-    RecursionModule #(.factorR(f1)) r1 (.in(w1), .rst(1'b1), .clk(clk), .out(w2));
+    LUT #(.re(0.1)) l1 (.sel(in[0]), .Result(w1));
+    RecursionModule #(.factorR(0.2), .factorI(-0.2)) r1 (.in(w1), .rst(1'b1), .clk(clk), .out(w2));
 endmodule

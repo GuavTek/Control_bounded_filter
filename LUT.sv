@@ -1,5 +1,6 @@
 module LUT #(
-    complex factor
+    parameter   re = 0.0,
+                im = 0.0
 ) (
     input logic sel,
     output complex result

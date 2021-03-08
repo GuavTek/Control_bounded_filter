@@ -126,12 +126,12 @@ function complex rtoc (input  shortreal a);
 endfunction
 
 function complex ltoc (input   logic[63:0] a);
-    ltoc.r = $bitstoshortreal(a[63:32]);
+    ltoc.r = $bitstoshortreal(a[63:32]); //Not supported?!
     ltoc.i = $bitstoshortreal(a[31:0]);
 endfunction
 
 function logic[63:0] ctol (input complex a);
-    ctol[63:32] = $shortrealtobits(a.r);
+    ctol[63:32] = $shortrealtobits(a.r); //Not supported?!
     ctol[31:0] = $shortrealtobits(a.i);
 endfunction
 

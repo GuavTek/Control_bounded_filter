@@ -2,19 +2,22 @@
 //`include "ALU16C.vhd"
 
 module RecursionModule #(
-    complex factorR
+    parameter   factorR = 0.0,
+                factorI = 0.0
 ) (
     input complex in,
     input complex resetVal = 32'b0,
     input logic rst, clk,
     output complex out
 );
-    complex prod, sum, prev;
+    complex prod, sum, prev, factor;
+    factor.r = factorR;
+    factor.i = factorI;
 
     assign out = sum;
 
     always_comb begin : calc
-        prod = cmulcc(prev, factorR);   // prod = prev * factorR;
+        prod = cmulcc(prev, factor);   // prod = prev * factorR;
         sum = caddcc(prod, in);         // sum = prod + in
     end
 
