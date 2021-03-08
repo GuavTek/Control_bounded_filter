@@ -1,7 +1,7 @@
 
 typedef struct {
-    shortreal r;
-    shortreal i;
+    shortreal r = 0.0;
+    shortreal i = 0.0;
 } complex;
 
 // Arithmetic functions
