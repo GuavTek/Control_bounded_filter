@@ -1,6 +1,6 @@
 `include "ComplexType.sv"
 `include "RecursionModule.sv"
-`include "LUT.vhd"
+`include "LUT.sv"
 
 module Parallel_top #(
     parameter stages = 32,
