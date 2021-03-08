@@ -4,7 +4,7 @@ module RecursionModule #(
                 factorI = 0.0
 ) (
     input complex in,
-    input complex resetVal = 32'b0,
+    input complex resetVal = '{0.0, 0.0},
     input logic rst, clk,
     output complex out
 );
