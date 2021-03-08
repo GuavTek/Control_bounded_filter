@@ -9,8 +9,7 @@ module LUT #(
         if (sel)
             result = factor;
         else begin
-            result.r = -factor.r;
-            result.i = -factor.i;
+            result = csubrc(0.0, factor);
         end
     end
 endmodule
