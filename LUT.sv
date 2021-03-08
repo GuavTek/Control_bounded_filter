@@ -1,4 +1,3 @@
-`include "ComplexType.sv"
 
 module LUT #(
     parameter   re = 0.0,
@@ -8,11 +7,10 @@ module LUT #(
     output complex result
 );
     complex factor;
-    factor.r = re;
-    factor.i = im;
-
-
+    
     always_comb begin : select
+        factor.r = re;
+        factor.i = im;
         if (sel)
             result = factor;
         else begin
