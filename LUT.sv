@@ -6,15 +6,17 @@ module LUT #(
     input logic sel,
     output complex result
 );
-    complex factor;
-    
+    complex factorP, factorN;
+    assign factorP.r = rtof(re);
+    assign factorP.i = rtof(im);
+    assign factorN.r = rtof(-re);
+    assign factorN.i = rtof(-im);
+
     always_comb begin : select
-        factor.r = re;
-        factor.i = im;
         if (sel)
-            result = factor;
+            result = factorP;
         else begin
-            result = csubrc(0.0, factor);
+            result = factorN;
         end
     end
 endmodule

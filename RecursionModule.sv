@@ -1,4 +1,4 @@
-
+`include "CFPU.sv"
 module RecursionModule #(
     parameter   factorR = 0.0,
                 factorI = 0.0
@@ -9,15 +9,12 @@ module RecursionModule #(
     output complex out
 );
     complex prod, sum, prev, factor;
-
+    assign factor.r = factorR;
+    assign factor.i = factorI;
     assign out = sum;
 
-    always_comb begin : calc
-        factor.r = factorR;
-        factor.i = factorI;
-        prod = cmulcc(prev, factor);   // prod = prev * factorR;
-        sum = caddcc(prod, in);         // sum = prod + in
-    end
+    CFPU c1 (.A(prev), .B(factor), .op(MULT), .result(prod));
+    CFPU c2 (.A(prod), .B(in), .op(ADD), .result(sum));
 
     always_ff @(posedge clk) begin : recurse
         if (!rst)
