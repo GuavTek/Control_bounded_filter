@@ -22,6 +22,7 @@ Complex backR[N];
 Complex forwardR[N];
 
 unsigned int index = 0;
+unsigned int stime;
 
 // The thread function for the design
 void Batch_filter::thread1()
@@ -42,6 +43,8 @@ void Batch_filter::thread1()
             backR[n].imag = 0.0;
             forwardR[n].imag = 0.0;
         }
+        index = 0;
+        stime = 0;
 
         wait();
     }
@@ -114,8 +117,15 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
                 tempValBack.imag -= Fbi[n][m];
             }
         }
-        backR[n].real = Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag + tempValBack.real;
-        backR[n].imag = Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real + tempValBack.imag;
+
+        if(stime < 3){
+            // Startup phase
+            backR[n].real = 0;
+            backR[n].imag = 0;
+        } else {
+            backR[n].real = Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag + tempValBack.real;
+            backR[n].imag = Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real + tempValBack.imag;
+        }
 
         calcInB[n][reIndex] = Wbr[n] * backR[n].real - Wbi[n] * backR[n].imag;
 
@@ -130,8 +140,15 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
                 tempValForward.imag -= Ffi[n][m];
             }
         }
-        forwardR[n].real = Lfr[n] * forwardR[n].real - Lfi[n] * forwardR[n].imag + tempValForward.real;
-        forwardR[n].imag = Lfr[n] * forwardR[n].imag + Lfi[n] * forwardR[n].real + tempValForward.imag;
+
+        if(stime < 3){
+            // Startup phase
+            forwardR[n].real = 0;
+            forwardR[n].imag = 0;
+        } else {
+            forwardR[n].real = Lfr[n] * forwardR[n].real - Lfi[n] * forwardR[n].imag + tempValForward.real;
+            forwardR[n].imag = Lfr[n] * forwardR[n].imag + Lfi[n] * forwardR[n].real + tempValForward.imag;
+        }
 
         calcInF[n][index] = delayedF[n];
         delayedF[n] = Wfr[n] * forwardR[n].real - Wfi[n] * forwardR[n].imag;
@@ -163,5 +180,8 @@ void Batch_filter::Propagate_regs(){
         backR[i] = lookaheadR[i];
         lookaheadR[i].real = 0.0;
         lookaheadR[i].imag = 0.0;
+    }
+    if (stime < 3){
+        stime++;
     }
 }
