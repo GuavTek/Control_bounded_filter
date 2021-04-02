@@ -62,6 +62,14 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         cycle++;
         //Propagate_regs();
 
+        for (uint n = 0; n < N; n++)
+        {
+            backR[n].real = lookaheadR[n].real;
+            backR[n].imag = lookaheadR[n].imag;
+            lookaheadR[n].real = 0.0;
+            lookaheadR[n].imag = 0.0; 
+        }
+
         if (stime < 3){
             stime++;
         }/**/
