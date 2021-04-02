@@ -31,7 +31,8 @@ HEADERS += \
 		system.h \ 
 		tb.h \ 
     FloatType.h \
-    Coefficients.h
+    Coefficients.h \
+    Buffer_Types.h
 
 OTHER_FILES += \ 
 		Makefile \ 

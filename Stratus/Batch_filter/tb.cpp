@@ -1,7 +1,7 @@
 #include "tb.h"
 
 #define N 3
-#define SAMPLES_LENGTH 16384
+#define SAMPLES_LENGTH 32767
 
 sc_uint <1> samples[N][SAMPLES_LENGTH];
 

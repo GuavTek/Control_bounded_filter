@@ -1,6 +1,6 @@
-#include "FloatType.h"
-#include "Coefficients.h"
+//#include "FloatType.h"
 #include "Batch_filter.h"
+#include "Coefficients.h"
 
 typedef unsigned int uint;
 
@@ -14,15 +14,6 @@ void Batch_filter::thread1()
         inputs.reset();
         outputs.reset();
         
-        // Reset recursion registers
-        for(int n = 0; n < N; n++){
-            //lookaheadR[n].real = 0.0;
-            //backR[n].real = 0.0;
-            //forwardR[n].real = 0.0;
-            //lookaheadR[n].imag = 0.0;
-            //backR[n].imag = 0.0;
-            //forwardR[n].imag = 0.0;
-        }
         stime = 0;
 
         wait();
@@ -49,13 +40,12 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     static uint cycle = 0;
 
     // Define buffers
-    static sc_uint <1> sample[4][N][BUFFER_SIZE];
+    static Batch_filter_INPUT_DT::raw_type sample[4][BUFFER_SIZE];
     static float16 calcF[2][N][BUFFER_SIZE];
     static float16 calcB[2][N][BUFFER_SIZE];
     static float16 delayF[N];
 
     index++;
-    int reIndex = BUFFER_SIZE - index - 1;
 
     if (index == BUFFER_SIZE){
         index = 0;
@@ -75,24 +65,30 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         }/**/
     }
 
+    uint reIndex = BUFFER_SIZE - index - 1;
     uint cycle0 = cycle % 4;
     uint cycle1 = (cycle+1) % 4;
-    uint cycle2 = (cycle+2) % 4;
+//    uint cycle2 = (cycle+2) % 4;
     uint cycle3 = (cycle+3) % 4;
 
     // Load inputs
+    cynw_interpret(var, sample[cycle0][index]);
+    /*
     for (int n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Input loading");
         // Load new samples
-        sample[cycle0][n][index] = var.Samples[n];
-    }
+        CYNW_INTERPRET(var, sample[cycle0][index]);
+        //sample[cycle0][index] = var.Samples;
+    }*/
 
     // Lookahead
+    Batch_filter_INPUT_DT look;
+    cynw_interpret(sample[cycle1][reIndex], look);
     for (int n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Lookahead");
         Complex tempVal;
         for(int m = 0; m < N; m++){
-            if(sample[cycle1][m][reIndex] == 1){
+            if(look.Samples[m] == 1){
                 tempVal.real += Fbr[n][m];
                 tempVal.imag += Fbi[n][m];
             } else {
@@ -105,12 +101,16 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     }
 
     // Computation
+    Batch_filter_INPUT_DT rf;
+    Batch_filter_INPUT_DT rb;
+    cynw_interpret(sample[cycle3][index], rf);
+    cynw_interpret(sample[cycle3][reIndex], rb);
     for (int n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Computation");
         // Backward recursion
         Complex tempValBack;
         for(int m = 0; m < N; m++){
-            if(sample[cycle3][m][reIndex] == 1){
+            if(rb.Samples[m] == 1){
                 tempValBack.real += Fbr[n][m];
                 tempValBack.imag += Fbi[n][m];
             } else {
@@ -133,7 +133,7 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         // Forward recursion
         Complex tempValForward;
         for(int m = 0; m < N; m++){
-            if(sample[cycle3][m][index] == 1){
+            if(rf.Samples[m] == 1){
                 tempValForward.real += Ffr[n][m];
                 tempValForward.imag += Ffi[n][m];
             } else {
@@ -163,7 +163,7 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         tempOut += calcF[cycle1 % 2][n][index] + calcB[cycle1 % 2][n][index];
     }
 
-    my_outputs.Result = (sc_int<20>) (tempOut * pow(2,14));
+    my_outputs.Result = tempOut;
     return (my_outputs);
 }
 /*

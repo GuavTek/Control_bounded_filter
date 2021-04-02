@@ -9,9 +9,9 @@ struct Batch_filter_OUTPUT_DT
     //
     // Member declarations.
     //
-    sc_int< 20 > Result;
+    float16 Result;
     
-    typedef sc_uint< 20 > raw_type;
+    //typedef sc_uint< 20 > raw_type;
     
     //
     // Default constructor.
@@ -55,7 +55,7 @@ inline void sc_trace( sc_trace_file* tf, const Batch_filter_OUTPUT_DT& object, c
 {
     if (tf)
     {
-        tf->trace( object.Result, in_name + std::string(".Result"));
+        tf->trace( object.Result.raw_bits(), in_name + std::string(".Result"));
     }
 }
 
@@ -75,21 +75,23 @@ inline ostream & operator << ( ostream & os, const Batch_filter_OUTPUT_DT& objec
 //
 // cynw_interpret function to generate a flat vector.
 //
+/*
 inline void cynw_interpret ( Batch_filter_OUTPUT_DT& from, Batch_filter_OUTPUT_DT::raw_type& to )
 {
     to = (
-                from.Result
+                from.Result.raw_bits()
                 );
 }
 
 //
 // cynw_interpret function to generate a Batch_filter_OUTPUT_DT from a flat vector.
 //
+/*
 inline void cynw_interpret ( const Batch_filter_OUTPUT_DT::raw_type& from, Batch_filter_OUTPUT_DT& to )
 {
-    cynw_interpret( (sc_uint<16>)from.range( 15,0 ), to.Result );
+    cynw_interpret( (sc_uint<20>)from.range( 20,0 ), to.Result );
 }
-
+*/
 
 template <>
 struct cynw_sc_wrap< Batch_filter_OUTPUT_DT >
