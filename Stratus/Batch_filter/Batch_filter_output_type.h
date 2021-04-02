@@ -2,15 +2,16 @@
 #define Batch_filter_OUTPUT_DT_SC_WRAPPER_TYPE 1
 
 #include "cynw_memory.h"
+#include "FloatType.h"
 
 struct Batch_filter_OUTPUT_DT
 {
     //
     // Member declarations.
     //
-    sc_int< 16 > Result;
+    sc_int< 20 > Result;
     
-    typedef sc_uint< 16 > raw_type;
+    typedef sc_uint< 20 > raw_type;
     
     //
     // Default constructor.
