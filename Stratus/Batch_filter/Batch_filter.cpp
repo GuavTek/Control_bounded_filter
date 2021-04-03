@@ -15,7 +15,9 @@ void Batch_filter::thread1()
         outputs.reset();
         
         // Flatten recursion registers
-
+        HLS_FLATTEN_ARRAY(lookaheadR);
+        HLS_FLATTEN_ARRAY(backR);
+        HLS_FLATTEN_ARRAY(forwardR);
 
         stime = 0;
 
@@ -47,7 +49,9 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     static float16 calcF[2][N][BUFFER_SIZE];
     static float16 calcB[2][N][BUFFER_SIZE];
     static float16 delayF[N];
-    // Flatten delayF
+    Complex lookaheadResult[N];
+    // Flatten small arrays
+    HLS_FLATTEN_ARRAY(delayF);
 
     index++;
 
@@ -86,6 +90,8 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         }
         if (index == 0){
             // New batch, reset register
+            lookaheadResult[n].real = lookaheadR[n].real;
+            lookaheadResult[n].imag = lookaheadR[n].imag;
             lookaheadR[n].real = tempVal.real;
             lookaheadR[n].imag = tempVal.imag;
         } else {
@@ -117,8 +123,8 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
             }
 
             if (index == 0){
-                tempValBack.real += Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag;
-                tempValBack.imag += Lbr[n] * lookaheadR[n].imag + Lbi[n] * lookaheadR[n].real;
+                tempValBack.real += Lbr[n] * lookaheadResult[n].real - Lbi[n] * lookaheadResult[n].imag;
+                tempValBack.imag += Lbr[n] * lookaheadResult[n].imag + Lbi[n] * lookaheadResult[n].real;
             } else {
                 tempValBack.real += Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag;
                 tempValBack.imag += Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real;
