@@ -9,7 +9,7 @@
 
 // Filter config
 #define N 3
-#define BUFFER_SIZE 512
+#define BUFFER_SIZE 400
 
 SC_MODULE(Batch_filter)
 {

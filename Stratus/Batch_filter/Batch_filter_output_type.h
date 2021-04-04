@@ -9,7 +9,7 @@ struct Batch_filter_OUTPUT_DT
     //
     // Member declarations.
     //
-    float16 Result;
+    floatType Result;
     
     //typedef sc_uint< 20 > raw_type;
     

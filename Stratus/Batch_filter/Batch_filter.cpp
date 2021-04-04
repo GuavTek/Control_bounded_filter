@@ -46,10 +46,9 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
 
     // Define buffers
     static Batch_filter_INPUT_DT::raw_type sample[4][BUFFER_SIZE];
-    static float16 calcF[2][N][BUFFER_SIZE];
-    static float16 calcB[2][N][BUFFER_SIZE];
-    static float16 delayF[N];
-    Complex lookaheadResult[N];
+    static floatType calcF[2][N][BUFFER_SIZE];
+    static floatType calcB[2][N][BUFFER_SIZE];
+    static floatType delayF[N];
     // Flatten small arrays
     HLS_FLATTEN_ARRAY(delayF);
 
@@ -59,6 +58,14 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         index = 0;
         cycle++;
 
+        for(uint n = 0; n < N; n++){
+            HLS_UNROLL_LOOP(ALL, "Register change");
+            backR[n].real = lookaheadR[n].real;
+            backR[n].imag = lookaheadR[n].imag;
+            lookaheadR[n].real = 0.0;
+            lookaheadR[n].imag = 0.0;
+        }
+
         if (stime < 3){
             stime++;
         }/**/
@@ -67,19 +74,19 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     uint reIndex = BUFFER_SIZE - index - 1;
     uint cycle0 = cycle % 4;
     uint cycle1 = (cycle+1) % 4;
-//    uint cycle2 = (cycle+2) % 4;
+    uint cycle2 = (cycle+2) % 4;
     uint cycle3 = (cycle+3) % 4;
 
     // Load inputs
-    cynw_interpret(var, sample[cycle0][index]);
+    cynw_interpret(var, sample[cycle3][index]);
 
     // Lookahead
     Batch_filter_INPUT_DT look;
-    cynw_interpret(sample[cycle1][reIndex], look);
-    for (int n = 0; n < N; n++){
+    cynw_interpret(sample[cycle2][reIndex], look);
+    for (uint n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Lookahead");
         Complex tempVal;
-        for(int m = 0; m < N; m++){
+        for(uint m = 0; m < N; m++){
             if(look.Samples[m] == 1){
                 tempVal.real += Fbr[n][m];
                 tempVal.imag += Fbi[n][m];
@@ -88,16 +95,9 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
                 tempVal.imag -= Fbi[n][m];
             }
         }
-        if (index == 0){
-            // New batch, reset register
-            lookaheadResult[n].real = lookaheadR[n].real;
-            lookaheadResult[n].imag = lookaheadR[n].imag;
-            lookaheadR[n].real = tempVal.real;
-            lookaheadR[n].imag = tempVal.imag;
-        } else {
-            lookaheadR[n].real = Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag + tempVal.real;
-            lookaheadR[n].imag = Lbi[n] * lookaheadR[n].real + Lbr[n] * lookaheadR[n].imag + tempVal.imag;
-        }
+
+        lookaheadR[n].real = Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag + tempVal.real;
+        lookaheadR[n].imag = Lbi[n] * lookaheadR[n].real + Lbr[n] * lookaheadR[n].imag + tempVal.imag;
     }
 
 
@@ -106,13 +106,13 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
         // Computation
         Batch_filter_INPUT_DT rf;
         Batch_filter_INPUT_DT rb;
-        cynw_interpret(sample[cycle3][index], rf);
-        cynw_interpret(sample[cycle3][reIndex], rb);
-        for (int n = 0; n < N; n++){
+        cynw_interpret(sample[cycle0][index], rf);
+        cynw_interpret(sample[cycle0][reIndex], rb);
+        for (uint n = 0; n < N; n++){
             HLS_UNROLL_LOOP(ALL, "Computation");
             // Backward recursion
             Complex tempValBack;
-            for(int m = 0; m < N; m++){
+            for(uint m = 0; m < N; m++){
                 if(rb.Samples[m] == 1){
                     tempValBack.real += Fbr[n][m];
                     tempValBack.imag += Fbi[n][m];
@@ -122,13 +122,8 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
                 }
             }
 
-            if (index == 0){
-                tempValBack.real += Lbr[n] * lookaheadResult[n].real - Lbi[n] * lookaheadResult[n].imag;
-                tempValBack.imag += Lbr[n] * lookaheadResult[n].imag + Lbi[n] * lookaheadResult[n].real;
-            } else {
-                tempValBack.real += Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag;
-                tempValBack.imag += Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real;
-            }
+            tempValBack.real += Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag;
+            tempValBack.imag += Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real;
 
             backR[n].real = tempValBack.real;
             backR[n].imag = tempValBack.imag;
@@ -137,7 +132,7 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
 
             // Forward recursion
             Complex tempValForward;
-            for(int m = 0; m < N; m++){
+            for(uint m = 0; m < N; m++){
                 if(rf.Samples[m] == 1){
                     tempValForward.real += Ffr[n][m];
                     tempValForward.imag += Ffi[n][m];
@@ -160,8 +155,8 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     }
 
     // Load outputs
-    float16 tempOut;
-    for (int n = 0; n < N; n++){
+    floatType tempOut;
+    for (uint n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Outputs");
         tempOut += calcF[cycle1 % 2][n][index] + calcB[cycle1 % 2][n][index];
     }
@@ -169,26 +164,4 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     my_outputs.Result = tempOut;
     return (my_outputs);
 }
-/*
-void Batch_filter::Propagate_regs(){
-    // Propagate registers
-    for(int i = 0; i < N; i++){
-//        HLS_UNROLL_LOOP( ALL, "Register Propagation");
-        for(int j = 0; j < BUFFER_SIZE; i++){
-            calcOutF[i][j] = calcInF[i][j];
-            calcOutB[i][j] = calcInB[i][j];
-            sampleCalc[i][j] = sampleHold[i][j];
-            sampleHold[i][j] = sampleLook[i][j];
-            sampleLook[i][j] = sampleIn[i][j];
-        }
-        backR[i] = lookaheadR[i];
-        lookaheadR[i].real = 0.0;
-        lookaheadR[i].imag = 0.0;
-    }
 
-    if (stime < 3){
-        stime++;
-    }
-//    return;
-}
-*/

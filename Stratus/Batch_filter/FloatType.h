@@ -3,11 +3,11 @@
 
 #include <cynw_cm_float.h>
 
-typedef cynw_cm_float<5,14,CYNW_BEST_ACCURACY,CYNW_NEAREST,0> float16;
+typedef cynw_cm_float<5,14,CYNW_BEST_ACCURACY,CYNW_NEAREST,0> floatType;
 
 typedef struct {
-    float16 real;
-    float16 imag;
+    floatType real;
+    floatType imag;
 } Complex;
 
 
