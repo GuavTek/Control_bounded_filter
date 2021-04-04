@@ -57,6 +57,7 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     if (index == BUFFER_SIZE){
         index = 0;
         cycle++;
+        cycle %= 4;
 
         for(uint n = 0; n < N; n++){
             HLS_UNROLL_LOOP(ALL, "Register change");
@@ -105,8 +106,10 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
     if(stime >= 3){
         // Computation
         Batch_filter_INPUT_DT rf;
+        static Batch_filter_INPUT_DT rff;
         Batch_filter_INPUT_DT rb;
-        cynw_interpret(sample[cycle0][index], rf);
+        rf = rff;
+        cynw_interpret(sample[cycle0][index], rff);
         cynw_interpret(sample[cycle0][reIndex], rb);
         for (uint n = 0; n < N; n++){
             HLS_UNROLL_LOOP(ALL, "Computation");
@@ -148,8 +151,8 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
             forwardR[n].real = tempValForward.real;
             forwardR[n].imag = tempValForward.imag;
 
-            calcF[cycle0 % 2][n][index] = delayF[n];
-            delayF[n] = Wfr[n] * tempValForward.real - Wfi[n] * tempValForward.imag;
+            calcF[cycle0 % 2][n][index] = Wfr[n] * tempValForward.real - Wfi[n] * tempValForward.imag;
+            //delayF[n] = Wfr[n] * tempValForward.real - Wfi[n] * tempValForward.imag;
 
         }
     }
