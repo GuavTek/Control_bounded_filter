@@ -81,13 +81,13 @@ Parallel_filter_OUTPUT_DT Parallel_filter::my_function(Parallel_filter_INPUT_DT 
         prev[i].imag = tempIn.imag;
     }
 
-    float16 sum = 0;
+    floatType sum = 0;
     for(int i = 0; i < N; i++){
         HLS_UNROLL_LOOP(ALL, "Results");
         sum += temp[i].real + prev[i].real * Wfr[i] - prev[i].imag * Wfi[i];
     }
 
-    my_outputs.Result = (sc_int<16>) (sum * pow(2,15));
+    my_outputs.Result = sum;
     
     return (my_outputs);
 }

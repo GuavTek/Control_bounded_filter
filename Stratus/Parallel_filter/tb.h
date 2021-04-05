@@ -3,14 +3,14 @@
 
 #include "cynw_p2p.h"
 
-#include "Parallel_filter_input_type.h"
-#include "Parallel_filter_output_type.h"
+#include "Batch_filter_input_type.h"
+#include "Batch_filter_output_type.h"
 
 SC_MODULE(tb)
 {
     public:
-    cynw_p2p < Parallel_filter_OUTPUT_DT >::base_in    inputs;
-    cynw_p2p < Parallel_filter_INPUT_DT >::base_out    outputs;
+    cynw_p2p < Batch_filter_OUTPUT_DT >::base_in    inputs;
+    cynw_p2p < Batch_filter_INPUT_DT >::base_out    outputs;
     
     // Declaration of clock and reset parameters
     sc_in_clk                   clk;

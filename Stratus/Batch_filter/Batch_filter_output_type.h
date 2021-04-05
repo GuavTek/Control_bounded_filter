@@ -72,27 +72,6 @@ inline ostream & operator << ( ostream & os, const Batch_filter_OUTPUT_DT& objec
     return os;
 }
 
-//
-// cynw_interpret function to generate a flat vector.
-//
-/*
-inline void cynw_interpret ( Batch_filter_OUTPUT_DT& from, Batch_filter_OUTPUT_DT::raw_type& to )
-{
-    to = (
-                from.Result.raw_bits()
-                );
-}
-
-//
-// cynw_interpret function to generate a Batch_filter_OUTPUT_DT from a flat vector.
-//
-/*
-inline void cynw_interpret ( const Batch_filter_OUTPUT_DT::raw_type& from, Batch_filter_OUTPUT_DT& to )
-{
-    cynw_interpret( (sc_uint<20>)from.range( 20,0 ), to.Result );
-}
-*/
-
 template <>
 struct cynw_sc_wrap< Batch_filter_OUTPUT_DT >
 {

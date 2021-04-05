@@ -2,15 +2,14 @@
 #define Parallel_filter_OUTPUT_DT_SC_WRAPPER_TYPE 1
 
 #include "cynw_memory.h"
+#include "FloatType.h"
 
 struct Parallel_filter_OUTPUT_DT
 {
     //
     // Member declarations.
     //
-    sc_int< 16 > Result;
-    
-    typedef sc_uint< 16 > raw_type;
+    floatType Result;
     
     //
     // Default constructor.
@@ -54,7 +53,7 @@ inline void sc_trace( sc_trace_file* tf, const Parallel_filter_OUTPUT_DT& object
 {
     if (tf)
     {
-        tf->trace( object.Result, in_name + std::string(".Result"));
+        tf->trace( object.Result.raw_bits(), in_name + std::string(".Result"));
     }
 }
 
@@ -69,24 +68,6 @@ inline ostream & operator << ( ostream & os, const Parallel_filter_OUTPUT_DT& ob
     os << ")";
 #endif
     return os;
-}
-
-//
-// cynw_interpret function to generate a flat vector.
-//
-inline void cynw_interpret ( Parallel_filter_OUTPUT_DT& from, Parallel_filter_OUTPUT_DT::raw_type& to )
-{
-    to = (
-                from.Result
-                );
-}
-
-//
-// cynw_interpret function to generate a Parallel_filter_OUTPUT_DT from a flat vector.
-//
-inline void cynw_interpret ( const Parallel_filter_OUTPUT_DT::raw_type& from, Parallel_filter_OUTPUT_DT& to )
-{
-    cynw_interpret( (sc_uint<16>)from.range( 15,0 ), to.Result );
 }
 
 
