@@ -11,7 +11,7 @@ typedef struct packed {
     floatType i;
 } complex;
 
-typedef enum logic { 
+typedef enum int { 
     ADD,
     MULT
  } FPU_opcode;

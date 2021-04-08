@@ -1,7 +1,6 @@
 
-module FPU #() (
+module FPU #(FPU_opcode op) (
     in floatType A, B,
-    in FPU_opcode op,
     out floatType result
 );
     const int mant_width = $bits(floatType.mantis);
