@@ -16,6 +16,6 @@ module Batch_top #(
     complex w1, w2;
 
     assign out = w2.r;
-    LUT #(.re(0.1)) l1 (.sel(in[0]), .Result(w1));
+    LUT #(.re(0.1)) l1 (.sel(in[0]), .result(w1));
     RecursionModule #(.factorR(0.2), .factorI(-0.2)) r1 (.in(w1), .rst(1'b1), .clk(clk), .out(w2));
 endmodule
