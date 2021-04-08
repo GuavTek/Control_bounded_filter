@@ -4,7 +4,7 @@
 `include "RecursionModule.sv"
 `include "LUT.sv"
 
-module Parallel_top #(
+module Batch_top #(
     parameter stages = 32,
     parameter width = 32,
     parameter N = 3

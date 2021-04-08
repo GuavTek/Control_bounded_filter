@@ -3,6 +3,7 @@ module FPU #(FPU_opcode op) (
     input floatType A, B,
     output floatType result
 );
+    import Util::*;
     const int mant_width = $bits(floatType.mantis);
     const int prod_width = 2*mant_width-1;
     const int exp_width = $bits(floatType.exp);
