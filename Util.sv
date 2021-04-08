@@ -17,6 +17,7 @@ typedef enum int {
  } FPU_opcode;
 
 function floatType rtof(real in);
+    begin
     floatType temp;
     int signed exponent = $clog2(in);
     temp.exp = exponent;
@@ -32,4 +33,5 @@ function floatType rtof(real in);
 
     temp.mantis = mant[$bits(temp.mantis)-1:0];
     rtof = temp;
+    end
 endfunction
