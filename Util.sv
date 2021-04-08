@@ -20,13 +20,15 @@ function floatType rtof(real in);
     int signed exponent = $clog2(in);
     rtof.exp = exponent;
     
-    if (in >= 0)
-        rtof.sign = 0;
-    else
-        rtof.sign = 1;
-
     logic[$bits(floatType.mantis):0] temp;
-    temp = in * 2**(-exponent);
-    rtof.mantis = temp[$bits(floatType.mantis-1:0)];
+    if (in >= 0) begin
+        rtof.sign = 0;
+        temp = int'(in * 2**(-exponent));
+    end else begin
+        rtof.sign = 1;
+        temp = int'(-in * 2**(-exponent));
+    end
+
+    rtof.mantis = temp[$bits(floatType.mantis)-1:0];
 
 endfunction
