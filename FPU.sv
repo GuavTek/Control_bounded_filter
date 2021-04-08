@@ -3,9 +3,9 @@ module FPU #(FPU_opcode op) (
     input floatType A, B,
     output floatType result
 );
-    const int mant_width = $bits(floatType.mantis);
+    const int mant_width = $bits(result.mantis);
     const int prod_width = 2*mant_width-1;
-    const int exp_width = $bits(floatType.exp);
+    const int exp_width = $bits(result.exp);
     logic[prod_width:0] m1;
     logic[mant_width:0] s1, s2, s3, s4;
     logic[mant_width+1:0] r1;
