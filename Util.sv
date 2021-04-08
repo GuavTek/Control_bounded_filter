@@ -12,8 +12,8 @@ typedef struct packed {
 } complex;
 
 typedef enum int { 
-    ADD,
-    MULT
+    ADD = 0,
+    MULT = 1
 } FPU_opcode;
 
 function floatType rtof(real in);
