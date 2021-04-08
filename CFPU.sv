@@ -17,7 +17,7 @@ generate
             //cmulcc.r = (a.r * b.r) - (a.i * b.i);
             //cmulcc.i = (a.i * b.r) + (a.r * b.i);
             complex i1, i2;
-            float16 temp2;
+            floatType temp2;
             // Real result
             FPU fr1 (.A(A.r), .B(B.r), .op(MULT), .result(i1.r));
             FPU fr2 (.A(A.i), .B(B.i), .op(MULT), .result(temp2));

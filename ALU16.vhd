@@ -1,8 +1,6 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-library IEEE_proposed;
-use IEEE_proposed.float_pkg.all;
 
 entity ALU16 is
     port(
@@ -13,8 +11,8 @@ entity ALU16 is
 end entity;
 
 architecture arc of ALU16 is
-subtype float16 is float(5 downto -10);
-signal Af, Bf, Rf : float16;
+subtype floatType is float(5 downto -10);
+signal Af, Bf, Rf : floatType;
 begin
 
     R <= to_slv(Rf);

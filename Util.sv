@@ -4,11 +4,11 @@ typedef struct packed {
     logic sign;
     logic[4:0] signed exp;
     logic[9:0] mantis;
-} float16;
+} floatType;
 
 typedef struct packed {
-    float16 r;
-    float16 i;
+    floatType r;
+    floatType i;
 } complex;
 
 typedef enum logic { 
@@ -16,7 +16,7 @@ typedef enum logic {
     MULT
  } FPU_opcode;
 
-function float16 rtof(real in);
+function floatType rtof(real in);
     int signed exponent = $clog2(in);
     rtof.exp = exponent;
     
@@ -25,8 +25,8 @@ function float16 rtof(real in);
     else
         rtof.sign = 1;
 
-    logic[$bits(float16.mantis):0] temp;
+    logic[$bits(floatType.mantis):0] temp;
     temp = in * 2**(-exponent);
-    rtof.mantis = temp[$bits(float16.mantis-1:0)];
+    rtof.mantis = temp[$bits(floatType.mantis-1:0)];
 
 endfunction

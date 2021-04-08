@@ -1,8 +1,6 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
-library IEEE_proposed;
-use IEEE_proposed.float_pkg.all;
 
 entity LUT is
     generic(
@@ -16,8 +14,8 @@ entity LUT is
 end entity;
 
 architecture arc of LUT is
-subtype float16 is float(5 downto -10);
-signal Rr, Ri : float16;
+subtype floatType is float(5 downto -10);
+signal Rr, Ri : floatType;
 signal rePol, imPol : real;
 begin
 	-- Output results
