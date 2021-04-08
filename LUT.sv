@@ -6,7 +6,6 @@ module LUT #(
     input logic sel,
     output complex result
 );
-    import Util::*;
     complex factorP, factorN;
     assign factorP.r = rtof(re);
     assign factorP.i = rtof(im);

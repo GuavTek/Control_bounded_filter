@@ -8,7 +8,6 @@ module RecursionModule #(
     input logic rst, clk,
     output complex out
 );
-    import Util::*;
     complex prod, sum, prev, factor;
     assign factor.r = factorR;
     assign factor.i = factorI;

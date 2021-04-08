@@ -13,7 +13,6 @@ module Batch_top #(
     input logic rst, clk,
     output logic [width-1:0] out
 );
-    import Util::*;
     complex w1, w2;
 
     assign out = w2.r;
