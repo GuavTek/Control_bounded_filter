@@ -79,7 +79,7 @@ always begin
         
         // Calculate mantis
         m1 = A.mantis * B.mantis;
-        overflow = m1[m_width];
+        overflow = m1[prod_width];
         if (overflow)
             result.mantis = m1[prod_width:mant_width];
         else
@@ -88,7 +88,6 @@ always begin
         //Calculate exponent
         result.exp = A.exp + B.exp + overflow;
     end
-    default: 
     endcase
 end
 
