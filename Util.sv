@@ -2,7 +2,7 @@
 
 typedef struct packed {
     logic sign;
-    logic[4:0] signed exp;
+    logic signed[4:0] exp;
     logic[9:0] mantis;
 } floatType;
 
@@ -17,18 +17,19 @@ typedef enum int {
  } FPU_opcode;
 
 function floatType rtof(real in);
+    floatType temp;
     int signed exponent = $clog2(in);
-    rtof.exp = exponent;
+    temp.exp = exponent;
     
-    logic[$bits(floatType.mantis):0] temp;
+    logic[$bits(temp.mantis):0] mant;
     if (in >= 0) begin
-        rtof.sign = 0;
-        temp = int'(in * 2**(-exponent));
+        temp.sign = 0;
+        mant = int'(in * 2**(-exponent));
     end else begin
-        rtof.sign = 1;
-        temp = int'(-in * 2**(-exponent));
+        temp.sign = 1;
+        mant = int'(-in * 2**(-exponent));
     end
 
-    rtof.mantis = temp[$bits(floatType.mantis)-1:0];
-
+    temp.mantis = mant[$bits(temp.mantis)-1:0];
+    rtof = temp;
 endfunction
