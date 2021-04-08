@@ -30,7 +30,6 @@ generate
             FPU #(op = MULT) fi2 (.A(A.r), .B(B.i), .result(i2.i));
             FPU #(op = ADD) fi3 (.A(i1.i), .B(i2.i), .result(result.i));
         end
-        default: 
     endcase
 endgenerate
 endmodule
