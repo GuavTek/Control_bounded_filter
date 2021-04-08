@@ -1,5 +1,5 @@
 
-module FPU #(FPU_opcode op) (
+module FPU #(parameter FPU_opcode op) (
     input floatType A, B,
     output floatType result
 );
