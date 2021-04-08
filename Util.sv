@@ -22,16 +22,16 @@ package Util;
         int signed exponent = $clog2(in);
         temp.exp = exponent;
         
-        logic[$bits(temp.mantis):0] mant;
+        int unsigned mant;
         if (in >= 0) begin
             temp.sign = 0;
-            mant = int'(in * 2**(-exponent));
+            mant = (in * 2**(-exponent));
         end else begin
             temp.sign = 1;
-            mant = int'(-in * 2**(-exponent));
+            mant = (-in * 2**(-exponent));
         end
 
-        temp.mantis = mant[$bits(temp.mantis)-1:0];
+        temp.mantis = mant;
         rtof = temp;
         end
     endfunction
