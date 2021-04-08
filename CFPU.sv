@@ -1,7 +1,7 @@
 `include "FPU.sv"
 module CFPU #(FPU_opcode op) (
-    in complex A, B,
-    out complex result
+    input complex A, B,
+    output complex result
 );
 
 generate

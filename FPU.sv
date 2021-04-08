@@ -1,7 +1,7 @@
 
 module FPU #(FPU_opcode op) (
-    in floatType A, B,
-    out floatType result
+    input floatType A, B,
+    output floatType result
 );
     const int mant_width = $bits(floatType.mantis);
     const int prod_width = 2*mant_width-1;
