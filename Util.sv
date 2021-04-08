@@ -19,10 +19,10 @@ package Util;
     function floatType rtof(real in);
         begin
         floatType temp;
+        int unsigned mant;
         int signed exponent = $clog2(in);
         temp.exp = exponent;
         
-        int unsigned mant;
         if (in >= 0) begin
             temp.sign = 0;
             mant = (in * 2**(-exponent));
