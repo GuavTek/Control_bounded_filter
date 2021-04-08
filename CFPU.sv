@@ -23,7 +23,7 @@ generate
             assign i2.r.sign = !temp2.sign;
             assign i2.r.exp = temp2.exp;
             assign i2.r.mantis = temp2.mantis;
-            FPU #(.op(ADD)) fr3 (.A(i1.r), .B(i3.r), .result(result.r));
+            FPU #(.op(ADD)) fr3 (.A(i1.r), .B(i2.r), .result(result.r));
 
             // Imaginary result
             FPU #(.op(MULT)) fi1 (.A(A.i), .B(B.r), .result(i1.i));
