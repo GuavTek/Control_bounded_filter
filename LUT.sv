@@ -1,22 +1,35 @@
 
 module LUT #(
-    parameter   re = 0.0,
-                im = 0.0
+    parameter       size = 1,
+    parameter real  re[size-1:0],
+                    im[size-1:0]
 ) (
-    input logic sel,
+    input logic[size-1:0] sel,
     output complex result
 );
-    complex factorP, factorN;
-    assign factorP.r = rtof(re);
-    assign factorP.i = rtof(im);
-    assign factorN.r = rtof(-re);
-    assign factorN.i = rtof(-im);
+    // Generate LUT values
+    complex mem[2**size-1:0];
+    genvar i;
+    genvar j;
+    generate
+        for(i = 0; i < size**2; i++) begin
+            real tempR = 0;
+            real tempI = 0;
+            for(j = 0; j < size; j++) begin
+                if(i[j] == 1) begin
+                    tempR += re[j];
+                    tempI += im[j];
+                end else begin
+                    tempR -= re[j];
+                    tempI -= im[j];
+                end
+            end
+            mem[i].r = rtof(tempR);
+            mem[i].i = rtof(tempI);
+        end
+    endgenerate
 
     always_comb begin : select
-        if (sel)
-            result = factorP;
-        else begin
-            result = factorN;
-        end
+        result = mem[sel];
     end
 endmodule
