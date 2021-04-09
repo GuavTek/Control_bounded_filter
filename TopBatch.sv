@@ -44,7 +44,7 @@ module Batch_top #(
     RAM_dual #(.depth(depth), .d_width(N)) sample4 (.clk(clk), .data1(sdf4), .write1(sw4), .addr1(batCount), .data2(sdr4), .addr2(batCountRev));
 
     // Sample multiplexing
-    logic[N-1:0] slh, scof, scob;
+    logic[N-1:0] slh, scof, scob, sf_delay;
     always @(*) begin
         case (cycle)
             2'd0:
@@ -54,7 +54,7 @@ module Batch_top #(
                 sw4 = 0;
                 sdf1 = in;
                 slh = sdf4;
-                scof = sdf2;
+                sf_delay = sdf2;
                 scob = sdr2;
             2'd1:
                 sw1 = 0;
@@ -63,7 +63,7 @@ module Batch_top #(
                 sw4 = 0;
                 sdf2 = in;
                 slh = sdf1;
-                scof = sdf3;
+                sf_delay = sdf3;
                 scob = sdr3;
             2'd2:
                 sw1 = 0;
@@ -72,7 +72,7 @@ module Batch_top #(
                 sw4 = 0;
                 sdf3 = in;
                 slh = sdf2;
-                scof = sdf4;
+                sf_delay = sdf4;
                 scob = sdr4;
             2'd3:
                 sw1 = 0;
@@ -81,10 +81,14 @@ module Batch_top #(
                 sw4 = 1;
                 sdf4 = in;
                 slh = sdf3;
-                scof = sdf1;
+                sf_delay = sdf1;
                 scob = sdr1;
             default: 
         endcase
+    end
+
+    always @(posedge clk) begin
+        scof = sf_delay;
     end
 
     floatType res[N];
