@@ -3,6 +3,7 @@
 `include "CFPU.sv"
 `include "RecursionModule.sv"
 `include "LUT.sv"
+`include "RAM.sv"
 
 module Batch_top #(
     parameter stages = 32,
