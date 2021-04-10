@@ -26,7 +26,7 @@ module LUT #(
 
     genvar i;
     generate
-        for(i = 0; i < size**2; i++) begin
+        for(i = 0; i < 2**size; i++) begin
             complex temp;
             assign temp.r = rtof(calcLUT#(size)::get(re, i));
             assign temp.i = rtof(calcLUT#(size)::get(im, i));
