@@ -161,7 +161,7 @@ module Batch_top #(
             end
 
             if(i == 0) begin
-                res[0] = partRes;
+                assign res[0] = partRes;
             end else begin
                 FPU #(.op(ADD)) FINADD (.A(res[i-1]), .B(partRes), .result(res[i]));
             end
