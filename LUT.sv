@@ -14,8 +14,8 @@ module LUT #(
     generate
         for(i = 0; i < size**2; i++) begin
             complex temp;
-            assign temp.r = rtof(calcLUT(size, re, j));
-            assign temp.i = rtof(calcLUT(size, im, j));
+            assign temp.r = rtof(calcLUT(size, re, i));
+            assign temp.i = rtof(calcLUT(size, im, i));
             assign mem[i] = temp;
         end
     endgenerate
