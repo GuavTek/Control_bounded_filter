@@ -13,8 +13,8 @@ endfunction
 
 module LUT #(
     parameter       size = 1,
-    parameter real  re[size-1:0],
-                    im[size-1:0]
+    parameter real  re[0:size-1],
+                    im[0:size-1]
 ) (
     input logic[size-1:0] sel,
     output complex result
