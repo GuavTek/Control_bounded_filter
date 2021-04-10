@@ -50,6 +50,7 @@ module Batch_top #(
     always @(*) begin
         case (cycle)
             2'd0:
+            begin
                 sw1 = 1;
                 sw2 = 0;
                 sw3 = 0;
@@ -58,7 +59,9 @@ module Batch_top #(
                 slh = sdf4;
                 sf_delay = sdf2;
                 scob = sdr2;
+            end
             2'd1:
+            begin
                 sw1 = 0;
                 sw2 = 1;
                 sw3 = 0;
@@ -67,7 +70,9 @@ module Batch_top #(
                 slh = sdf1;
                 sf_delay = sdf3;
                 scob = sdr3;
+            end
             2'd2:
+            begin
                 sw1 = 0;
                 sw2 = 0;
                 sw3 = 1;
@@ -76,7 +81,9 @@ module Batch_top #(
                 slh = sdf2;
                 sf_delay = sdf4;
                 scob = sdr4;
+            end
             2'd3:
+            begin
                 sw1 = 0;
                 sw2 = 0;
                 sw3 = 0;
@@ -85,7 +92,7 @@ module Batch_top #(
                 slh = sdf3;
                 sf_delay = sdf1;
                 scob = sdr1;
-            default: 
+            end 
         endcase
     end
 
