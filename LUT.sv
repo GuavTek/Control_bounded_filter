@@ -1,15 +1,17 @@
-function real calcLUT(int size, real fact[0:size-1], logic[size-1:0] in);
-    real temp = 0.0;
-    logic[size:0] j;
-    for(j = 0; j < size; j++) begin
-        if(in[j] == 1) begin
-            temp += fact[j];
-        end else begin
-            temp -= fact[j];
+virtual class calcLUT #(parameter size = 1);
+    function real get(real fact[0:size-1], logic[size-1:0] in);
+        real temp = 0.0;
+        logic[size:0] j;
+        for(j = 0; j < size; j++) begin
+            if(in[j] == 1) begin
+                temp += fact[j];
+            end else begin
+                temp -= fact[j];
+            end
         end
-    end
-    calcLUT = temp;
-endfunction
+        calcLUT = temp;
+    endfunction
+endclass //calcLUT
 
 module LUT #(
     parameter       size = 1,
@@ -26,8 +28,8 @@ module LUT #(
     generate
         for(i = 0; i < size**2; i++) begin
             complex temp;
-            assign temp.r = rtof(calcLUT(size, re, i));
-            assign temp.i = rtof(calcLUT(size, im, i));
+            assign temp.r = rtof(calcLUT#(size)::get(re, i));
+            assign temp.i = rtof(calcLUT#(size)::get(im, i));
             assign mem[i] = temp;
         end
     endgenerate
