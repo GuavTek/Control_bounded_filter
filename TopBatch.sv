@@ -124,7 +124,7 @@ module Batch_top #(
             LUT #(.size(N), .re(Ffr[i]), .im(Ffi[i])) CFL_ (.sel(scof), .result(CF_in));
             LUT #(.size(N), .re(Fbr[i]), .im(Fbi[i])) CBL_ (.sel(scob), .result(CB_in));
             RecursionModule #(.factorR(Lfr[i]), .factorI(Lfi[i])) CFR_ (.in(CF_in), .rst(rst), .resetVal(0), .clk(clk), .out(CF_out));
-            RecursionModule #(.factorR(Lbr[i]), .factorI(Lbi[i])) CFR_ (.in(CB_in), .rst(cyclePulse & rst), .resetVal(LH_res), .clk(clk), .out(CB_out));
+            RecursionModule #(.factorR(Lbr[i]), .factorI(Lbi[i])) CBR_ (.in(CB_in), .rst(cyclePulse & rst), .resetVal(LH_res), .clk(clk), .out(CB_out));
             WF.r = rtof(Wfr[i]);
             WF.i = rtof(Wfi[i]);
             WB.r = rtof(Wbr[i]);
