@@ -7,7 +7,7 @@ module RAM_single #(
 	inout reg[d_width-1:0] data
 );
 	logic[d_width-1:0] mem[depth-1:0];
-	always @(*) begin
+	always @(posedge clk) begin
         if (write)
             mem[addr] = data;
         else
@@ -27,7 +27,7 @@ module RAM_dual #(
     
 	logic[d_width-1:0] mem [depth-1:0];
     
-	always @(*) begin
+	always @(posedge clk) begin
     	if (write1) 
 			mem[addr1] = data1;
 		else
