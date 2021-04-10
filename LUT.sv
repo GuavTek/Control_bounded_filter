@@ -10,22 +10,10 @@ module LUT #(
     // Generate LUT values
     complex mem[2**size-1:0];
     genvar i;
-    genvar j;
     generate
         for(i = 0; i < size**2; i++) begin
-            genvar tempR = 0.0;
-            benvar tempI = 0.0;
-            for(j = 0; j < size; j++) begin
-                if(i[j] == 1) begin
-                    tempR += re[j];
-                    tempI += im[j];
-                end else begin
-                    tempR -= re[j];
-                    tempI -= im[j];
-                end
-            end
-            mem[i].r = rtof(tempR);
-            mem[i].i = rtof(tempI);
+            mem[i].r = rtof(calcLUT(size, re, j));
+            mem[i].i = rtof(calcLUT(size, im, j));
         end
     endgenerate
 
@@ -33,3 +21,16 @@ module LUT #(
         result = mem[sel];
     end
 endmodule
+
+function real calcLUT(int size, real fact[size-1:0], logic[size-1:0] in);
+    real temp = 0.0;
+    logic[size:0] j;
+    for(j = 0; j < size; j++) begin
+        if(in[j] == 1) begin
+            temp += fact[j];
+        end else begin
+            temp -= fact[j];
+        end
+    end
+    calcLUT = temp;
+endfunction
