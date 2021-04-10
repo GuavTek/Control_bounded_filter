@@ -25,10 +25,10 @@ function floatType rtof(real in);
         
     if (in >= 0) begin
         temp.sign = 0;
-        mant = (in * 2**(-exponent));
+        mant = (in * 2**($bits(temp.mantis)-exponent));
     end else begin
         temp.sign = 1;
-        mant = (-in * 2**(-exponent));
+        mant = (-in * 2**($bits(temp.mantis)-exponent));
     end
 
     temp.mantis = mant;
