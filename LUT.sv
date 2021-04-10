@@ -1,5 +1,5 @@
 virtual class calcLUT #(parameter size = 1);
-    function real get(real fact[0:size-1], logic[size-1:0] in);
+    static function real get(real fact[0:size-1], logic[size-1:0] in);
         real temp = 0.0;
         logic[size:0] j;
         for(j = 0; j < size; j++) begin
