@@ -136,26 +136,28 @@ module Batch_top #(
             // Final add
             floatType forward, backward, partRes;
             FPU #(.op(ADD)) PRes_ (.A(forward), .B(backward), .result(partRes));
-
+            
             // MUX Part-results
-            if (cycle[0]) begin
-                cw1 = 1;
-                cw2 = 0;
-                baddr1 = batCountRev;
-                baddr2 = batCount;
-                cf1 = resF.r;
-                cb1 = resB.r;
-                forward = cf2;
-                backward = cb2;
-            end else begin
-                cw1 = 0;
-                cw2 = 1;
-                baddr1 = batCount;
-                baddr2 = batCountRev;
-                cf2 = resF.r;
-                cb2 = resB.r;
-                forward = cf1;
-                backward = cb1;
+            always @(*) begin
+                if (cycle[0]) begin
+                    cw1 = 1;
+                    cw2 = 0;
+                    baddr1 = batCountRev;
+                    baddr2 = batCount;
+                    cf1 = resF.r;
+                    cb1 = resB.r;
+                    forward = cf2;
+                    backward = cb2;
+                end else begin
+                    cw1 = 0;
+                    cw2 = 1;
+                    baddr1 = batCount;
+                    baddr2 = batCountRev;
+                    cf2 = resF.r;
+                    cb2 = resB.r;
+                    forward = cf1;
+                    backward = cb1;
+                end
             end
 
             if(i == 0) begin
