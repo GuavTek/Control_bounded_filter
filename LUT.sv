@@ -13,8 +13,8 @@ module LUT #(
     genvar j;
     generate
         for(i = 0; i < size**2; i++) begin
-            genvar real tempR = 0.0;
-            benvar real tempI = 0.0;
+            genvar tempR = 0.0;
+            benvar tempI = 0.0;
             for(j = 0; j < size; j++) begin
                 if(i[j] == 1) begin
                     tempR += re[j];
