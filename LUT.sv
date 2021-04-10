@@ -1,4 +1,4 @@
-function real calcLUT(int size, real fact[size-1:0], logic[size-1:0] in);
+function real calcLUT(int size, real fact[0:size-1], logic[size-1:0] in);
     real temp = 0.0;
     logic[size:0] j;
     for(j = 0; j < size; j++) begin
