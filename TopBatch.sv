@@ -18,12 +18,13 @@ module Batch_top #(
     // Counter for batch cycle
     logic[$clog2(depth)-1:0] batCount, batCountRev;
     always @(posedge clk) begin
-        if(batCount == (depth-1))
+        if(batCount == (depth-1)) begin
             batCount = 0;
             batCountRev = depth-1;
-        else
+        end else begin
             batCount++;
             batCountRev--;
+        end
     end
 
     logic cyclePulse;
