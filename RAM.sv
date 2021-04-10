@@ -4,7 +4,7 @@ module RAM_single #(
 	) (
 	input logic[$clog2(depth)-1:0]  addr,
 	input logic clk, write, 
-	inout logic[d_width-1:0] data
+	inout reg[d_width-1:0] data
 );
 	logic[d_width-1:0] mem[depth-1:0];
 	always @(*) begin
@@ -22,7 +22,7 @@ module RAM_dual #(
   	input logic[$clog2(depth)-1:0] addr1, addr2,
   	input logic write1,
   	input logic clk,
-  	inout logic[d_width-1:0] data1, data2
+  	inout reg[d_width-1:0] data1, data2
 );
     
 	logic[d_width-1:0] mem [depth-1:0];
