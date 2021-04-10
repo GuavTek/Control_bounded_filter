@@ -129,9 +129,9 @@ module Batch_top #(
             assign WF.i = rtof(Wfi[i]);
             assign WB.r = rtof(Wbr[i]);
             assign WB.i = rtof(Wbi[i]);
-            floatType resF, resB;
-            CFPU #(.op(MULT)) WFR_ (.A(CF_out), .B(WF), .result.r(resF));
-            CFPU #(.op(MULT)) WBR_ (.A(CB_out), .B(WB), .result.r(resB));
+            complex resF, resB;
+            CFPU #(.op(MULT)) WFR_ (.A(CF_out), .B(WF), .result(resF));
+            CFPU #(.op(MULT)) WBR_ (.A(CB_out), .B(WB), .result(resB));
 
             // Final add
             floatType forward, backward, partRes;
@@ -143,8 +143,8 @@ module Batch_top #(
                 cw2 = 0;
                 baddr1 = batCountRev;
                 baddr2 = batCount;
-                cf1 = resF;
-                cb1 = resB;
+                cf1 = resF.r;
+                cb1 = resB.r;
                 forward = cf2;
                 backward = cb2;
             end else begin
@@ -152,8 +152,8 @@ module Batch_top #(
                 cw2 = 1;
                 baddr1 = batCount;
                 baddr2 = batCountRev;
-                cf2 = resF;
-                cb2 = resB;
+                cf2 = resF.r;
+                cb2 = resB.r;
                 forward = cf1;
                 backward = cb1;
             end
