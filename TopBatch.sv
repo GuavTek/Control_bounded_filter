@@ -138,7 +138,7 @@ module Batch_top #(
             FPU #(.op(ADD)) PRes_ (.A(forward), .B(backward), .result(partRes));
 
             // MUX Part-results
-            if (cycle % 2) begin
+            if (cycle[0]) begin
                 cw1 = 1;
                 cw2 = 0;
                 baddr1 = batCountRev;
