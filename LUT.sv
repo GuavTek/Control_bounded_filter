@@ -1,3 +1,15 @@
+function real calcLUT(int size, real fact[size-1:0], logic[size-1:0] in);
+    real temp = 0.0;
+    logic[size:0] j;
+    for(j = 0; j < size; j++) begin
+        if(in[j] == 1) begin
+            temp += fact[j];
+        end else begin
+            temp -= fact[j];
+        end
+    end
+    calcLUT = temp;
+endfunction
 
 module LUT #(
     parameter       size = 1,
@@ -25,15 +37,3 @@ module LUT #(
     end
 endmodule
 
-function real calcLUT(int size, real fact[size-1:0], logic[size-1:0] in);
-    real temp = 0.0;
-    logic[size:0] j;
-    for(j = 0; j < size; j++) begin
-        if(in[j] == 1) begin
-            temp += fact[j];
-        end else begin
-            temp -= fact[j];
-        end
-    end
-    calcLUT = temp;
-endfunction
