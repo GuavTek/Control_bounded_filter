@@ -9,11 +9,14 @@ module LUT #(
 );
     // Generate LUT values
     complex mem[2**size-1:0];
+
     genvar i;
     generate
         for(i = 0; i < size**2; i++) begin
-            mem[i].r = rtof(calcLUT(size, re, j));
-            mem[i].i = rtof(calcLUT(size, im, j));
+            complex temp;
+            assign temp.r = rtof(calcLUT(size, re, j));
+            assign temp.i = rtof(calcLUT(size, im, j));
+            assign mem[i] = temp;
         end
     endgenerate
 
