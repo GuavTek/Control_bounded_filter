@@ -4,6 +4,7 @@
 `include "RecursionModule.sv"
 `include "LUT.sv"
 `include "RAM.sv"
+`include "Data/Coefficients.v"
 
 module Batch_top #(
     parameter depth = 32,
