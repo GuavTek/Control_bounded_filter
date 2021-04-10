@@ -9,7 +9,7 @@ virtual class calcLUT #(parameter size = 1);
                 temp -= fact[j];
             end
         end
-        calcLUT = temp;
+        get = temp;
     endfunction
 endclass //calcLUT
 
