@@ -19,7 +19,7 @@ void tb::source()
 
     esc_printf("Source started...\n");
 
-    Batch_filter_INPUT_DT stimuli;
+    Parallel_filter_INPUT_DT stimuli;
 
     // Load stimuli
     std::ifstream ins("hardware_signals.csv");
@@ -96,7 +96,7 @@ void tb::sink()
         esc_printf("No output file\n");
     }
 
-    Batch_filter_OUTPUT_DT val;
+    Parallel_filter_OUTPUT_DT val;
     val = inputs.get();
     wait();
 
