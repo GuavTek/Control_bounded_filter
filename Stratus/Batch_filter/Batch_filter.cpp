@@ -42,78 +42,70 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
 {
     Batch_filter_OUTPUT_DT my_outputs;
     static uint index = 0;
-    static uint cycle = 0;
+    static uint indexOut = 0;
+    static sc_uint < 2 > cycle = 0;
+    static sc_uint < 1 > cycleOut = 0;
+    const uint width = 32;
 
     // Define buffers
     static Batch_filter_INPUT_DT::raw_type sample[4][BUFFER_SIZE];
-    static floatType calcF[2][N][BUFFER_SIZE];
-    static floatType calcB[2][N][BUFFER_SIZE];
-    static floatType delayF[N];
-    // Flatten small arrays
-    HLS_FLATTEN_ARRAY(delayF);
+    static sc_bv < N*width > calcF[2][BUFFER_SIZE];
+    static sc_bv < N*width > calcB[2][BUFFER_SIZE];
+    // Flatten arrays
+    //HLS_FLATTEN_ARRAY(sample);
+    // Split arrays
+    HLS_SEPARATE_ARRAY(sample);
+    HLS_MAP_TO_MEMORY(sample, "DualRAM");
+
+    //HLS_SEPARATE_ARRAY(calcF);
+    //HLS_SEPARATE_ARRAY(calcB);
+    HLS_MAP_TO_MEMORY(calcF, "DualRAM");
+    HLS_MAP_TO_MEMORY(calcB, "DualRAM");
+
+    indexOut = index;
+
+    if (indexOut == 0){
+        cycleOut = !cycleOut;
+    }
 
     index++;
 
     if (index == BUFFER_SIZE){
         index = 0;
         cycle++;
-        cycle %= 4;
 
-        for(uint n = 0; n < N; n++){
-            HLS_UNROLL_LOOP(ALL, "Register change");
-            backR[n].real = lookaheadR[n].real;
-            backR[n].imag = lookaheadR[n].imag;
-            lookaheadR[n].real = 0.0;
-            lookaheadR[n].imag = 0.0;
-        }
+        stime <<= 1;
+        stime[0] = 1;
 
-        if (stime < 3){
-            stime++;
-        }/**/
     }
 
     uint reIndex = BUFFER_SIZE - index - 1;
-    uint cycle0 = cycle % 4;
-    uint cycle1 = (cycle+1) % 4;
-    uint cycle2 = (cycle+2) % 4;
-    uint cycle3 = (cycle+3) % 4;
+    uint reIndexOut = BUFFER_SIZE - indexOut - 1;
+    sc_uint < 2 > cycle0 = cycle;
+    sc_uint < 2 > cycle1 = (cycle+1);
+    sc_uint < 2 > cycle2 = (cycle+2);
+    sc_uint < 2 > cycle3 = (cycle+3);
 
     // Load inputs
     cynw_interpret(var, sample[cycle3][index]);
 
-    // Lookahead
-    Batch_filter_INPUT_DT look;
-    cynw_interpret(sample[cycle2][reIndex], look);
-    for (uint n = 0; n < N; n++){
-        HLS_UNROLL_LOOP(ALL, "Lookahead");
-        Complex tempVal;
-        for(uint m = 0; m < N; m++){
-            if(look.Samples[m] == 1){
-                tempVal.real += Fbr[n][m];
-                tempVal.imag += Fbi[n][m];
-            } else {
-                tempVal.real -= Fbr[n][m];
-                tempVal.imag -= Fbi[n][m];
-            }
-        }
-
-        lookaheadR[n].real = Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag + tempVal.real;
-        lookaheadR[n].imag = Lbi[n] * lookaheadR[n].real + Lbr[n] * lookaheadR[n].imag + tempVal.imag;
-    }
-
-
     // Finish startup phase
-    if(stime >= 3){
+    if(stime[2]){
         // Computation
         Batch_filter_INPUT_DT rf;
         static Batch_filter_INPUT_DT rff;
         Batch_filter_INPUT_DT rb;
         rf = rff;
+
         cynw_interpret(sample[cycle0][index], rff);
         cynw_interpret(sample[cycle0][reIndex], rb);
+
         for (uint n = 0; n < N; n++){
             HLS_UNROLL_LOOP(ALL, "Computation");
+
             // Backward recursion
+            calcB[cycleOut][reIndexOut].range((n+1)*width-1,n*width) = (Wbr[n] * backR[n].real - Wbi[n] * backR[n].imag).raw_bits();
+
             Complex tempValBack;
             for(uint m = 0; m < N; m++){
                 if(rb.Samples[m] == 1){
@@ -125,15 +117,20 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
                 }
             }
 
-            tempValBack.real += Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag;
-            tempValBack.imag += Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real;
+            if(index == 0){
+                tempValBack.real += Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag;
+                tempValBack.imag += Lbr[n] * lookaheadR[n].imag + Lbi[n] * lookaheadR[n].real;
+            } else {
+                tempValBack.real += Lbr[n] * backR[n].real - Lbi[n] * backR[n].imag;
+                tempValBack.imag += Lbr[n] * backR[n].imag + Lbi[n] * backR[n].real;
+            }
 
             backR[n].real = tempValBack.real;
             backR[n].imag = tempValBack.imag;
 
-            calcB[cycle0 % 2][n][reIndex] = Wbr[n] * tempValBack.real - Wbi[n] * tempValBack.imag;
-
             // Forward recursion
+            calcF[cycleOut][indexOut].range((n+1)*width-1,n*width) = (Wfr[n] * forwardR[n].real - Wfi[n] * forwardR[n].imag).raw_bits();
+
             Complex tempValForward;
             for(uint m = 0; m < N; m++){
                 if(rf.Samples[m] == 1){
@@ -151,17 +148,48 @@ Batch_filter_OUTPUT_DT Batch_filter::Calculate(Batch_filter_INPUT_DT var)
             forwardR[n].real = tempValForward.real;
             forwardR[n].imag = tempValForward.imag;
 
-            calcF[cycle0 % 2][n][index] = Wfr[n] * tempValForward.real - Wfi[n] * tempValForward.imag;
-            //delayF[n] = Wfr[n] * tempValForward.real - Wfi[n] * tempValForward.imag;
-
         }
+    }
+
+    // Lookahead
+    Batch_filter_INPUT_DT look;
+    cynw_interpret(sample[cycle2][reIndex], look);
+    for (uint n = 0; n < N; n++){
+        HLS_UNROLL_LOOP(ALL, "Lookahead");
+        Complex tempVal;
+        for(uint m = 0; m < N; m++){
+            if(look.Samples[m] == 1){
+                tempVal.real += Fbr[n][m];
+                tempVal.imag += Fbi[n][m];
+            } else {
+                tempVal.real -= Fbr[n][m];
+                tempVal.imag -= Fbi[n][m];
+            }
+        }
+
+        if(index != 0) {
+            tempVal.real += Lbr[n] * lookaheadR[n].real - Lbi[n] * lookaheadR[n].imag;
+            tempVal.imag += Lbi[n] * lookaheadR[n].real + Lbr[n] * lookaheadR[n].imag;
+        }
+        lookaheadR[n].real = tempVal.real;
+        lookaheadR[n].imag = tempVal.imag;
+
     }
 
     // Load outputs
     floatType tempOut;
     for (uint n = 0; n < N; n++){
         HLS_UNROLL_LOOP(ALL, "Outputs");
-        tempOut += calcF[cycle1 % 2][n][index] + calcB[cycle1 % 2][n][index];
+        floatType tempF;
+        floatType tempB;
+        sc_bv < width > vecF;
+        sc_bv < width > vecB;
+        vecF = calcF[!cycleOut][indexOut].range((n+1)*width-1,n*width);
+        vecB = calcB[!cycleOut][indexOut].range((n+1)*width-1,n*width);
+
+        tempF.raw_bits(vecF);
+        tempB.raw_bits(vecB);
+        tempOut += tempF + tempB;
     }
 
     my_outputs.Result = tempOut;

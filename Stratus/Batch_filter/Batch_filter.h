@@ -9,7 +9,7 @@
 
 // Filter config
 #define N 3
-#define BUFFER_SIZE 400
+#define BUFFER_SIZE 256
 
 SC_MODULE(Batch_filter)
 {
@@ -18,7 +18,7 @@ SC_MODULE(Batch_filter)
     cynw_p2p < Batch_filter_OUTPUT_DT >::out    outputs;
     
     // Internal variables
-    unsigned int stime;
+    sc_uint < 4 > stime;
 
     // Define recursion registers
     Complex lookaheadR[N];
