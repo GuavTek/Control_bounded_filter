@@ -32,3 +32,16 @@ function floatType rtof(real in);
     rtof.mantis = temp[$bits(floatType.mantis)-1:0];
 
 endfunction
+
+function real ftor(floatType in);
+    logic[$bits(floatType.mantis):0] temp;
+    temp = {1'b1, in.mantis};
+    
+    if (in.sign) begin
+        ftor = real'(-temp);
+    end else begin
+        ftor = real'(temp);
+    end
+
+    ftor = ftor * 2**in.exp;
+endfunction
