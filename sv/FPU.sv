@@ -1,17 +1,16 @@
 
-module FPU #() (
-    in floatType A, B,
-    in FPU_opcode op,
-    out floatType result
+module FPU #(parameter FPU_opcode op) (
+    input floatType A, B,
+    output floatType result
 );
-    const int mant_width = $bits(floatType.mantis);
+    const int mant_width = $bits(result.mantis);
     const int prod_width = 2*mant_width-1;
-    const int exp_width = $bits(floatType.exp);
+    const int exp_width = $bits(result.exp);
     logic[prod_width:0] m1;
     logic[mant_width:0] s1, s2, s3, s4;
     logic[mant_width+1:0] r1;
     logic overflow, signX;
-    logic[exp_width:0] signed shift, e1;
+    logic signed[exp_width:0] shift, e1;
 
 always begin
     signX = A.sign ^ B.sign;
@@ -80,7 +79,7 @@ always begin
         
         // Calculate mantis
         m1 = A.mantis * B.mantis;
-        overflow = m1[m_width];
+        overflow = m1[prod_width];
         if (overflow)
             result.mantis = m1[prod_width:mant_width];
         else
@@ -89,7 +88,6 @@ always begin
         //Calculate exponent
         result.exp = A.exp + B.exp + overflow;
     end
-    default: 
     endcase
 end
 

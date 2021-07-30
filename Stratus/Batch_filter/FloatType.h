@@ -3,7 +3,7 @@
 
 #include <cynw_cm_float.h>
 
-typedef cynw_cm_float<5,14,CYNW_BEST_ACCURACY,CYNW_NEAREST,0> floatType;
+typedef cynw_cm_float<6,13,CYNW_REDUCED_ACCURACY,CYNW_NEAREST,0> floatType;
 
 typedef struct {
     floatType real;
