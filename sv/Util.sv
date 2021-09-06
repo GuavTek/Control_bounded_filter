@@ -1,9 +1,11 @@
 // Misc utilities used in several modules
+`define EXP_W 5
+`define MANT_W 11
 
-typedef struct packed {
-    logic sign;
-    logic signed[4:0] exp;
-    logic[9:0] mantis;
+typedef struct packed { 
+    logic sign; 
+    logic signed[EXP_W-1:0] exp;
+    logic[MANT_W-1:0] mantis;
 } floatType;
 
 typedef struct packed {

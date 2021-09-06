@@ -1,4 +1,3 @@
-
 module CFPU #(parameter FPU_opcode op) (
     input complex A, B,
     output complex result

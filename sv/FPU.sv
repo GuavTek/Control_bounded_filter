@@ -1,94 +1,34 @@
+`include "HardFloat-1/source/fNToRecFN.v"
+`include "HardFloat-1/source/recFNToFN.v"
+`include "HardFloat-1/source/addRecFN.v"
+`include "HardFloat-1/source/mulRecFN.v"
+`include "HardFloat-1/source/HardFloat_consts.vi"
 
 module FPU #(parameter FPU_opcode op) (
     input floatType A, B,
     output floatType result
 );
     const int mant_width = $bits(result.mantis);
-    const int prod_width = 2*mant_width-1;
     const int exp_width = $bits(result.exp);
-    logic[prod_width:0] m1;
-    logic[mant_width:0] s1, s2, s3, s4;
-    logic[mant_width+1:0] r1;
-    logic overflow, signX;
-    logic signed[exp_width:0] shift, e1;
+    logic[(mant_width + exp_width):0] s1, s2, r1;
 
 always begin
-    signX = A.sign ^ B.sign;
-    case (op)
-    ADD:
-    begin
-        s1[mant_width-1:0] = A.mantis;
-        s2[mant_width-1:0] = B.mantis;
-        s1[mant_width] = 1;
-        s2[mant_width] = 1;
-        // Align
-        if (A.exp > B.exp) begin
-            shift = A.exp - B.exp;
-            s4 = s2 >> shift;
-            s3 = s1;
-            e1 = A.exp;
-        end 
-        else if (A.exp < B.exp) begin
-            shift = B.exp - A.exp;
-            s3 = s1 >> shift;
-            s4 = s2;
-            e1 = B.exp;
+    fNToRecFN #(.expWidth(exp_width), .sigWidth(mant_width)) aConv (.in(A), .out(s1));
+    fNToRecFN #(.expWidth(exp_width), .sigWidth(mant_width)) bConv (.in(B), .out(s2));
+    recFNToFN #(.expWidth(exp_width), .sigWidth(mant_width)) resConv (.in(r1), .out(result));
+
+    generate
+        case (op)
+        ADD:
+        begin
+            addRecFN #(.expWidth(exp_width), .sigWidth(mant_width)) add1 (.control(flControl_tininessAfterRounding), .subOp(0), .a(s1), .b(s2), .roundingMode(round_near_even), .out(r1));
         end
-        else begin
-            shift = 0;
-            s3 = s1;
-            s4 = s2;
-            e1 = A.exp;
+        MULT:
+        begin 
+            mulRecFN #(.expWidth(exp_width), .sigWidth(mant_width)) mul1 (.control(1), .a(s1), .b(s2), .roundingMode(round_near_even), .out(r1));
         end
-
-        // Calculate mantissa
-        if (signX) begin
-            // Subtraction
-            if (A.mantis < B.mantis) begin
-                r1 = s4 - s3;
-                result.sign = B.sign;
-            end else begin
-                r1 = s3 - s4;
-                result.sign = A.sign;
-            end
-        end else begin
-            // Addition
-            result.sign = A.sign;
-            r1 = s3 + s4;
-        end     
-
-        // Normalize mantissa
-        if (r1[mant_width+1]) begin
-            result.exp = e1 + 1;
-            result.mantis = r1 >> 1;
-        end else begin
-            for (int i = 0; i <= mant_width; i++) begin
-                if (r1[mant_width-i]) begin
-                    result.exp = e1 - i;
-                    result.mantis = r1 << i;
-                    break;
-                end
-            end
-        end
-
-    end
-    MULT:
-    begin 
-        // Calculate resulting sign
-        result.sign = signX;
-        
-        // Calculate mantis
-        m1 = A.mantis * B.mantis;
-        overflow = m1[prod_width];
-        if (overflow)
-            result.mantis = m1[prod_width:mant_width];
-        else
-            result.mantis = m1[prod_width-1:mant_width-1];
-
-        //Calculate exponent
-        result.exp = A.exp + B.exp + overflow;
-    end
-    endcase
+        endcase
+    endgenerate
 end
 
 endmodule
