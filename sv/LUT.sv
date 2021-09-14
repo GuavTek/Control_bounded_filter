@@ -1,3 +1,5 @@
+`include "Util.sv"
+
 virtual class calcLUT #(parameter size = 1);
     static function real get(real fact[0:size-1], logic[size-1:0] in);
         real temp = 0.0;
