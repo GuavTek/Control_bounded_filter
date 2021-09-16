@@ -1,0 +1,6 @@
+Stratus/Batch_filter/.*
+Stratus/Parallel_filter/.*
+Stratus/Batch_filter/cachelib
+Stratus/Parallel_filter/cachelib
+Stratus/Batch_filter/bdw_work
+Stratus/Parallel_filter/bdw_work
