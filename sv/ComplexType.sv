@@ -1,3 +1,5 @@
+`ifndef COMPLEXTYPE_SV_
+`define COMPLEXTYPE_SV_
 
 typedef struct {
     shortreal r = 0.0;
@@ -153,3 +155,5 @@ bind - function shortreal rsubcr(complex, shortreal);
 bind * function complex cmulcc(complex, complex);
 bind = function complex rtoc (shortreal);
 */
+
+`endif

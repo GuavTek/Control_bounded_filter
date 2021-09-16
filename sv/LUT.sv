@@ -1,3 +1,6 @@
+`ifndef LUT_SV_
+`define LUT_SV_
+
 `include "Util.sv"
 
 virtual class calcLUT #(parameter size = 1);
@@ -41,3 +44,4 @@ module LUT #(
     end
 endmodule
 
+`endif

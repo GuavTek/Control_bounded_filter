@@ -1,3 +1,6 @@
+`ifndef FPU_SV_
+`define FPU_SV_
+
 `include "HardFloat-1/source/fNToRecFN.v"
 `include "HardFloat-1/source/recFNToFN.v"
 `include "HardFloat-1/source/addRecFN.v"
@@ -31,3 +34,5 @@ module FPU #(parameter FPU_opcode op) (
     endgenerate
 
 endmodule
+
+`endif

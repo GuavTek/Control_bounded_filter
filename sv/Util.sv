@@ -1,5 +1,5 @@
-`ifndef _Util_sv_
-`define _Util_sv_
+`ifndef _UTIL_SV_
+`define _UTIL_SV_
 // Misc utilities used in several modules
 
 typedef enum int { 
@@ -87,4 +87,4 @@ endfunction
         end
     endfunction
 //endpackage
-`endif  // _Util_sv_
+`endif  // _UTIL_SV_

@@ -1,3 +1,6 @@
+`ifndef CFPU_SV_
+`define CFPU_SV_
+
 `include "Util.sv"
 
 module CFPU #(parameter FPU_opcode op) (
@@ -34,3 +37,5 @@ generate
     endcase
 endgenerate
 endmodule
+
+`endif

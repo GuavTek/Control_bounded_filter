@@ -1,3 +1,6 @@
+`ifndef RECURSIONMODULE_SV_
+`define RECURSIONMODULE_SV_
+
 `include "Util.sv"
 
 module RecursionModule #(
@@ -25,3 +28,4 @@ module RecursionModule #(
     end
 
 endmodule
+`endif

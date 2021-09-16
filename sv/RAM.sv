@@ -1,3 +1,6 @@
+`ifndef RAM_SV_
+`define RAM_SV_
+
 module RAM_single #(
 	parameter 	depth = 32,
 	d_width = 3
@@ -55,3 +58,4 @@ module RAM_dual #(
   	end   
 `endif
 endmodule
+`endif
