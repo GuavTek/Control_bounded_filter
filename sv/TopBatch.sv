@@ -67,13 +67,11 @@ module Batch_top #(
     end
     
     // Sample storage
-    logic[N*OSR-1:0] sdf1, sdf2, sdf3, sdf4, sdr1, sdr2, sdr3, sdr4;
-    logic sw1, sw2, sw3, sw4;
+    wire[N*OSR-1:0] sdf1, sdf2, sdf3, sdf4, sdff1, sdff2, sdff3, sdff4, sdr1, sdr2, sdr3, sdr4;
     RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample1 (.clk(clkDS), .data1(sdf1), .write1(sw1), .addr1(downBatCount), .data2(sdr1), .addr2(downBatCountRev));
     RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample2 (.clk(clkDS), .data1(sdf2), .write1(sw2), .addr1(downBatCount), .data2(sdr2), .addr2(downBatCountRev));
     RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample3 (.clk(clkDS), .data1(sdf3), .write1(sw3), .addr1(downBatCount), .data2(sdr3), .addr2(downBatCountRev));
     RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample4 (.clk(clkDS), .data1(sdf4), .write1(sw4), .addr1(downBatCount), .data2(sdr4), .addr2(downBatCountRev));
-
 
     // Shifted input
     logic[N*OSR-1:0] inShift;
@@ -122,7 +120,7 @@ module Batch_top #(
     generate 
         for (i = 0; i < N ; i++ ) begin
             // Part-result storage
-            floatType cf1, cf2, cb1, cb2;
+            wire[`MANT_W + `EXP_W:0] cf1, cf2, cb1, cb2, cff1, cff2, cbb1, cbb2;
             logic cw1, cw2;
             logic[$clog2(DownSampleDepth)-1:0] baddr1, baddr2;
             RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF1 (.clk(clkDS), .data(cf1), .write(cw1), .addr(downBatCount));
