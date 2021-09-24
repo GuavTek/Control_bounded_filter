@@ -1,23 +1,27 @@
 `include "Util.sv"
-`include "Data/Coefficients.v"
-//`include "FPU.sv"
-//`include "CFPU.sv"
-//`include "RecursionModule.sv"
-//`include "LUT.sv"
-//`include "RAM.sv"
+`include "Data/Coefficients.sv"
+`include "FPU.sv"
+`include "CFPU.sv"
+`include "RecursionModule.sv"
+`include "LUT.sv"
+`include "RAM.sv"
+
+
 
 module Batch_top #(
     parameter depth = 32,
     parameter N = 3,
-    parameter OSR = 2
+    parameter OSR = 1
 ) (
-    input logic [N-1:0] in,
+    input wire [N-1:0] in,
     input logic rst, clk,
     output floatType out
 );
     import Coefficients::*;
+    localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
+    localparam LUTdepth = N*OSR; 
 
-    localparam DownSampleDepth = $ceil(depth / OSR);
+
 
     // Counters for batch cycle
     logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
@@ -57,7 +61,7 @@ module Batch_top #(
                 downBatCountRev--;
                 downBatCount++;
                 osrCount = 0;
-            end
+            end 
         end
 
         sw1 = cycle == 2'd0;
@@ -65,7 +69,7 @@ module Batch_top #(
         sw3 = cycle == 2'd2;
         sw4 = cycle == 2'd3;    
     end
-
+    
     // Downsampled clock
     logic clkDS;
     generate
@@ -77,7 +81,7 @@ module Batch_top #(
             assign clkDS = clk;
         end
     endgenerate
-    
+
     // Sample storage
     wire[N*OSR-1:0] sdf1, sdf2, sdf3, sdf4, sdff1, sdff2, sdff3, sdff4, sdr1, sdr2, sdr3, sdr4;
     RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample1 (.clk(clkDS), .data1(sdf1), .write1(sw1), .addr1(downBatCount), .data2(sdr1), .addr2(downBatCountRev));
@@ -139,16 +143,24 @@ module Batch_top #(
             RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF2 (.clk(clkDS), .data(cf2), .write(cw2), .addr(downBatCount));
             RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB1 (.clk(clkDS), .data(cb1), .write(cw1), .addr(baddr1));
             RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB2 (.clk(clkDS), .data(cb2), .write(cw2), .addr(baddr2));
+            
+            /*
+            always @(posedge clk) begin
+                //$display("addr %d, dir %b, data %b", downBatCount, cw1, cf1);
+                //$display("cycle: %d, Lookahead In %f, lookahead out %f, %b", cycle, ftor(LH_in), ftor(LH_res), LH_res);
+                $display("cycle %d, step %d, LUT in %b, LUT out %f, %b", cycle, downBatCount, slh, ftor(LH_in), LH_in);
+            end
+            */
 
             // Lookahead
             complex LH_res, LH_in;
-            LUT #(.size(N*OSR), .re(Fbr[i][0:N*OSR-1]), .im(Fbi[i][0:N*OSR-1])) LHL_ (.sel(slh), .result(LH_in));
+            LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) LHL_ (.sel(slh), .result(LH_in));
             RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(cyclePulse & rst), .resetVal(LH_in), .clk(clkDS), .out(LH_res));
 
             // Compute
-            complex CF_in, CB_in, CF_out, CB_out, WF, WB;
-            LUT #(.size(N*OSR), .re(Ffr[i][0:N*OSR-1]), .im(Ffi[i][0:N*OSR-1])) CFL_ (.sel(scof), .result(CF_in));
-            LUT #(.size(N*OSR), .re(Fbr[i][0:N*OSR-1]), .im(Fbi[i][0:N*OSR-1])) CBL_ (.sel(scob), .result(CB_in));
+            complex CF_in, CB_in, CF_out, CB_out, WF, WB; 
+            LUT #(.size(LUTdepth), .re(Ffr[i][0:LUTdepth-1]), .im(Ffi[i][0:LUTdepth-1])) CFL_ (.sel(scof), .result(CF_in));
+            LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) CBL_ (.sel(scob), .result(CB_in));
             RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal(CF_in), .clk(clkDS), .out(CF_out));
             RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(cyclePulse & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
             assign WF.r = rtof(Wfr[i]);
