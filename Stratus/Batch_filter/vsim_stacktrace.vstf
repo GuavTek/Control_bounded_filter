@@ -1,0 +1,606 @@
+# Current time Fri Apr 16 13:02:38 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f296dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f4385b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f29ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f3ff15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f3f2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f3f4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2500eaa: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac25010bc: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2500115: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab416671a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4167047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab417187d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41725fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 14:41:21 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f876dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa185b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f87ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9df15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9d2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9d4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac255eeaa: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac255f0bc: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac255e115: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419671a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4197047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41a187d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41a25fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 15:01:41 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f606dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7a85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f60ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f76f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f762e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f764c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac252afa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac252b1ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac252a213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4191047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab419b87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab419c5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 15:38:44 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2fbe6dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fd885b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2fbeac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2fd4f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2fd42e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2fd44c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2588fa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac25891ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2588213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41c071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41c1047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41cb87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41cc5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 16:31:50 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f296dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f4385b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f29ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f3ff15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f3f2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f3f4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2500fa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac25011ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2500213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab416671a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4167047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab417187d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41725fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 16:54:37 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f946dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fae85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f94ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2faaf15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2faa2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2faa4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac255efa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac255f1ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac255e213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419671a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4197047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41a187d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41a25fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 17:16:59 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f606dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7a85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f60ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f76f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f762e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f764c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac252afa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac252b1ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac252a213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4191047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab419b87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab419c5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 16 17:34:09 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f606dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7a85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f60ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f76f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f762e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f764c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac252afa8: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac252b1ba: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac252a213: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4191047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab419b87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab419c5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 19 13:38:34 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f0a6dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f2485b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f0aac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f20f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f202e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f204c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2504f28: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac250513a: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2504193: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab416671a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4167047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab417187d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41725fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Thu Apr 22 22:08:48 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f346dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f4e85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f34ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f4af15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f4a2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f4a4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac252f03e: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac252f250: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac252e2a9: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4191047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab419b87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab419c5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Thu Apr 22 23:38:01 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f626dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7c85b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f62ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f78f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f782e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f784c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac255d03e: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac255d250: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac255c2a9: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab419071a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab4191047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab419b87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab419c5fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Fri Apr 23 00:06:17 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# --> START OF USERCODE
+# 2    0x00002aaab21ec145: '__gnu_cxx::__verbose_terminate_handler() + 0x0000000000000125' in '/eda/tools/mentor/questasim.2021.1_1/gcc-7.4.0-linux_x86_64/lib64/libstdc++.so.6'
+# 3    0x00002aaab21e9f26: '__cxxabiv1::__terminate(void (*)()) + 0x0000000000000006' in '/eda/tools/mentor/questasim.2021.1_1/gcc-7.4.0-linux_x86_64/lib64/libstdc++.so.6'
+# <-- END OF USERCODE
+# 4    0x00002aaab21e9f71: '<unknown (@0x2aaab21e9f71)>'
+# 5    0x00002aaab21ea1b3: '<unknown (@0x2aaab21ea1b3)>'
+# --> START OF USERCODE
+# 6    0x00002aaab152c46f: 'c2Exit + 0x000000000000002f' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libbdw_st.so'
+# <-- END OF USERCODE
+# 7    0x00002aaab14352ef: '<unknown (@0x2aaab14352ef)>'
+# --> START OF USERCODE
+# 8    0x00002aaab55c23f6: 'vatMsgLoc + 0x0000000000000146' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libstratus_hls.so'
+# 9    0x00002aaab55c2b97: 'message + 0x0000000000000097' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libstratus_hls.so'
+# <-- END OF USERCODE
+# 10   0x00002aaaab831450: '<unknown (@0x2aaaab831450)>'
+# 11   0x0000000000efd411: '<unknown (@0xefd411)>'
+# 12   0x0000000000f1cf04: '<unknown (@0xf1cf04)>'
+# 13   0x000000000053dd7c: '<unknown (@0x53dd7c)>'
+# 14   0x00000000006dd5f3: '<unknown (@0x6dd5f3)>'
+# 15   0x0000000000bf4965: '<unknown (@0xbf4965)>'
+# 16   0x0000000000bf97a3: '<unknown (@0xbf97a3)>'
+# 17   0x0000000000bfb4fe: '<unknown (@0xbfb4fe)>'
+# 18   0x0000000000ebff0d: '<unknown (@0xebff0d)>'
+# 19   0x00000000038d06bd: '<unknown (@0x38d06bd)>'
+# 20   0x00000000038d4b16: '<unknown (@0x38d4b16)>'
+# 21   0x00000000038d6201: '<unknown (@0x38d6201)>'
+# 22   0x00000000038d6566: '<unknown (@0x38d6566)>'
+# 23   0x000000000112d239: '<unknown (@0x112d239)>'
+# 24   0x000000000397646f: '<unknown (@0x397646f)>'
+# 25   0x00000000039c9fe7: '<unknown (@0x39c9fe7)>'
+# 26   0x000000000398ced7: '<unknown (@0x398ced7)>'
+# 27   0x000000000398d1b9: '<unknown (@0x398d1b9)>'
+# 28   0x0000000003775a1d: '<unknown (@0x3775a1d)>'
+# 29   0x0000000000bc12bc: '<unknown (@0xbc12bc)>'
+# End of Stack Trace
+
+
+# Current time Fri Apr 23 01:05:34 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582f90: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac25831a2: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac25821fb: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 13:59:24 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 14:56:25 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f5e6dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7885b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f5eac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f74f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f742e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f744c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2558efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac255910e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2558167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41ba71a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41bb047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41c587d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41c65fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 15:26:52 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 16:01:24 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f5e6dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2f7885b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f5eac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f74f15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f742e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f744c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2558efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac255910e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2558167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41ba71a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41bb047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41c587d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41c65fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 19:48:31 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Mon Apr 26 21:58:23 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Tue Apr 27 17:17:42 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
+# Current time Tue Apr 27 19:03:52 2021
+# Program = vsim
+# Id = "2021.1_1"
+# Version = "2021.02"
+# Date = "Feb 21 2021"
+# Platform = "linux_x86_64"
+# Signature = 99d62ddf6c6cdf83acc061c947005295
+# 0    0x00002aaaab8313d7: 'raise + 0x0000000000000037' in '/lib64/libc.so.6'
+# 1    0x00002aaaab832ac8: 'abort + 0x0000000000000148' in '/lib64/libc.so.6'
+# 2    0x00002aaaab82a1a6: '__assert_fail_base + 0x0000000000000126' in '/lib64/libc.so.6'
+# 3    0x00002aaaab82a252: '<unknown (@0x2aaaab82a252)>'
+# --> START OF USERCODE
+# 4    0x00002aaac2f886dd: 'sc_core::sc_cor_qt::stack_protect(bool) + 0x000000000000006d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 5    0x00002aaac2fa285b: 'sc_core::sc_thread_process::~sc_thread_process() + 0x000000000000002b' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 6    0x00002aaac2f88ac9: 'sc_core::sc_cthread_process::~sc_cthread_process() + 0x0000000000000009' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 7    0x00002aaac2f9ef15: 'sc_core::sc_simcontext::crunch(bool) + 0x0000000000000545' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 8    0x00002aaac2f9e2e0: 'sc_core::sc_simcontext::simulate(sc_core::sc_time const&) + 0x0000000000000290' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 9    0x00002aaac2f9e4c2: 'sc_core::sc_start(sc_core::sc_time const&, sc_core::sc_starvation_policy) + 0x00000000000001a2' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/systemc/2.3.1/lib-linux64/libsystemc-2.3.1.so'
+# 10   0x00002aaac2582efc: 'esc_hub::exec_sc_now() + 0x0000000000000040' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 11   0x00002aaac258310e: 'esc_hub::domain_exec_cb(unsigned long, qbhDomainExecActivity, double, double*) + 0x00000000000001d6' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 12   0x00002aaac2582167: 'esc_hub::static_domain_exec_cb(unsigned long, void*, qbhDomainExecActivity, double, double*) + 0x0000000000000045' in 'bdw_work/sims/BASIC_V/sim_BASIC_V.so'
+# 13   0x00002aaab41e471a: 'CHubExecDomain::execToTime(double) + 0x000000000000003a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 14   0x00002aaab41e5047: 'CHub::execAllToTime(double) + 0x0000000000000057' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 15   0x00002aaab41ef87d: 'CTimeQBHCallback::execute() + 0x000000000000001d' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# 16   0x00002aaab41f05fa: 'cpliTimerCallback + 0x000000000000000a' in '/eda/tools/cadence/stratus.19/tools.lnx86/stratus/lib/64bit/libhub.so'
+# End of Stack Trace
+
+
