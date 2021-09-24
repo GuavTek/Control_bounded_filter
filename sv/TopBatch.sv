@@ -21,18 +21,37 @@ module Batch_top #(
 
     // Counters for batch cycle
     logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
-    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
-    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev;     // downsampled counters
     always @(posedge clk) begin
-        if(batCount == (depth-1)) begin
+        if(!rst || (batCount == (depth-1))) begin
             batCount = 0;
             batCountRev = depth-1;
-            downBatCount = 0;
-            downBatCountRev = DownSampleDepth-1;
-            osrCount = 0;
         end else begin
             batCount++;
             batCountRev--;
+        end
+    end
+
+    // Is low when the cycle is ending
+    logic cyclePulse;
+    assign cyclePulse = !(batCount == (depth-1));
+
+    // Counter for cycles
+    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
+    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev;     // downsampled counters
+    logic[1:0] cycle;
+    logic sw1, sw2, sw3, sw4;   // Sample write signals
+    always @(posedge clk) begin
+        if(!rst) begin
+            cycle = 0;
+            osrCount = 0;
+            downBatCount = 0;
+            downBatCountRev = DownSampleDepth-1;
+        end else if(!cyclePulse) begin
+            cycle++;
+            osrCount = 0;
+            downBatCount = 0;
+            downBatCountRev = DownSampleDepth-1;
+        end else begin
             osrCount++;
             if (osrCount == OSR) begin
                 downBatCountRev--;
@@ -40,6 +59,11 @@ module Batch_top #(
                 osrCount = 0;
             end
         end
+
+        sw1 = cycle == 2'd0;
+        sw2 = cycle == 2'd1;
+        sw3 = cycle == 2'd2;
+        sw4 = cycle == 2'd3;    
     end
 
     // Downsampled clock
@@ -53,18 +77,6 @@ module Batch_top #(
             assign clkDS = clk;
         end
     endgenerate
-    
-
-    // Is low when the cycle is ending
-    logic cyclePulse;
-    assign cyclePulse = !(batCount == (depth-1));
-
-    // Counter for cycles
-    logic[1:0] cycle;
-    always @(posedge clk) begin
-        if(!cyclePulse)
-            cycle++;
-    end
     
     // Sample storage
     wire[N*OSR-1:0] sdf1, sdf2, sdf3, sdf4, sdff1, sdff2, sdff3, sdff4, sdr1, sdr2, sdr3, sdr4;
