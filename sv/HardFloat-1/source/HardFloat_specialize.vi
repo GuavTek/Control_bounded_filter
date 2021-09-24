@@ -1,0 +1,7 @@
+// none
+
+`define flControl_default `flControl_tininessAfterRounding
+
+`define HardFloat_signDefaultNaN 0
+
+`define HardFloat_fractDefaultNaN(sigWidth) {1'b1, {((sigWidth) - 2){1'b0}}}
