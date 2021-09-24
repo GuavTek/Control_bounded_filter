@@ -85,67 +85,35 @@ module Batch_top #(
                 inShift[N*OSR-1:N] = inShift[N*OSR-N-1:0];
                 inShift[N-1:0] = in;
             end
-        end else
-            assign inShift = in;
+        end else begin
+            always @(posedge clk) begin
+                inShift = in;
+            end
+        end
     endgenerate
 
     // Sample multiplexing
-    logic[N*OSR-1:0] slh, scof, scob, sf_delay;
-    always @(*) begin
-        case (cycle)
-            2'd0:
-            begin
-                sw1 = 1;
-                sw2 = 0;
-                sw3 = 0;
-                sw4 = 0;
-                sdf1 = in;
-                sdf3 = 'bZ;
-                slh = sdf4;
-                sf_delay = sdf2;
-                scob = sdr2;
-            end
-            2'd1:
-            begin
-                sw1 = 0;
-                sw2 = 1;
-                sw3 = 0;
-                sw4 = 0;
-                sdf2 = in;
-                sdf4 = 'bZ;
-                slh = sdf1;
-                sf_delay = sdf3;
-                scob = sdr3;
-            end
-            2'd2:
-            begin
-                sw1 = 0;
-                sw2 = 0;
-                sw3 = 1;
-                sw4 = 0;
-                sdf3 = in;
-                sdf1 = 'bZ;
-                slh = sdf2;
-                sf_delay = sdf4;
-                scob = sdr4;
-            end
-            2'd3:
-            begin
-                sw1 = 0;
-                sw2 = 0;
-                sw3 = 0;
-                sw4 = 1;
-                sdf4 = in;
-                sdf2 = 'bZ;
-                slh = sdf3;
-                sf_delay = sdf1;
-                scob = sdr1;
-            end 
-        endcase
-    end
+    logic[N*OSR-1:0] slh, scob, sf_delay, scof;
+    wire[3:0][N*OSR-1:0] slh_vec, sfd_vec, scob_vec;
+    assign slh_vec = {sdf3, sdf2, sdf1, sdf4};
+    assign sfd_vec = {sdf1, sdf4, sdf3, sdf2};
+    assign scob_vec = {sdr1, sdr4, sdr3, sdr2};
+
+    assign sdff1 = sw1 ? in : 'bZ;
+    assign sdff2 = sw2 ? in : 'bZ;
+    assign sdff3 = sw3 ? in : 'bZ;
+    assign sdff4 = sw4 ? in : 'bZ;
+
+    assign sdf1 = sdff1;
+    assign sdf2 = sdff2;
+    assign sdf3 = sdff3;
+    assign sdf4 = sdff4;
 
     always @(posedge clkDS) begin
         scof = sf_delay;
+        scob = scob_vec[cycle];
+        sf_delay = sfd_vec[cycle];
+        slh = slh_vec[cycle];
     end
 
     floatType res[N];
@@ -186,25 +154,27 @@ module Batch_top #(
             FPU #(.op(ADD)) PRes_ (.A(forward), .B(backward), .result(partRes));
             
             // MUX Part-results
+            assign cff1 = cw1 ? resF.r : 'bZ;
+            assign cff2 = cw2 ? resF.r : 'bZ;
+            assign cbb1 = cw1 ? resB.r : 'bZ;
+            assign cbb2 = cw2 ? resB.r : 'bZ;
+            assign cf1 = cff1;
+            assign cf2 = cff2;
+            assign cb1 = cbb1;
+            assign cb2 = cbb2;
+            assign forward = cycle[0] ? cf2 : cf1;
+            assign backward = cycle[0] ? cb2 : cb1;
             always @(*) begin
                 if (cycle[0]) begin
                     cw1 = 1;
                     cw2 = 0;
                     baddr1 = downBatCountRev;
                     baddr2 = downBatCount;
-                    cf1 = resF.r;
-                    cb1 = resB.r;
-                    forward = cf2;
-                    backward = cb2;
                 end else begin
                     cw1 = 0;
                     cw2 = 1;
                     baddr1 = downBatCount;
                     baddr2 = downBatCountRev;
-                    cf2 = resF.r;
-                    cb2 = resB.r;
-                    forward = cf1;
-                    backward = cb1;
                 end
             end
 
