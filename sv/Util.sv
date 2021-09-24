@@ -40,7 +40,7 @@ endfunction
 
     typedef struct packed { 
         logic sign; 
-        logic signed[`EXP_W-1:0] exp;
+        logic[`EXP_W-1:0] exp;
         logic[`MANT_W-1:0] mantis;
     } floatType;
 
@@ -53,17 +53,27 @@ endfunction
         begin
         floatType temp;
         int floatBias;
+        real absIn;
         logic[`MANT_W:0] mant;
-        int signed exponent = flog2($abs(in));
+        automatic int signed exponent;
         floatBias = 2 ** (`EXP_W - 1) - 1;
-        temp.exp = exponent + floatBias;
             
-        if (in >= 0)
+        if (in == 0) begin
             temp.sign = 0;
-        else
+            exponent = -floatBias;
+            absIn = 0;
+        end else if (in > 0) begin
+            temp.sign = 0;
+            exponent = flog2(in);
+            absIn = in;
+        end else begin
             temp.sign = 1;
+            exponent = flog2(-in);
+            absIn = -in;
+        end
             
-        mant = ($abs(in) * 2**(`MANT_W-exponent));
+        temp.exp = exponent + floatBias;
+        mant = (absIn * 2**(`MANT_W-exponent));
         temp.mantis = mant[`MANT_W-1:0];
         rtof = temp;
         end
@@ -74,16 +84,18 @@ endfunction
         real tempR;    
         logic[`MANT_W:0] tempF;
         automatic real floatBias = 2 ** (`EXP_W - 1) - 1;
+        automatic real bias = real'(in.exp) - floatBias - real'(`MANT_W);
 
         tempF = {1'b1, in.mantis};
         
         if (in.sign) begin
-            tempR = real'(-tempF);
+            tempR = -real'(tempF);
         end else begin
             tempR = real'(tempF);
         end
+        tempR = tempR * 2**(bias);
 
-        ftor = tempR * 2**(in.exp - floatBias - `MANT_W);
+        ftor = tempR;
         end
     endfunction
 //endpackage
