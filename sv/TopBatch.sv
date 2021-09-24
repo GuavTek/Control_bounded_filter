@@ -15,6 +15,7 @@ module Batch_top #(
     input logic rst, clk,
     output floatType out
 );
+    import Coefficients::*;
 
     localparam DownSampleDepth = $ceil(depth / OSR);
 
