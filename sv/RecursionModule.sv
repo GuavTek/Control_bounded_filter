@@ -4,7 +4,7 @@
 `include "Util.sv"
 
 module RecursionModule #(
-    parameter   factorR = 0.0,
+    parameter real factorR = 0.0,
                 factorI = 0.0
 ) (
     input complex in,
@@ -13,8 +13,8 @@ module RecursionModule #(
     output complex out
 );
     complex prod, sum, prev, factor;
-    assign factor.r = factorR;
-    assign factor.i = factorI;
+    assign factor.r = rtof(factorR);
+    assign factor.i = rtof(factorI);
     assign out = prev;
 
     CFPU #(.op(MULT)) c1 (.A(prev), .B(factor), .result(prod));
