@@ -14,7 +14,7 @@ function int signed flog2(real in);
         $error("Logarithm of 0 or less is not attainable");
         flog2 = 0;
     end else begin
-        int signed temp = 0;
+        automatic int signed temp = 0;
         if (in >= 1)
             while(in > 1) begin
                 in = in / 2;
@@ -73,7 +73,7 @@ endfunction
         begin
         real tempR;    
         logic[`MANT_W:0] tempF;
-        int floatBias = 2 ** (`EXP_W - 1) - 1;
+        automatic real floatBias = 2 ** (`EXP_W - 1) - 1;
 
         tempF = {1'b1, in.mantis};
         
