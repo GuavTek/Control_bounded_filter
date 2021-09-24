@@ -3,7 +3,7 @@
 
 `include "Util.sv"
 
-module CFPU #(parameter FPU_opcode op) (
+module CFPU #(parameter FPU_opcode op = ADD) (
     input complex A, B,
     output complex result
 );

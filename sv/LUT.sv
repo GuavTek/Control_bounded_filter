@@ -20,8 +20,8 @@ endclass //calcLUT
 
 module LUT #(
     parameter       size = 1,
-    parameter real  re[0:size-1],
-                    im[0:size-1]
+    parameter real  re[0:size-1] = '{default: 0.0},
+    parameter real  im[0:size-1] = '{default: 0.0}
 ) (
     input logic[size-1:0] sel,
     output complex result

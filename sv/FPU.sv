@@ -8,7 +8,7 @@
 `include "HardFloat-1/source/HardFloat_consts.vi"
 `include "Util.sv"
 
-module FPU #(parameter FPU_opcode op) (
+module FPU #(parameter FPU_opcode op = ADD) (
     input floatType A, B,
     output floatType result
 );
