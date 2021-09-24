@@ -7,7 +7,7 @@
 `include "FPU_prop.sv"
 `include "RAM_prop.sv"
 
-`define TestLength 2000
+`define TestLength 33536
 `define N 3
 `define T 4.167
 `define VERBOSE_LVL 1
@@ -96,7 +96,7 @@ module TB #() ();
     // Instantiate DUTs
     logic[`N-1:0] inDUT;
     assign inDUT = inSample;
-    Batch_top #(.depth(32), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
+    Batch_top #(.depth(192), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
     
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op)) flprop_i (.clk(clk), .*);  
