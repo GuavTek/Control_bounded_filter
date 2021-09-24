@@ -14,15 +14,12 @@ module RAM_single #(
 	input logic clk, write;
 	inout logic[d_width-1:0] data;
 `ifdef INCLUDE_RAM
-	logic[d_width-1:0] dout;
-	logic[d_width-1:0] mem[depth-1:0];
-	assign data = dout;
+	logic[d_width-1:0] mem[depth-1:0] = '{depth{0}};
+	assign data = write ? 'bz : mem[addr];
 
 	always @(posedge clk) begin
         if (write)
-            mem[addr] = dout;
-        else
-			dout = mem[addr];
+            mem[addr] = data;
    	end
 `endif
 endmodule
@@ -43,18 +40,13 @@ module RAM_dual #(
   	input logic clk;
   	inout logic[d_width-1:0] data1, data2;
 `ifdef INCLUDE_RAM
-    logic[d_width-1:0] dout1, dout2;
-	logic[d_width-1:0] mem [depth-1:0];
-    assign data1 = dout1;
-	assign data2 = dout2;
+	logic[d_width-1:0] mem [depth-1:0] = '{depth{0}};
+    assign data1 = write1 ? 'bz : mem[addr1];
+	assign data2 = write1 ? 'bz : mem[addr2];
 
 	always @(posedge clk) begin
     	if (write1) 
-			mem[addr1] = dout1;
-		else
-			dout1 = mem[addr1];
-
-		dout2 = mem[addr2];
+			mem[addr1] = data1;
   	end   
 `endif
 endmodule
