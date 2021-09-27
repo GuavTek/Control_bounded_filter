@@ -64,8 +64,8 @@ module TB #() ();
 
         // Write data
         for (int i = 0; i < `TestLength; i++) begin
-            $fwrite(fdo, "%f", ftor(result));
-            $fwrite(fdo, ", %b;\n", result);
+            $fwrite(fdo, "%f, ", ftor(result));
+//            $fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 1)
                 $display("Write result %d.\n", i);
             @(posedge clk);
