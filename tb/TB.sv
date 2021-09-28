@@ -99,7 +99,7 @@ module TB #() ();
     // Instantiate DUTs
     logic[`N-1:0] inDUT;
     assign inDUT = inSample;
-    Batch_top #(.depth(192), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
+    Batch_top #(.depth(220), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
     
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op)) flprop_i (.clk(clk), .*);  
