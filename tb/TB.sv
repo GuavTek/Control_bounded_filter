@@ -26,6 +26,9 @@ module TB #() ();
             $stop;
         end
         
+        // Prepare first sample
+        $fscanf(fdi, "%b,\n", inSample);
+
         // Wait for reset cycle
         @(negedge rst);
         @(posedge rst);
