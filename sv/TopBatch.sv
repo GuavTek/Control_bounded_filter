@@ -25,43 +25,45 @@ module Batch_top #(
 
     // Counters for batch cycle
     logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
+    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev;     // downsampled counters
+    logic[$clog2(OSR):0] osrCount;      // Prescale counter
     always @(posedge clk) begin
         if(!rst || (batCount == (depth-1))) begin
             batCount = 0;
             batCountRev = depth-1;
+            downBatCount = 0;
+            downBatCountRev = DownSampleDepth-1;
+            osrCount = 0;
         end else begin
             batCount++;
             batCountRev--;
-        end
-    end
-
-    // Is low when the cycle is ending
-    logic cyclePulse;
-    assign cyclePulse = !(batCount == (depth-1));
-
-    // Counter for cycles
-    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
-    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev;     // downsampled counters
-    logic[1:0] cycle;
-    logic sw1, sw2, sw3, sw4;   // Sample write signals
-    always @(posedge clk) begin
-        if(!rst) begin
-            cycle = 0;
-            osrCount = 0;
-            downBatCount = 0;
-            downBatCountRev = DownSampleDepth-1;
-        end else if(!cyclePulse) begin
-            cycle++;
-            osrCount = 0;
-            downBatCount = 0;
-            downBatCountRev = DownSampleDepth-1;
-        end else begin
             osrCount++;
             if (osrCount == OSR) begin
                 downBatCountRev--;
                 downBatCount++;
                 osrCount = 0;
             end 
+        end
+    end
+
+    // Is low when the cycle is ending
+    logic cyclePulse;
+    assign cyclePulse = !(batCount == 0);
+
+    // Recursion register propagation is delayed one cycle
+    logic regProp;
+    always @(posedge clk) begin
+        regProp = cyclePulse;
+    end
+
+    // Counter for cycles
+    logic[1:0] cycle;
+    logic sw1, sw2, sw3, sw4;   // Sample write signals
+    always @(posedge clk) begin
+        if(!rst) begin
+            cycle = 0;
+        end else if(!cyclePulse) begin
+            cycle++;
         end
 
         sw1 = cycle == 2'd0;
@@ -76,7 +78,7 @@ module Batch_top #(
         if(OSR > 1) begin
             // MSb of counter is prescaled clock, not symmetrical for all OSR
             // Rising edge when osrCount = 0
-            assign clkDS = !osrCount[$clog2(OSR)-1];
+            assign clkDS = !osrCount[$clog2(OSR)];
         end else begin
             assign clkDS = clk;
         end
@@ -109,7 +111,7 @@ module Batch_top #(
     // Sample multiplexing
     logic[N*OSR-1:0] slh, scob, sf_delay, scof;
     wire[3:0][N*OSR-1:0] slh_vec, sfd_vec, scob_vec;
-    assign slh_vec = {sdf3, sdf2, sdf1, sdf4};
+    assign slh_vec = {sdr3, sdr2, sdr1, sdr4};
     assign sfd_vec = {sdf1, sdf4, sdf3, sdf2};
     assign scob_vec = {sdr1, sdr4, sdr3, sdr2};
 
@@ -155,21 +157,29 @@ module Batch_top #(
             // Lookahead
             complex LH_res, LH_in;
             LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) LHL_ (.sel(slh), .result(LH_in));
-            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(cyclePulse & rst), .resetVal(LH_in), .clk(clkDS), .out(LH_res));
+            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal(LH_in), .clk(clkDS), .out(LH_res));
 
             // Compute
             complex CF_in, CB_in, CF_out, CB_out, WF, WB; 
             LUT #(.size(LUTdepth), .re(Ffr[i][0:LUTdepth-1]), .im(Ffi[i][0:LUTdepth-1])) CFL_ (.sel(scof), .result(CF_in));
             LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) CBL_ (.sel(scob), .result(CB_in));
             RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal(CF_in), .clk(clkDS), .out(CF_out));
-            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(cyclePulse & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
+            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
             assign WF.r = rtof(Wfr[i]);
             assign WF.i = rtof(Wfi[i]);
             assign WB.r = rtof(Wbr[i]);
             assign WB.i = rtof(Wbi[i]);
+
+            // Save in registers to reduce timing requirements
+            complex F_out, B_out;
+            always @(posedge clkDS) begin
+                F_out = CF_out;
+                B_out = CB_out;
+            end
+
             complex resF, resB;
-            CFPU #(.op(MULT)) WFR_ (.A(CF_out), .B(WF), .result(resF));
-            CFPU #(.op(MULT)) WBR_ (.A(CB_out), .B(WB), .result(resB));
+            CFPU #(.op(MULT)) WFR_ (.A(F_out), .B(WF), .result(resF));
+            CFPU #(.op(MULT)) WBR_ (.A(B_out), .B(WB), .result(resB));
 
             // Final add
             floatType forward, backward, partRes;
@@ -199,6 +209,8 @@ module Batch_top #(
                     baddr2 = downBatCountRev;
                 end
             end
+
+
 
             if(i == 0) begin
                 assign res[0] = partRes;
