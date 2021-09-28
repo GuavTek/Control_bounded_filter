@@ -6,6 +6,7 @@
 `include "../sv/FPU.sv"
 `include "FPU_prop.sv"
 `include "RAM_prop.sv"
+`include "RecursionModule_prop.sv"
 
 `define TestLength 33536
 `define N 3
@@ -105,5 +106,6 @@ module TB #() ();
     bind FPU FPU_prop #(.op(op)) flprop_i (.clk(clk), .*);  
     bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.*);
     bind RAM_dual RAM_dual_prop #(.depth(depth), .d_width(d_width)) ramdprop_i (.*);
+    bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
 
 endmodule
