@@ -15,7 +15,7 @@ module RecursionModule #(
     complex prod, sum, prev, factor;
     assign factor.r = rtof(factorR);
     assign factor.i = rtof(factorI);
-    assign out = prev;
+    assign out = sum;
 
     CFPU #(.op(MULT)) c1 (.A(prev), .B(factor), .result(prod));
     CFPU #(.op(ADD)) c2 (.A(prod), .B(in), .result(sum));
