@@ -25,9 +25,11 @@ module Batch_top #(
 
     // Counters for batch cycle
     logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
-    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev;     // downsampled counters
+    logic[$clog2(DownSampleDepth)-1:0] downBatCount, downBatCountRev, delBatCount, delBatCountRev;     // downsampled counters
     logic[$clog2(OSR):0] osrCount;      // Prescale counter
     always @(posedge clk) begin
+        delBatCount = downBatCount;
+        delBatCountRev = downBatCountRev;
         if(!rst || (batCount == (depth-1))) begin
             batCount = 0;
             batCountRev = depth-1;
@@ -86,10 +88,10 @@ module Batch_top #(
 
     // Sample storage
     wire[N*OSR-1:0] sdf1, sdf2, sdf3, sdf4, sdff1, sdff2, sdff3, sdff4, sdr1, sdr2, sdr3, sdr4;
-    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample1 (.clk(clkDS), .data1(sdf1), .write1(sw1), .addr1(downBatCount), .data2(sdr1), .addr2(downBatCountRev));
-    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample2 (.clk(clkDS), .data1(sdf2), .write1(sw2), .addr1(downBatCount), .data2(sdr2), .addr2(downBatCountRev));
-    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample3 (.clk(clkDS), .data1(sdf3), .write1(sw3), .addr1(downBatCount), .data2(sdr3), .addr2(downBatCountRev));
-    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample4 (.clk(clkDS), .data1(sdf4), .write1(sw4), .addr1(downBatCount), .data2(sdr4), .addr2(downBatCountRev));
+    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample1 (.clk(!clkDS), .data1(sdf1), .write1(sw1), .addr1(delBatCount), .data2(sdr1), .addr2(delBatCountRev));
+    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample2 (.clk(!clkDS), .data1(sdf2), .write1(sw2), .addr1(delBatCount), .data2(sdr2), .addr2(delBatCountRev));
+    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample3 (.clk(!clkDS), .data1(sdf3), .write1(sw3), .addr1(delBatCount), .data2(sdr3), .addr2(delBatCountRev));
+    RAM_dual #(.depth(DownSampleDepth), .d_width(N*OSR)) sample4 (.clk(!clkDS), .data1(sdf4), .write1(sw4), .addr1(delBatCount), .data2(sdr4), .addr2(delBatCountRev));
 
     // Shifted input
     logic[N*OSR-1:0] inShift;
@@ -125,11 +127,12 @@ module Batch_top #(
     assign sdf3 = sdff3;
     assign sdf4 = sdff4;
 
+    assign scob = scob_vec[cycle];
+    assign sf_delay = sfd_vec[cycle];
+    assign slh = slh_vec[cycle];
+
     always @(posedge clkDS) begin
         scof = sf_delay;
-        scob = scob_vec[cycle];
-        sf_delay = sfd_vec[cycle];
-        slh = slh_vec[cycle];
     end
 
     floatType res[N];
@@ -141,10 +144,10 @@ module Batch_top #(
             wire[`MANT_W + `EXP_W:0] cf1, cf2, cb1, cb2, cff1, cff2, cbb1, cbb2;
             logic cw1, cw2;
             logic[$clog2(DownSampleDepth)-1:0] baddr1, baddr2;
-            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF1 (.clk(clkDS), .data(cf1), .write(cw1), .addr(downBatCount));
-            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF2 (.clk(clkDS), .data(cf2), .write(cw2), .addr(downBatCount));
-            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB1 (.clk(clkDS), .data(cb1), .write(cw1), .addr(baddr1));
-            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB2 (.clk(clkDS), .data(cb2), .write(cw2), .addr(baddr2));
+            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF1 (.clk(!clkDS), .data(cf1), .write(cw1), .addr(delBatCount));
+            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcF2 (.clk(!clkDS), .data(cf2), .write(cw2), .addr(delBatCount));
+            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB1 (.clk(!clkDS), .data(cb1), .write(cw1), .addr(baddr1));
+            RAM_single #(.depth(DownSampleDepth), .d_width($bits(res[0]))) calcB2 (.clk(!clkDS), .data(cb2), .write(cw2), .addr(baddr2));
             
             /*
             always @(posedge clk) begin
@@ -187,30 +190,21 @@ module Batch_top #(
             
             // MUX Part-results
             assign cff1 = cw1 ? resF.r : 'bZ;
-            assign cff2 = cw2 ? resF.r : 'bZ;
+            assign cff2 = cw1 ? 'bZ : resF.r;
             assign cbb1 = cw1 ? resB.r : 'bZ;
-            assign cbb2 = cw2 ? resB.r : 'bZ;
+            assign cbb2 = cw1 ? 'bZ : resB.r;
             assign cf1 = cff1;
             assign cf2 = cff2;
             assign cb1 = cbb1;
             assign cb2 = cbb2;
-            assign forward = cycle[0] ? cf2 : cf1;
+            assign baddr1 = cycle[0] ? delBatCountRev : delBatCount;
+            assign baddr2 = cycle[0] ? delBatCount : delBatCountRev;
             assign backward = cycle[0] ? cb2 : cb1;
-            always @(*) begin
-                if (cycle[0]) begin
-                    cw1 = 1;
-                    cw2 = 0;
-                    baddr1 = downBatCountRev;
-                    baddr2 = downBatCount;
-                end else begin
-                    cw1 = 0;
-                    cw2 = 1;
-                    baddr1 = downBatCount;
-                    baddr2 = downBatCountRev;
-                end
+            assign forward = cycle[0] ? cf2 : cf1;
+            always @(posedge clkDS) begin
+                cw1 = cycle[0];
+                cw2 = !cycle[0];
             end
-
-
 
             if(i == 0) begin
                 assign res[0] = partRes;
