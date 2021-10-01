@@ -1,3 +1,6 @@
+`ifndef TOPBATCH_SV_
+`define TOPBATCH_SV_
+
 `include "Util.sv"
 `include "Data/Coefficients.sv"
 `include "FPU.sv"
@@ -5,8 +8,6 @@
 `include "RecursionModule.sv"
 `include "LUT.sv"
 `include "RAM.sv"
-
-
 
 module Batch_top #(
     parameter depth = 32,
@@ -217,3 +218,5 @@ module Batch_top #(
     // Final final result
     assign out = res[N-1];
 endmodule
+
+`endif
