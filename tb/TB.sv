@@ -1,12 +1,13 @@
 //`define MANT_W 23
 //`define EXP_W 8
 
-`include "../sv/TopBatch.sv"
+//`include "../sv/TopBatch.sv"
 `include "../sv/Util.sv"
 `include "../sv/FPU.sv"
 `include "FPU_prop.sv"
 `include "RAM_prop.sv"
 `include "RecursionModule_prop.sv"
+`include "TopBatch_prop.sv"
 
 `define TestLength 33536
 `define N 3
@@ -105,7 +106,8 @@ module TB #() ();
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op)) flprop_i (.clk(clk), .*);  
     bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.*);
-    bind RAM_dual RAM_dual_prop #(.depth(depth), .d_width(d_width)) ramdprop_i (.*);
+    bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
     bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
+    bind Batch_top Batch_top_prop #(.depth(depth), .N(N), .OSR(OSR)) batchprop_i (.*);
 
 endmodule
