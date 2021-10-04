@@ -64,7 +64,7 @@ module Batch_top #(
 
     // Is low when the cycle is ending
     logic cyclePulse;
-    assign cyclePulse = !(batCount == (depth-1));
+    assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
 
     // Recursion register propagation is delayed one cycle
     logic regProp;
@@ -101,21 +101,44 @@ module Batch_top #(
     endgenerate
 
     // Sample storage
-    logic[N*OSR-1:0] slh, scob, sf_delay, scof;
+    logic[N*OSR-1:0] slh, scob, sf_delay, scof, slh_delay, scob_delay, sfd_delay;
     logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
-    assign addrIn = {dBatCount, cycle};
-    assign addrLH = {dBatCountRev, cycleLH};
-    assign addrBR = {dBatCountRev, cycleCalc};
-    assign addrFR = {dBatCount, cycleCalc};
     RAM_triple #(.depth(4*DownSampleDepth), .d_width(N*OSR)) sample (.clk(clkDS), .write(1), .dataIn(inShift), .addrIn(addrIn), 
-            .dataOut1(slh), .dataOut2(sf_delay), .dataOut3(scob), .addrOut1(addrLH), .addrOut2(addrFR), .addrOut3(addrBR));
-
-    always @(posedge clkDS) begin
-        scof = sf_delay;
-    end
+            .dataOut1(slh_delay), .dataOut2(sfd_delay), .dataOut3(scob_delay), .addrOut1(addrLH), .addrOut2(addrFR), .addrOut3(addrBR));
 
     // Outputs from generate blocks
     floatType partResF[N], partResB[N];
+
+    // Partial result storage
+    floatType finF, finB, finResult, partMemF, partMemB, finF_delay, finB_delay;
+    logic[$clog2(2*DownSampleDepth)-1:0] addrResIn, addrResOutB, addrResOutF;
+    logic[$clog2(DownSampleDepth)-1:0] delayBatCount, delayBatCountRev;
+    logic[1:0] delayCycle;
+    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcB (.clk(clkDS), .write(1), .dataIn(partMemB), .addrIn(addrResIn),
+            .dataOut(finB_delay), .addrOut(addrResOutB));
+    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcF (.clk(clkDS), .write(1), .dataIn(partMemF), .addrIn(addrResIn),
+            .dataOut(finF_delay), .addrOut(addrResOutF));
+
+    always @(posedge clkDS) begin
+        scof = sf_delay;
+        sf_delay = sfd_delay;
+        slh = slh_delay;
+        scob = scob_delay;
+        partMemB = partResB[N-1];
+        partMemF = partResF[N-1];
+        finF = finF_delay;
+        finB = finB_delay;
+        addrIn = {dBatCount, cycle};
+        addrLH = {dBatCountRev, cycleLH};
+        addrBR = {dBatCountRev, cycleCalc};
+        addrFR = {dBatCount, cycleCalc};
+        addrResIn = {dBatCount, cycle[0]};
+        addrResOutB = {dBatCountRev, !cycle[0]};
+        addrResOutF = {dBatCount, !cycle[0]};
+        delayBatCount = dBatCount;
+        delayBatCountRev = dBatCountRev;
+        delayCycle = cycle;
+    end
 
     genvar i;
     generate 
@@ -164,16 +187,8 @@ module Batch_top #(
         end
     endgenerate
 
-    // Partial result storage
-    floatType finF, finB, finResult;
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcB (.clk(clkDS), .write(1), .dataIn(partResB[N-1]), .addrIn({dBatCount, cycle[0]}),
-            .dataOut(finB), .addrOut({dBatCountRev, !cycle[0]}));
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcF (.clk(clkDS), .write(1), .dataIn(partResF[N-1]), .addrIn({dBatCount, cycle[0]}),
-            .dataOut(finF), .addrOut({dBatCount, !cycle[0]}));
-
-    FPU #(.op(ADD)) FINADD (.A(finF), .B(finB), .result(finResult));
-
     // Final final result
+    FPU #(.op(ADD)) FINADD (.A(finF), .B(finB), .result(finResult));
     always @(posedge clkDS) begin
         out = finResult;
     end
