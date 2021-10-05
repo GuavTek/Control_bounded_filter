@@ -22,6 +22,29 @@ module Batch_top #(
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
     localparam LUTdepth = N*OSR; 
 
+    // Downsampled clock
+    logic[$clog2(OSR):0] osrCount;      // Prescale counter
+    logic clkDS;
+    generate
+        if(OSR > 1) begin
+            always @(posedge clk) begin
+                if(!rst)
+                    osrCount = 0;
+                else
+                    osrCount++;
+                if (osrCount == OSR)
+                    osrCount = 0;
+            end
+
+            // MSb of counter is prescaled clock, not symmetrical for all OSR
+            // Rising edge when osrCount = 0
+            assign clkDS = !osrCount[$clog2(OSR)];
+        end else begin
+            assign clkDS = clk;
+        end
+    endgenerate
+
+
     // Shifted input
     logic[N*OSR-1:0] inShift;
 
@@ -40,25 +63,22 @@ module Batch_top #(
     endgenerate
 
     // Counters for batch cycle
-    logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
+    //logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
     logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // downsampled counters
-    logic[$clog2(OSR):0] osrCount;      // Prescale counter
-    always @(posedge clk) begin
-        if(!rst || (batCount == (depth-1))) begin
-            batCount = 0;
-            batCountRev = depth-1;
+    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[1:0], delayBatCountRev[1:0];
+    always @(posedge clkDS) begin
+        delayBatCount[1] = delayBatCount[0];
+        delayBatCount[0] = dBatCount;
+        delayBatCountRev[1] = delayBatCountRev[0];
+        delayBatCountRev[0] = dBatCountRev;
+        if(!rst || (dBatCount == (depth-1))) begin
+            //batCount = 0;
+            //batCountRev = depth-1;
             dBatCount = 0;
             dBatCountRev = DownSampleDepth-1;
-            osrCount = 0;
         end else begin
-            batCount++;
-            batCountRev--;
-            osrCount++;
-            if (osrCount == OSR) begin
-                dBatCountRev--;
-                dBatCount++;
-                osrCount = 0;
-            end 
+            dBatCount++;
+            dBatCountRev--;
         end
     end
 
@@ -68,13 +88,16 @@ module Batch_top #(
 
     // Recursion register propagation is delayed one cycle
     logic regProp;
-    always @(posedge clk) begin
+    always @(negedge clkDS) begin
         regProp = cyclePulse;
     end
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    always @(posedge clk) begin
+    logic[1:0] delayCycle[1:0];
+    always @(posedge clkDS) begin
+        delayCycle[1] = delayCycle[0];
+        delayCycle[0] = cycle;
         if(!rst) begin
             cycle = 0;
             cycleLH = 3;
@@ -87,57 +110,37 @@ module Batch_top #(
             cycle++;
         end   
     end
-    
-    // Downsampled clock
-    logic clkDS;
-    generate
-        if(OSR > 1) begin
-            // MSb of counter is prescaled clock, not symmetrical for all OSR
-            // Rising edge when osrCount = 0
-            assign clkDS = !osrCount[$clog2(OSR)];
-        end else begin
-            assign clkDS = clk;
-        end
-    endgenerate
 
     // Sample storage
-    logic[N*OSR-1:0] slh, scob, sf_delay, scof, slh_delay, scob_delay, sfd_delay;
+    logic[N*OSR-1:0] slh, scob, sf_delay, scof;
     logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
-    RAM_triple #(.depth(4*DownSampleDepth), .d_width(N*OSR)) sample (.clk(clkDS), .write(1), .dataIn(inShift), .addrIn(addrIn), 
-            .dataOut1(slh_delay), .dataOut2(sfd_delay), .dataOut3(scob_delay), .addrOut1(addrLH), .addrOut2(addrFR), .addrOut3(addrBR));
+    RAM_triple #(.depth(4*DownSampleDepth), .d_width(N*OSR)) sample (.clk(clkDS), .rst(rst), .write(1), .dataIn(inShift), .addrIn(addrIn), 
+            .dataOut1(slh), .dataOut2(sf_delay), .dataOut3(scob), .addrOut1(addrLH), .addrOut2(addrFR), .addrOut3(addrBR));
 
     // Outputs from generate blocks
     floatType partResF[N], partResB[N];
 
     // Partial result storage
-    floatType finF, finB, finResult, partMemF, partMemB, finF_delay, finB_delay;
+    floatType finF, finB, finResult, finF_delay, finB_delay, partMemB, partMemF;
     logic[$clog2(2*DownSampleDepth)-1:0] addrResIn, addrResOutB, addrResOutF;
-    logic[$clog2(DownSampleDepth)-1:0] delayBatCount, delayBatCountRev;
-    logic[1:0] delayCycle;
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcB (.clk(clkDS), .write(1), .dataIn(partMemB), .addrIn(addrResIn),
+    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcB (.clk(clkDS), .rst(rst), .write(1), .dataIn(partMemB), .addrIn(addrResIn),
             .dataOut(finB_delay), .addrOut(addrResOutB));
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcF (.clk(clkDS), .write(1), .dataIn(partMemF), .addrIn(addrResIn),
+    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcF (.clk(clkDS), .rst(rst), .write(1), .dataIn(partMemF), .addrIn(addrResIn),
             .dataOut(finF_delay), .addrOut(addrResOutF));
 
     always @(posedge clkDS) begin
         scof = sf_delay;
-        sf_delay = sfd_delay;
-        slh = slh_delay;
-        scob = scob_delay;
-        partMemB = partResB[N-1];
-        partMemF = partResF[N-1];
         finF = finF_delay;
         finB = finB_delay;
+        partMemB = partResB[N-1];
+        partMemF = partResF[N-1];
         addrIn = {dBatCount, cycle};
         addrLH = {dBatCountRev, cycleLH};
         addrBR = {dBatCountRev, cycleCalc};
         addrFR = {dBatCount, cycleCalc};
-        addrResIn = {dBatCount, cycle[0]};
-        addrResOutB = {dBatCountRev, !cycle[0]};
-        addrResOutF = {dBatCount, !cycle[0]};
-        delayBatCount = dBatCount;
-        delayBatCountRev = dBatCountRev;
-        delayCycle = cycle;
+        addrResIn = {delayBatCount[1], delayCycle[1][0]};
+        addrResOutB = {delayBatCountRev[1], !delayCycle[1][0]};
+        addrResOutF = {delayBatCount[1], !delayCycle[1][0]};
     end
 
     genvar i;
@@ -146,13 +149,13 @@ module Batch_top #(
             // Lookahead
             complex LH_res, LH_in;
             LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) LHL_ (.sel(slh), .result(LH_in));
-            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal(LH_in), .clk(clkDS), .out(LH_res));
+            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(LH_res));
 
             // Compute
             complex CF_in, CB_in, CF_out, CB_out, WF, WB; 
             LUT #(.size(LUTdepth), .re(Ffr[i][0:LUTdepth-1]), .im(Ffi[i][0:LUTdepth-1])) CFL_ (.sel(scof), .result(CF_in));
             LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) CBL_ (.sel(scob), .result(CB_in));
-            RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal(CF_in), .clk(clkDS), .out(CF_out));
+            RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(CF_out));
             RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
             assign WF.r = rtof(Wfr[i]);
             assign WF.i = rtof(Wfi[i]);
