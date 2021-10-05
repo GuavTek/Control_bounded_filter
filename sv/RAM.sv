@@ -30,12 +30,12 @@ module RAM_single #(
 	d_width = 3
 	) (
 	addrIn, addrOut,
-	clk, 
+	clk, rst,
 	write, 
 	dataIn, dataOut
 );
 	input logic[$clog2(depth)-1:0]  addrIn, addrOut;
-	input logic clk, write;
+	input logic clk, rst, write;
 	input logic[d_width-1:0] dataIn;
 	output logic[d_width-1:0] dataOut;
 	`ifdef INCLUDE_RAM
@@ -55,12 +55,12 @@ module RAM_triple #(
 	d_width = 3
 	) (
 	addrIn, addrOut1, addrOut2, addrOut3,
-	clk, 
+	clk, rst,
 	write, 
 	dataIn, dataOut1, dataOut2, dataOut3
 );
 	input logic[$clog2(depth)-1:0]  addrIn, addrOut1, addrOut2, addrOut3;
-	input logic clk, write;
+	input logic clk, rst, write;
 	input logic[d_width-1:0] dataIn;
 	output logic[d_width-1:0] dataOut1, dataOut2, dataOut3;
 	`ifdef INCLUDE_RAM
@@ -92,7 +92,7 @@ module RAM_dual_bi #(
   	input logic clk;
   	inout logic[d_width-1:0] data1;
 	output logic[d_width-1:0] data2;
-`ifdef INCLUDE_RAM
+	`ifdef INCLUDE_RAM
 	logic[d_width-1:0] mem [depth-1:0] = '{depth{0}};
     assign data1 = write1 ? 'bz : mem[addr1];
 	assign data2 = mem[addr2]; //write1 ? 'bz : mem[addr2];
@@ -101,6 +101,6 @@ module RAM_dual_bi #(
     	if (write1) 
 			mem[addr1] = data1;
   	end   
-`endif
+	`endif
 endmodule
 `endif
