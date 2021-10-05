@@ -6,13 +6,14 @@
 `include "../sv/FPU.sv"
 `include "FPU_prop.sv"
 `include "RAM_prop.sv"
+`include "LUT_prop.sv"
 `include "RecursionModule_prop.sv"
 `include "TopBatch_prop.sv"
 
 `define TestLength 33536
 `define N 3
 `define T 4.167
-`define VERBOSE_LVL 1
+//`define VERBOSE_LVL 2
 
 module TB #() ();
     logic rst;
@@ -41,8 +42,8 @@ module TB #() ();
         // Read until end of file
         while ($fscanf(fdi, "%b,\n", inSample) > 0) begin
             // Wait for clock cycle
-            if(`VERBOSE_LVL > 1)
-                $display("Reading sample %b", inSample);
+            if(`VERBOSE_LVL > 2)
+                $display("Reading sample %b as %d", inSample, inSample);
             @(posedge clk);
         end
 
@@ -71,7 +72,7 @@ module TB #() ();
         for (int i = 0; i < `TestLength; i++) begin
             $fwrite(fdo, "%f, ", ftor(result));
 //            $fwrite(fdo, "%b;\n", result);
-            if (`VERBOSE_LVL > 1)
+            if (`VERBOSE_LVL > 2)
                 $display("Write result %d.\n", i);
             @(posedge clk);
         end
@@ -104,9 +105,10 @@ module TB #() ();
     Batch_top #(.depth(220), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
     
     // Bind Modules to property checkers
-    bind FPU FPU_prop #(.op(op)) flprop_i (.clk(clk), .*);  
-    bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.*);
+    bind FPU FPU_prop #(.op(op)) flprop_i (.*);  
+    bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.rst(rst), .*);
     bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
+    bind LUT LUT_prop #(.size(size), .re(re), .im(im)) lutprop_i (.*);
     bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
     bind Batch_top Batch_top_prop #(.depth(depth), .N(N), .OSR(OSR)) batchprop_i (.*);
 
