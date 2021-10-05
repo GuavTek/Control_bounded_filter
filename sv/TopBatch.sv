@@ -65,10 +65,12 @@ module Batch_top #(
     // Counters for batch cycle
     //logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
     logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // downsampled counters
-    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[1:0], delayBatCountRev[1:0];
+    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[2:0], delayBatCountRev[2:0];
     always @(posedge clkDS) begin
+        delayBatCount[2] = delayBatCount[1];
         delayBatCount[1] = delayBatCount[0];
         delayBatCount[0] = dBatCount;
+        delayBatCountRev[2] = delayBatCountRev[1];
         delayBatCountRev[1] = delayBatCountRev[0];
         delayBatCountRev[0] = dBatCountRev;
         if(!rst || (dBatCount == (depth-1))) begin
@@ -94,8 +96,9 @@ module Batch_top #(
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    logic[1:0] delayCycle[1:0];
+    logic[1:0] delayCycle[2:0];
     always @(posedge clkDS) begin
+        delayCycle[2] = delayCycle[1];
         delayCycle[1] = delayCycle[0];
         delayCycle[0] = cycle;
         if(!rst) begin
@@ -138,7 +141,7 @@ module Batch_top #(
         addrLH = {dBatCountRev, cycleLH};
         addrBR = {dBatCountRev, cycleCalc};
         addrFR = {dBatCount, cycleCalc};
-        addrResIn = {delayBatCount[1], delayCycle[1][0]};
+        addrResIn = {delayBatCount[2], delayCycle[2][0]};
         addrResOutB = {delayBatCountRev[1], !delayCycle[1][0]};
         addrResOutF = {delayBatCount[1], !delayCycle[1][0]};
     end
