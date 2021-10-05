@@ -8,13 +8,13 @@ module RAM_single_prop #(
 	d_width = 3
 	) (
 	addrIn, addrOut,
-	clk, 
+	clk, rst, 
 	write, 
 	dataIn, dataOut,
 	mem
 	);
 	input logic[$clog2(depth)-1:0]  addrIn, addrOut;
-	input logic clk, write;
+	input logic clk, write, rst;
 	input logic[d_width-1:0] dataIn;
 	input logic[d_width-1:0] dataOut;
 	input logic[d_width-1:0] mem[depth-1:0];
@@ -25,7 +25,7 @@ module RAM_single_prop #(
 	assert property (@(posedge clk) 1 |-> dataOut == mem[addrOut])
 	else $warning("Data out from port is not equal memory!! \n%h at port, %h at address %d", dataOut, mem[addrOut], addrOut);
 
-    assert property (@(posedge clk) disable iff($isunknown(addrIn)) write |=> !$isunknown(mem[$past(addrIn)])) 
+    assert property (@(posedge clk) disable iff($isunknown(addrIn) || !rst) write |=> !$isunknown(mem[$past(addrIn)])) 
     else   $warning("Data in ram is unknown!! \n%h at address %d", dataIn, $past(addrIn));
 endmodule
 
@@ -34,13 +34,13 @@ module RAM_triple_prop #(
 	d_width = 3
 	) (
 	addrIn, addrOut1, addrOut2, addrOut3,
-	clk, 
+	clk, rst,
 	write, 
 	dataIn, dataOut1, dataOut2, dataOut3,
 	mem
 	);
 	input logic[$clog2(depth)-1:0]  addrIn, addrOut1, addrOut2, addrOut3;
-	input logic clk, write;
+	input logic clk, write, rst;
 	input logic[d_width-1:0] dataIn;
 	input logic[d_width-1:0] dataOut1, dataOut2, dataOut3;
 	input logic[d_width-1:0] mem[depth-1:0];
@@ -57,7 +57,7 @@ module RAM_triple_prop #(
 	assert property (@(posedge clk) 1 |-> dataOut3 == mem[addrOut3])
 	else $warning("Data out 3 from port is not equal memory!! \n%h at port, %h at address %d", dataOut3, mem[addrOut3], addrOut3);
 
-    assert property (@(posedge clk) disable iff($isunknown(addrIn)) write |=> !$isunknown(mem[$past(addrIn)])) 
+    assert property (@(posedge clk) disable iff($isunknown(addrIn) || !rst) write |=> !$isunknown(mem[$past(addrIn)])) 
     else   $warning("Data in ram is unknown!! \n%h at address %d", dataIn, $past(addrIn));
 endmodule
 
