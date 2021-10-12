@@ -16,7 +16,17 @@ module Batch_top #(
 ) (
     input wire [N-1:0] in,
     input logic rst, clk,
-    output floatType out
+    output floatType out,
+    // Sample memory
+    output logic[$clog2(4*$rtoi($ceil(depth / OSR)))-1:0]  sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3,
+	output logic sampleClk, sampleWrite,
+	output logic[N*OSR-1:0] sampleDataIn,
+	input logic[N*OSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3,
+    // Part result memory
+    output logic[$clog2(2*$rtoi($ceil(depth / OSR)))-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB,
+	output logic resClkF, resClkB, resWriteF, resWriteB,
+	output logic[(`EXP_W + `MANT_W):0] resDataInF, resDataInB,
+	input logic[(`EXP_W + `MANT_W):0] resDataOutF, resDataOutB
 );
     import Coefficients::*;
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
@@ -115,10 +125,18 @@ module Batch_top #(
     end
 
     // Sample storage
-    logic[N*OSR-1:0] slh, scob, sf_delay, scof;
+    logic[SampleWidth-1:0] slh, scob, sf_delay, scof;
     logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
-    RAM_triple #(.depth(4*DownSampleDepth), .d_width(N*OSR)) sample (.clk(clkDS), .rst(rst), .write(1), .dataIn(inShift), .addrIn(addrIn), 
-            .dataOut1(slh), .dataOut2(sf_delay), .dataOut3(scob), .addrOut1(addrLH), .addrOut2(addrFR), .addrOut3(addrBR));
+    assign sampleClk = clkDS;
+    assign sampleWrite = 'b1;
+    assign sampleDataIn = inShift;
+    assign sampleAddrIn = addrIn;
+    assign slh = sampleDataOut1;
+    assign sf_delay = sampleDataOut2;
+    assign scob = sampleDataOut3;
+    assign sampleAddrOut1 = addrLH;
+    assign sampleAddrOut2 = addrFR;
+    assign sampleAddrOut3 = addrBR;
 
     // Outputs from generate blocks
     floatType partResF[N], partResB[N];
@@ -126,10 +144,18 @@ module Batch_top #(
     // Partial result storage
     floatType finF, finB, finResult, finF_delay, finB_delay, partMemB, partMemF;
     logic[$clog2(2*DownSampleDepth)-1:0] addrResIn, addrResOutB, addrResOutF;
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcB (.clk(clkDS), .rst(rst), .write(1), .dataIn(partMemB), .addrIn(addrResIn),
-            .dataOut(finB_delay), .addrOut(addrResOutB));
-    RAM_single #(.depth(2*DownSampleDepth), .d_width($bits(partResF[0]))) calcF (.clk(clkDS), .rst(rst), .write(1), .dataIn(partMemF), .addrIn(addrResIn),
-            .dataOut(finF_delay), .addrOut(addrResOutF));
+    assign resClkB = clkDS;
+    assign resWriteB = 'b1;
+    assign resDataInB = partMemB;
+    assign resAddrInB = addrResIn;
+    assign finB_delay = resDataOutB;
+    assign resAddrOutB = addrResOutB;
+    assign resClkF = clkDS;
+    assign resWriteF = 'b1;
+    assign resDataInF = partMemF;
+    assign resAddrInF = addrResIn;
+    assign finF_delay = resDataOutF;
+    assign resAddrOutF = addrResOutF;
 
     always @(posedge clkDS) begin
         scof = sf_delay;

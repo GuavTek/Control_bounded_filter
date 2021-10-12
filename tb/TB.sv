@@ -19,6 +19,9 @@ module TB #() ();
     logic rst;
     logic clk;
 
+    localparam DownSampleDepth = $rtoi($ceil(`depth / `OSR));
+    localparam SampleWidth = `N*`OSR; 
+
     // Read input file
     reg[`N-1:0] inSample = 0;
     initial begin
@@ -100,9 +103,26 @@ module TB #() ();
     end
 
     // Instantiate DUTs
-    logic[`N-1:0] inDUT;
-    assign inDUT = inSample;
-    Batch_top #(.depth(220), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result));
+    logic[SampleWidth-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3, sampleDataIn;
+    logic[$clog2(4*DownSampleDepth)-1:0] sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
+    floatType resDataInB, resDataInF, resDataOutB, resDataOutF;
+    logic[$clog2(2*DownSampleDepth)-1:0] resAddrInB, resAddrInF, resAddrOutB, resAddrOutF;
+    logic sampleClk, resClkF, resClkB, sampleWrite, resWriteB, resWriteF;
+    RAM_triple #(.depth(4*DownSampleDepth), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
+            .dataOut1(sampleDataOut1), .dataOut2(sampleDataOut2), .dataOut3(sampleDataOut3), .addrOut1(sampleAddrOut1), .addrOut2(sampleAddrOut2), .addrOut3(sampleAddrOut3));
+
+    RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
+            .dataOut(resDataOutB), .addrOut(resAddrOutB));
+    RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
+            .dataOut(resDataOutF), .addrOut(resAddrOutF));
+
+    Batch_top #(.depth(220), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
+    .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
+	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
+	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
+    .resAddrInF(resAddrInF), .resAddrInB(resAddrInB), .resAddrOutF(resAddrOutF), .resAddrOutB(resAddrOutB),
+	.resClkF(resClkF), .resClkB(resClkB), .resWriteF(resWriteF), .resWriteB(resWriteB),
+	.resDataInF(resDataInF), .resDataInB(resDataInB), .resDataOutF(resDataOutF), .resDataOutB(resDataOutB));
     
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op)) flprop_i (.*);  

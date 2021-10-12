@@ -1,6 +1,7 @@
 `ifndef RAM_SV_
 `define RAM_SV_
 
+
 module RAM_single_bi #(
 	parameter 	depth = 32,
 	d_width = 3
@@ -13,7 +14,6 @@ module RAM_single_bi #(
 	input logic[$clog2(depth)-1:0]  addr;
 	input logic clk, write;
 	inout logic[d_width-1:0] data;
-	`ifdef INCLUDE_RAM
 	logic[d_width-1:0] mem[depth-1:0] = '{depth{0}};
 	assign data = write ? 'bz : mem[addr];
 
@@ -21,7 +21,6 @@ module RAM_single_bi #(
         if (write)
             mem[addr] = data;
    	end
-	`endif
 endmodule
 
 // Unidirectional RAM with one read port
@@ -38,7 +37,6 @@ module RAM_single #(
 	input logic clk, rst, write;
 	input logic[d_width-1:0] dataIn;
 	output logic[d_width-1:0] dataOut;
-	`ifdef INCLUDE_RAM
 	logic[d_width-1:0] mem[depth-1:0] = '{depth{0}};
 	assign dataOut = mem[addrOut];
 
@@ -46,7 +44,6 @@ module RAM_single #(
         if (write)
             mem[addrIn] = dataIn;
    	end
-	`endif
 endmodule
 
 // Unidirectional RAM with three read ports
@@ -63,7 +60,6 @@ module RAM_triple #(
 	input logic clk, rst, write;
 	input logic[d_width-1:0] dataIn;
 	output logic[d_width-1:0] dataOut1, dataOut2, dataOut3;
-	`ifdef INCLUDE_RAM
 	logic[d_width-1:0] mem[depth-1:0] = '{depth{0}};
 	assign dataOut1 = mem[addrOut1];
 	assign dataOut2 = mem[addrOut2];
@@ -73,7 +69,6 @@ module RAM_triple #(
         if (write)
             mem[addrIn] = dataIn;
    	end
-	`endif
 endmodule
 
 module RAM_dual_bi #(
@@ -92,7 +87,6 @@ module RAM_dual_bi #(
   	input logic clk;
   	inout logic[d_width-1:0] data1;
 	output logic[d_width-1:0] data2;
-	`ifdef INCLUDE_RAM
 	logic[d_width-1:0] mem [depth-1:0] = '{depth{0}};
     assign data1 = write1 ? 'bz : mem[addr1];
 	assign data2 = mem[addr2]; //write1 ? 'bz : mem[addr2];
@@ -100,7 +94,6 @@ module RAM_dual_bi #(
 	always @(posedge clk) begin
     	if (write1) 
 			mem[addr1] = data1;
-  	end   
-	`endif
+  	end
 endmodule
 `endif
