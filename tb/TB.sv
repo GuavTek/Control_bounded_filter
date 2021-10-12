@@ -91,7 +91,7 @@ module TB #() ();
     initial begin
         clk = 1;
         forever begin
-            #`T clk = ~clk;
+            #(`T/2) clk = ~clk;
         end
     end
 
