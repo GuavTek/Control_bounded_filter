@@ -1,7 +1,7 @@
 //`define MANT_W 23
 //`define EXP_W 8
 
-//`include "../sv/TopBatch.sv"
+`include "../sv/TopBatch.sv"
 `include "../sv/Util.sv"
 `include "../sv/FPU.sv"
 `include "FPU_prop.sv"
@@ -10,14 +10,14 @@
 `include "RecursionModule_prop.sv"
 `include "TopBatch_prop.sv"
 
-`define TestLength 33536
+`define TestLength 24000
 `define N 3
 `define T 4.167
 `define depth 220
 `define OSR 1
 //`define VERBOSE_LVL 2
 
-module TB #() ();
+module TB_BATCH #() ();
     logic rst;
     logic clk;
 
@@ -63,7 +63,7 @@ module TB #() ();
     floatType result;
     initial begin
         // Open output file
-        static int fdo = $fopen("./Data/results.csv", "w");
+        static int fdo = $fopen("./Data/results_batch.csv", "w");
         if (!fdo) begin
             $error("File output was not opened");
             $stop;
@@ -76,7 +76,7 @@ module TB #() ();
         // Write data
         for (int i = 0; i < `TestLength; i++) begin
             $fwrite(fdo, "%f, ", ftor(result));
-//            $fwrite(fdo, "%b;\n", result);
+            //$fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 2)
                 $display("Write result %d.\n", i);
             @(posedge clk);
