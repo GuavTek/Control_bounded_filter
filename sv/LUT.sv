@@ -20,21 +20,19 @@ endclass //calcLUT
 
 module LUT #(
     parameter       size = 1,
-    parameter real  re[0:size-1] = '{default: 0.0},
-    parameter real  im[0:size-1] = '{default: 0.0}
+    parameter real  fact[0:size-1] = '{default: 0.0}
 ) (
     input logic[size-1:0] sel,
-    output complex result
+    output floatType result
 );
     // Generate LUT values
-    complex mem[2**size-1:0];
+    floatType mem[2**size-1:0];
 
     genvar i;
     generate
         for(i = 0; i < 2**size; i++) begin
-            complex temp;
-            assign temp.r = rtof(calcLUT#(size)::get(re, i));
-            assign temp.i = rtof(calcLUT#(size)::get(im, i));
+            floatType temp;
+            assign temp = rtof(calcLUT#(size)::get(fact, i));
             assign mem[i] = temp;
         end
     endgenerate

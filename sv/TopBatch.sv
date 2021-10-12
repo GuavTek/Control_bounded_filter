@@ -20,7 +20,7 @@ module Batch_top #(
 );
     import Coefficients::*;
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
-    localparam LUTdepth = N*OSR; 
+    localparam SampleWidth = N*OSR; 
 
     // Downsampled clock
     logic[$clog2(OSR):0] osrCount;      // Prescale counter
@@ -151,13 +151,16 @@ module Batch_top #(
         for (i = 0; i < N ; i++ ) begin : CalculationBlock
             // Lookahead
             complex LH_res, LH_in;
-            LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) LHL_ (.sel(slh), .result(LH_in));
+                LUT #(.size(SampleWidth), .fact(Fbr[i][0:N-1])) LHLR_ (.sel(slh_rev), .result(LH_in.r));
+                LUT #(.size(SampleWidth), .fact(Fbi[i][0:N-1])) LHLI_ (.sel(slh_rev), .result(LH_in.i));
             RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(LH_res));
 
             // Compute
             complex CF_in, CB_in, CF_out, CB_out, WF, WB; 
-            LUT #(.size(LUTdepth), .re(Ffr[i][0:LUTdepth-1]), .im(Ffi[i][0:LUTdepth-1])) CFL_ (.sel(scof), .result(CF_in));
-            LUT #(.size(LUTdepth), .re(Fbr[i][0:LUTdepth-1]), .im(Fbi[i][0:LUTdepth-1])) CBL_ (.sel(scob), .result(CB_in));
+            LUT #(.size(SampleWidth), .fact(Ffr[i][0:N-1])) CFLR_ (.sel(scof), .result(CF_in.r));
+            LUT #(.size(SampleWidth), .fact(Ffi[i][0:N-1])) CFLI_ (.sel(scof), .result(CF_in.i));
+            LUT #(.size(SampleWidth), .fact(Fbr[i][0:N-1])) CBLR_ (.sel(scob), .result(CB_in.r));
+            LUT #(.size(SampleWidth), .fact(Fbi[i][0:N-1])) CBLI_ (.sel(scob), .result(CB_in.i));
             RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(CF_out));
             RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
             assign WF.r = rtof(Wfr[i]);

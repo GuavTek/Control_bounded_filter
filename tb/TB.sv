@@ -108,7 +108,7 @@ module TB #() ();
     bind FPU FPU_prop #(.op(op)) flprop_i (.*);  
     bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.rst(rst), .*);
     bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
-    bind LUT LUT_prop #(.size(size), .re(re), .im(im)) lutprop_i (.*);
+    bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
     bind Batch_top Batch_top_prop #(.depth(depth), .N(N), .OSR(OSR)) batchprop_i (.*);
 
