@@ -13,6 +13,8 @@
 `define TestLength 33536
 `define N 3
 `define T 4.167
+`define depth 220
+`define OSR 1
 //`define VERBOSE_LVL 2
 
 module TB #() ();
