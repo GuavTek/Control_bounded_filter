@@ -7,8 +7,8 @@
 `define F_SLACK 0.001
 
 module RecursionModule_prop #(
-    parameter real factorR = 0.0,
-                factorI = 0.0
+    parameter floatType factorR = rtof(0.0),
+                factorI = rtof(0.0)
 ) (
     input complex in,
     input complex resetVal,
