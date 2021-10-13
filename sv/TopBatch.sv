@@ -172,23 +172,63 @@ module Batch_top #(
         addrResOutF = {delayBatCount[1], !delayCycle[1][0]};
     end
 
-    genvar i;
+    function automatic floatType[0:`MAX_LUT_SIZE-1] GetFbr (int row, int startIndex);
+        floatType[0:`MAX_LUT_SIZE-1] tempArray;
+        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+            tempArray[i] = rtof(Fbr[row][startIndex + i]);
+        end
+        return tempArray;
+    endfunction
+
+    function automatic floatType[0:`MAX_LUT_SIZE-1] GetFbi (int row, int startIndex);
+        floatType[0:`MAX_LUT_SIZE-1] tempArray;
+        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+            tempArray[i] = rtof(Fbi[row][startIndex + i]);
+        end
+        return tempArray;
+    endfunction
+
+    function automatic floatType[0:`MAX_LUT_SIZE-1] GetFfr (int row, int startIndex);
+        floatType[0:`MAX_LUT_SIZE-1] tempArray;
+        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+            tempArray[i] = rtof(Ffr[row][startIndex + i]);
+        end
+        return tempArray;
+    endfunction
+
+    function automatic floatType[0:`MAX_LUT_SIZE-1] GetFfi (int row, int startIndex);
+        floatType[0:`MAX_LUT_SIZE-1] tempArray;
+        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+            tempArray[i] = rtof(Ffi[row][startIndex + i]);
+        end
+        return tempArray;
+    endfunction
+
     generate 
-        for (i = 0; i < N ; i++ ) begin : CalculationBlock
+        genvar i;
+        for (i = 0; i < N ; i++ ) begin
             // Lookahead
             complex LH_res, LH_in;
-                LUT #(.size(SampleWidth), .fact(Fbr[i][0:N-1])) LHLR_ (.sel(slh_rev), .result(LH_in.r));
-                LUT #(.size(SampleWidth), .fact(Fbi[i][0:N-1])) LHLI_ (.sel(slh_rev), .result(LH_in.i));
-            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(LH_res));
+            localparam floatType[0:`MAX_LUT_SIZE-1] testFbi = GetFbi(i, 0); //'{rtof(Fbi[i][0]), rtof(Fbi[i][1]), rtof(Fbi[i][2])};
+            localparam floatType[0:`MAX_LUT_SIZE-1] testFfr = GetFfr(i, 0); //'{rtof(Ffr[i][0]), rtof(Ffr[i][1]), rtof(Ffr[i][2])};
+            localparam floatType[0:`MAX_LUT_SIZE-1] testFbr = GetFbr(i, 0); //'{rtof(Fbr[i][0]), rtof(Fbr[i][1]), rtof(Fbr[i][2])};
+            localparam floatType[0:`MAX_LUT_SIZE-1] testFfi = GetFfi(i, 0); //'{rtof(Ffi[i][0]), rtof(Ffi[i][1]), rtof(Ffi[i][2])};
+            localparam floatType testLbr = rtof(Lbr[i]**OSR);
+            localparam floatType testLbi = rtof(Lbi[i]**OSR);
+            localparam floatType testLfr = rtof(Lfr[i]**OSR);
+            localparam floatType testLfi = rtof(Lfi[i]**OSR);
+                LUT #(.size(SampleWidth), .fact(testFbr[0:SampleWidth-1])) LHLR_ (.sel(slh_rev), .result(LH_in.r));
+                LUT #(.size(SampleWidth), .fact(testFbi[0:SampleWidth-1])) LHLI_ (.sel(slh_rev), .result(LH_in.i));
+            RecursionModule #(.factorR(testLbr), .factorI(testLbi)) LHR_ (.in(LH_in), .rst(regProp & rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(LH_res));
 
             // Compute
             complex CF_in, CB_in, CF_out, CB_out, WF, WB; 
-            LUT #(.size(SampleWidth), .fact(Ffr[i][0:N-1])) CFLR_ (.sel(scof), .result(CF_in.r));
-            LUT #(.size(SampleWidth), .fact(Ffi[i][0:N-1])) CFLI_ (.sel(scof), .result(CF_in.i));
-            LUT #(.size(SampleWidth), .fact(Fbr[i][0:N-1])) CBLR_ (.sel(scob), .result(CB_in.r));
-            LUT #(.size(SampleWidth), .fact(Fbi[i][0:N-1])) CBLI_ (.sel(scob), .result(CB_in.i));
-            RecursionModule #(.factorR(Lfr[i]**OSR), .factorI(Lfi[i]**OSR)) CFR_ (.in(CF_in), .rst(rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(CF_out));
-            RecursionModule #(.factorR(Lbr[i]**OSR), .factorI(Lbi[i]**OSR)) CBR_ (.in(CB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
+            LUT #(.size(SampleWidth), .fact(testFfr[0:SampleWidth-1])) CFLR_ (.sel(scof), .result(CF_in.r));
+            LUT #(.size(SampleWidth), .fact(testFfi[0:SampleWidth-1])) CFLI_ (.sel(scof), .result(CF_in.i));
+            LUT #(.size(SampleWidth), .fact(testFbr[0:SampleWidth-1])) CBLR_ (.sel(scob), .result(CB_in.r));
+            LUT #(.size(SampleWidth), .fact(testFbi[0:SampleWidth-1])) CBLI_ (.sel(scob), .result(CB_in.i));
+            RecursionModule #(.factorR(testLfr), .factorI(testLfi)) CFR_ (.in(CF_in), .rst(rst), .resetVal({rtof(0.0), rtof(0.0)}), .clk(clkDS), .out(CF_out));
+            RecursionModule #(.factorR(testLbr), .factorI(testLbi)) CBR_ (.in(CB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS), .out(CB_out));
             assign WF.r = rtof(Wfr[i]);
             assign WF.i = rtof(Wfi[i]);
             assign WB.r = rtof(Wbr[i]);

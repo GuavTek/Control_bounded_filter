@@ -9,7 +9,7 @@
 
 module LUT_prop #(
     parameter       size = 1,
-    parameter real  fact[0:size-1] = '{default: 0.0}
+    parameter floatType[0:size-1]  fact = '{default: rtof(0.0)}
 ) (
     input logic[size-1:0] sel,
     input floatType result,

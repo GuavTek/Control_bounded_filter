@@ -3,24 +3,9 @@
 
 `include "Util.sv"
 
-virtual class calcLUT #(parameter size = 1);
-    static function real get(real fact[0:size-1], logic[size-1:0] in);
-        real temp = 0.0;
-        logic[size:0] j;
-        for(j = 0; j < size; j++) begin
-            if(in[j] == 1) begin
-                temp += fact[j];
-            end else begin
-                temp -= fact[j];
-            end
-        end
-        get = temp;
-    endfunction
-endclass //calcLUT
-
 module LUT #(
     parameter       size = 1,
-    parameter real  fact[0:size-1] = '{default: 0.0}
+    parameter floatType[0:size-1] fact = '{default: rtof(0.0)}
 ) (
     input logic[size-1:0] sel,
     output floatType result
@@ -28,11 +13,24 @@ module LUT #(
     // Generate LUT values
     floatType mem[2**size-1:0];
 
+    function automatic real getVal(logic[size-1:0] in);
+        automatic real temp = 0.0;
+        logic[size:0] j;
+        for(j = 0; j < size; j++) begin
+            if(in[j] == 1) begin
+                temp += ftor(fact[j]);
+            end else begin
+                temp -= ftor(fact[j]);
+            end
+        end
+        getVal = temp;
+    endfunction
+
     genvar i;
     generate
         for(i = 0; i < 2**size; i++) begin
             floatType temp;
-            assign temp = rtof(calcLUT#(size)::get(fact, i));
+            assign temp = rtof(getVal(i));
             assign mem[i] = temp;
         end
     endgenerate
