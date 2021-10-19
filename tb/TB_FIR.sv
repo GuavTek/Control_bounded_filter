@@ -3,6 +3,7 @@
 `include "../sv/FPU.sv"
 `include "FPU_prop.sv"
 `include "LUT_prop.sv"
+`include "TopFIR_prop.sv"
 
 `include "../sv/Data/Coefficients.sv"
 `define TestLength 24000
@@ -132,5 +133,6 @@ module TB_FIR #() ();
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op)) flprop_i (.*);
     bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
+    bind FIR_top FIR_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .OSR(OSR)) firprop_i (.*);
 
 endmodule
