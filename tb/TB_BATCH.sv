@@ -19,6 +19,7 @@ module TB_BATCH #() ();
     logic clk;
     import Coefficients::*;
 
+    localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `OSR));
     localparam SampleWidth = N*`OSR; 
 
     // Read input file
