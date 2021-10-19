@@ -75,7 +75,7 @@ endfunction
         end
             
         temp.exp = exponent + floatBias;
-        mant = (absIn * 2**(`MANT_W-exponent));
+        mant = (absIn * 2.0**(`MANT_W-exponent));
         temp.mantis = mant[`MANT_W-1:0];
         rtof = temp;
         end
