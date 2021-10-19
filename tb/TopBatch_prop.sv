@@ -22,12 +22,7 @@ module Batch_top_prop #(
     import Coefficients::N;
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
 
-    function real absr(real in);
-        if(in >= 0)
-            absr = in;
-        else
-            absr = -in;
-    endfunction
+    
 
     property continuity_p;
         1 |=> absr(absr(ftor(finResult)) - absr(ftor($past(finResult)))) < 0.3;

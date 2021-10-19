@@ -2,6 +2,7 @@
 `define RECURSIONMODULE_PROP_SV_
 
 `include "../sv/RecursionModule.sv"
+`include "../sv/Util.sv"
 
 // How much results can vary due to precision differences
 `define F_SLACK 0.001
@@ -16,13 +17,6 @@ module RecursionModule_prop #(
     input complex out,
     input complex prev, factor
 );
-
-    function real absr(real in);
-        if(in >= 0)
-            absr = in;
-        else
-            absr = -in;
-    endfunction
     
     assert property (@(posedge clk) absr(ftor(out.r) - (ftor(prev.r) * ftor(factor.r) - ftor(prev.i) * ftor(factor.i) + ftor(in.r))) < `F_SLACK*absr(ftor(out.r)) )
     else $warning("Wrong real value!! %f out, but should be %f", ftor(out.r), (ftor(prev.r) * ftor(factor.r) - ftor(prev.i) * ftor(factor.i) + ftor(in.r)));
