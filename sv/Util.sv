@@ -2,6 +2,8 @@
 `define _UTIL_SV_
 // Misc utilities used in several modules
 
+`define STRINGIFY(x) $sformatf("%0s", `"x`")
+
 typedef enum int { 
     ADD = 0,
     MULT = 1
