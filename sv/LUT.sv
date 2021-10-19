@@ -29,9 +29,7 @@ module LUT #(
     genvar i;
     generate
         for(i = 0; i < 2**size; i++) begin
-            floatType temp;
-            assign temp = rtof(getVal(i));
-            assign mem[i] = temp;
+            assign mem[i] = rtof(getVal(i));
         end
     endgenerate
 
