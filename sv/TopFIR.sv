@@ -160,13 +160,13 @@ module FIR_top #(
                 floatType tempResult;
                 if ( i == 0 ) begin
                     if ( ii < addfloor ) begin
-                        FPU #(.op(ADD)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .result(tempResult));
+                        FPU #(.op(ADD)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clkDS), .result(tempResult));
                     end else begin
                         assign tempResult = lutResults[2*ii];
                     end
                 end else begin
                     if ( ii < addfloor) begin
-                        FPU #(.op(ADD)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .result(tempResult));
+                        FPU #(.op(ADD)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clkDS), .result(tempResult));
                     end else begin
                         assign tempResult = adderResults[firstRes + 2*ii];
                     end

@@ -13,9 +13,9 @@
 
 module FPU #(parameter FPU_opcode op = ADD) (
     input floatType A, B,
+    input logic clk,
     output floatType result
 );
-    logic clk;  // dummy for property checker
     logic[(`MANT_W + `EXP_W + 1):0] s1, s2, r1;
 
     fNToRecFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) aConv (.in(A), .out(s1));

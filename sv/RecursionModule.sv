@@ -17,8 +17,8 @@ module RecursionModule #(
     assign factor.i = factorI;
     assign out = sum;
 
-    CFPU #(.op(MULT)) c1 (.A(prev), .B(factor), .result(prod));
-    CFPU #(.op(ADD)) c2 (.A(prod), .B(in), .result(sum));
+    CFPU #(.op(MULT)) c1 (.A(prev), .B(factor), .clk(clk), .result(prod));
+    CFPU #(.op(ADD)) c2 (.A(prod), .B(in), .clk(clk), .result(sum));
 
     always_ff @(posedge clk) begin : recurse
         if (!rst)

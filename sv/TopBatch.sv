@@ -238,8 +238,8 @@ module Batch_top #(
             end
 
             complex resF, resB;
-            CFPU #(.op(MULT)) WFR_ (.A(F_out), .B(WF), .result(resF));
-            CFPU #(.op(MULT)) WBR_ (.A(B_out), .B(WB), .result(resB));
+            CFPU #(.op(MULT)) WFR_ (.A(F_out), .B(WF), .clk(clkDS), .result(resF));
+            CFPU #(.op(MULT)) WBR_ (.A(B_out), .B(WB), .clk(clkDS), .result(resB));
 
             // Final add
             floatType forward, backward;
@@ -252,14 +252,14 @@ module Batch_top #(
                 assign partResF[0] = forward;
                 assign partResB[0] = backward;
             end else begin
-                FPU #(.op(ADD)) FINADDF (.A(partResF[i-1]), .B(forward), .result(partResF[i]));
-                FPU #(.op(ADD)) FINADDB (.A(partResB[i-1]), .B(backward), .result(partResB[i]));
+                FPU #(.op(ADD)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
+                FPU #(.op(ADD)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
             end
         end
     endgenerate
 
     // Final final result
-    FPU #(.op(ADD)) FINADD (.A(finF), .B(finB), .result(finResult));
+    FPU #(.op(ADD)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = finResult;
     end
