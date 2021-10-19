@@ -2,24 +2,24 @@
 `define TOPBATCH_PROP_SV_
 
 `include "../sv/TopBatch.sv"
+`include "../sv/Data/Coefficients.sv"
 
 module Batch_top_prop #(
     parameter depth = 32,
-    parameter N = 3,
     parameter OSR = 1
 ) (
-    input wire [N-1:0] in,
+    input wire [Coefficients::N-1:0] in,
     input logic rst, clk, clkDS,
     input floatType out,
     input logic[$clog2($rtoi($ceil(depth / OSR)))-1:0] dBatCount, dBatCountRev, delayBatCount[2:0], delayBatCountRev[2:0], 
     input logic cyclePulse, regProp,
     input logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc, delayCycle[2:0],
-    input logic[N*OSR-1:0] inShift,
-    input logic[N*OSR-1:0] slh, scob, sf_delay, scof,
+    input logic[Coefficients::N*OSR-1:0] inShift,
+    input logic[Coefficients::N*OSR-1:0] slh, scob, sf_delay, scof,
     input floatType finF, finB, finResult, partMemF, partMemB,
-    input floatType partResF[N], partResB[N]
+    input floatType partResF[Coefficients::N], partResB[Coefficients::N]
 );
-
+    import Coefficients::N;
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
 
     function real absr(real in);

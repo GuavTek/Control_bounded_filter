@@ -10,18 +10,17 @@
 `include "RAM.sv"
 
 module Batch_top #(
-    parameter depth = 32,
-    parameter N = 3,
+    parameter depth = 220,
     parameter OSR = 1
 ) (
-    input wire [N-1:0] in,
+    input wire [Coefficients::N-1:0] in,
     input logic rst, clk,
     output floatType out,
     // Sample memory
     output logic[$clog2(4*$rtoi($ceil(depth / OSR)))-1:0]  sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3,
 	output logic sampleClk, sampleWrite,
-	output logic[N*OSR-1:0] sampleDataIn,
-	input logic[N*OSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3,
+	output logic[Coefficients::N*OSR-1:0] sampleDataIn,
+	input logic[Coefficients::N*OSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3,
     // Part result memory
     output logic[$clog2(2*$rtoi($ceil(depth / OSR)))-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB,
 	output logic resClkF, resClkB, resWriteF, resWriteB,

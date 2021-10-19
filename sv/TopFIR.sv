@@ -2,7 +2,7 @@
 `define TOPFIR_SV_
 
 `include "Util.sv"
-`include "Data/Coefficients.sv"
+`include "Data/Coefficients_FIR1.sv"
 `include "FPU.sv"
 `include "LUT.sv"
 
@@ -11,14 +11,13 @@
 module FIR_top #(
     parameter Lookahead = 240,
     parameter Lookback = 240,
-    parameter N = 3,
-    parameter OSR = 1
+    parameter OSR = 12
 ) (
-    input wire [N-1:0] in,
+    input wire [Coefficients_FIR1::N-1:0] in,
     input logic rst, clk,
     output floatType out
 );
-    import Coefficients::*;
+    import Coefficients_FIR1::*;
     localparam Looktotal = Lookahead + Lookback;
     localparam int LookaheadLUTs = $ceil(N*Lookahead/`MAX_LUT_SIZE);
     localparam int LookbackLUTs = $ceil(N*Lookback/`MAX_LUT_SIZE);

@@ -4,8 +4,9 @@
 `include "FPU_prop.sv"
 `include "LUT_prop.sv"
 
+`include "../sv/Data/Coefficients.sv"
 `define TestLength 24000
-`define N 3
+//`define N 3
 `define T 4.167
 `define Lookahead 100
 `define Lookback 100
@@ -15,9 +16,10 @@
 module TB_FIR #() ();
     logic rst;
     logic clk;
+    import Coefficients::*;
 
     // Read input file
-    reg[`N-1:0] inSample = 0;
+    reg[N-1:0] inSample = 0;
     initial begin
         // Open input file
         static int fdi = $fopen("./Data/verilog_signals.csv", "r");
@@ -97,8 +99,8 @@ module TB_FIR #() ();
     end
 
     // Instantiate DUTs
-    FIR_top #(.Lookahead(`Lookahead), .Lookback(`Lookback), .N(`N), .OSR(`OSR)) DUT_FIR (
-            .in(inSample), .rst(rst), .clk(clk), .out(result)); 
+    FIR_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .OSR(`OSR)) DUT_FIR (
+            .in(inSample), .rst(rst), .clk(clk), .out(dutResult)); 
     
     
     // Bind Modules to property checkers

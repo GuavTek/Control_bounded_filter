@@ -1,6 +1,4 @@
-//`define MANT_W 23
-//`define EXP_W 8
-
+`include "../sv/Data/Coefficients.sv"
 `include "../sv/TopBatch.sv"
 `include "../sv/Util.sv"
 `include "../sv/FPU.sv"
@@ -11,7 +9,6 @@
 `include "TopBatch_prop.sv"
 
 `define TestLength 24000
-`define N 3
 `define T 4.167
 `define depth 220
 `define OSR 1
@@ -20,12 +17,12 @@
 module TB_BATCH #() ();
     logic rst;
     logic clk;
+    import Coefficients::*;
 
-    localparam DownSampleDepth = $rtoi($ceil(`depth / `OSR));
-    localparam SampleWidth = `N*`OSR; 
+    localparam SampleWidth = N*`OSR; 
 
     // Read input file
-    reg[`N-1:0] inSample = 0;
+    reg[N-1:0] inSample = 0;
     initial begin
         // Open input file
         static int fdi = $fopen("./Data/verilog_signals.csv", "r");
@@ -118,7 +115,7 @@ module TB_BATCH #() ();
     RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_top #(.depth(220), .N(`N), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
+    Batch_top #(.depth(`DEPTH), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -132,6 +129,6 @@ module TB_BATCH #() ();
     bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
     bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
-    bind Batch_top Batch_top_prop #(.depth(depth), .N(N), .OSR(OSR)) batchprop_i (.*);
+    bind Batch_top Batch_top_prop #(.depth(depth), .OSR(OSR)) batchprop_i (.*);
 
 endmodule
