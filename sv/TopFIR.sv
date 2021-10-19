@@ -25,19 +25,22 @@ module FIR_top #(
     localparam AdderLayers = $clog2(AddersNum);
 
     // Downsampled clock
-    logic[$clog2(OSR):0] osrCount;      // Prescale counter
+    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
     logic clkDS;
     generate
         if(OSR > 1) begin
             always @(posedge clk) begin
-                osrCount++;
-                if (osrCount == OSR)
+                if (!rst)
                     osrCount = 0;
+                else 
+                osrCount++;
+                if (osrCount == $floor(OSR/2))
+                    clkDS = 0;
+                if (osrCount == OSR) begin
+                    osrCount = 0;
+                    clkDS = 1;
             end
-
-            // MSb of counter is prescaled clock, not symmetrical for all OSR
-            // Rising edge when osrCount = 0
-            assign clkDS = !osrCount[$clog2(OSR)];
+            end
         end else begin
             assign clkDS = clk;
         end
