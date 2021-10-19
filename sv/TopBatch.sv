@@ -55,13 +55,13 @@ module Batch_top #(
 
 
     // Shifted input
-    logic[N*OSR-1:0] inShift;
+    logic[SampleWidth-1:0] inShift;
 
     // Generates shift register if OSR > 1
     generate
         if (OSR > 1) begin
             always @(posedge clk) begin
-                inShift[N*OSR-1:N] = inShift[N*OSR-N-1:0];
+                inShift[SampleWidth-1:N] = inShift[SampleWidth-N-1:0];
                 inShift[N-1:0] = in;
             end
         end else begin
@@ -72,8 +72,7 @@ module Batch_top #(
     endgenerate
 
     // Counters for batch cycle
-    //logic[$clog2(depth)-1:0] batCount, batCountRev;      // counter for input samples
-    logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // downsampled counters
+    logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // counters for input samples
     logic[$clog2(DownSampleDepth)-1:0] delayBatCount[2:0], delayBatCountRev[2:0];
     always @(posedge clkDS) begin
         delayBatCount[2] = delayBatCount[1];
@@ -83,9 +82,7 @@ module Batch_top #(
         delayBatCountRev[1] = delayBatCountRev[0];
         delayBatCountRev[0] = dBatCountRev;
         if(!rst || (dBatCount == (depth-1))) begin
-            //batCount = 0;
-            //batCountRev = depth-1;
-            dBatCount = 0;
+            dBatCount = 'b0;
             dBatCountRev = DownSampleDepth-1;
         end else begin
             dBatCount++;
@@ -97,7 +94,7 @@ module Batch_top #(
     logic cyclePulse;
     assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
 
-    // Recursion register propagation is delayed one cycle
+    // Recursion register propagation is delayed one half cycle
     logic regProp;
     always @(negedge clkDS) begin
         regProp = cyclePulse;
@@ -111,10 +108,10 @@ module Batch_top #(
         delayCycle[1] = delayCycle[0];
         delayCycle[0] = cycle;
         if(!rst) begin
-            cycle = 0;
-            cycleLH = 3;
-            cycleIdle = 2;
-            cycleCalc = 1;
+            cycle = 2'b00;
+            cycleLH = 2'b11;
+            cycleIdle = 2'b10;
+            cycleCalc = 2'b01;
         end else if(!cyclePulse) begin
             cycleCalc = cycleIdle;
             cycleIdle = cycleLH;
@@ -127,7 +124,7 @@ module Batch_top #(
     logic[SampleWidth-1:0] slh, scob, sf_delay, scof;
     logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
     assign sampleClk = clkDS;
-    assign sampleWrite = 'b1;
+    assign sampleWrite = 1'b1;
     assign sampleDataIn = inShift;
     assign sampleAddrIn = addrIn;
     assign slh = sampleDataOut1;
@@ -144,13 +141,13 @@ module Batch_top #(
     floatType finF, finB, finResult, finF_delay, finB_delay, partMemB, partMemF;
     logic[$clog2(2*DownSampleDepth)-1:0] addrResIn, addrResOutB, addrResOutF;
     assign resClkB = clkDS;
-    assign resWriteB = 'b1;
+    assign resWriteB = 1'b1;
     assign resDataInB = partMemB;
     assign resAddrInB = addrResIn;
     assign finB_delay = resDataOutB;
     assign resAddrOutB = addrResOutB;
     assign resClkF = clkDS;
-    assign resWriteF = 'b1;
+    assign resWriteF = 1'b1;
     assign resDataInF = partMemF;
     assign resAddrInF = addrResIn;
     assign finF_delay = resDataOutF;
