@@ -8,10 +8,30 @@
 `define TestLength 24000
 //`define N 3
 `define T 4.167
-`define Lookahead 100
-`define Lookback 100
+
+`ifndef DEPTH
+    `define DEPTH 220
+`endif
+
+`ifndef LOOKAHEAD
+    `define LOOKAHEAD `DEPTH
+`endif
+
+`ifndef LOOKBACK
+    `define LOOKBACK `DEPTH
+`endif
+
+`ifndef OSR
 `define OSR 1
-//`define VERBOSE_LVL 2
+`endif
+
+`ifndef VERBOSE_LVL
+    `define VERBOSE_LVL 2
+`endif
+
+`ifndef OUT_FILE
+    `define OUT_FILE results_fir
+`endif
 
 module TB_FIR #() ();
     logic rst;
@@ -54,10 +74,11 @@ module TB_FIR #() ();
     end
 
     // Write output file
-    floatType result;
+    floatType dutResult;
     initial begin
         // Open output file
-        static int fdo = $fopen("./Data/results_fir.csv", "w");
+        static string file_path = {"./Data/", `STRINGIFY(`OUT_FILE), ".csv"};
+        static int fdo = $fopen(file_path, "w");
         if (!fdo) begin
             $error("File output was not opened");
             $stop;
@@ -69,7 +90,12 @@ module TB_FIR #() ();
 
         // Write data
         for (int i = 0; i < `TestLength; i++) begin
-            $fwrite(fdo, "%f, ", ftor(result));
+            // Write only one in OSR number of results
+            if (i % `OSR) begin 
+                @(posedge clk);
+                continue;
+            end
+            $fwrite(fdo, "%f, ", ftor(dutResult));
             //$fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 2)
                 $display("Write result %d.\n", i);

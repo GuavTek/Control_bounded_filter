@@ -10,9 +10,18 @@
 
 `define TestLength 24000
 `define T 4.167
-`define depth 220
-`define OSR 1
-//`define VERBOSE_LVL 2
+
+`ifndef DEPTH
+    `define DEPTH 220
+`endif
+
+`ifndef OSR
+    `define OSR 1
+`endif
+
+`ifndef VERBOSE_LVL
+    `define VERBOSE_LVL 2
+`endif
 
 module TB_BATCH #() ();
     logic rst;
