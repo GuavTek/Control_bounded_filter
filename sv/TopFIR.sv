@@ -49,20 +49,26 @@ module FIR_top #(
 
     // Shift register
     logic[N*Looktotal-1:0] inShift;
-    always @(posedge clkDS) begin
+    always @(posedge clk) begin
         inShift[N*Looktotal-1:N] = inShift[N*Looktotal-N-1:0];
         inShift[N-1:0] = in;
     end
 
-    wire[N*Lookahead-1:0] sampleahead;
-    wire[N*Lookback-1:0] sampleback;
-    assign sampleback = inShift[N*Looktotal-1:N*Lookahead];
+    logic[N*Lookahead-1:0] sampleahead;
+    logic[N*Lookback-1:0] sampleback;
+
+    
+    always @(posedge clkDS) begin
+        sampleback = inShift[N*Looktotal-1:N*Lookahead];
+    end
 
     // Invert sample-order
     generate
         genvar i;
         for(i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
+            always @(posedge clkDS) begin
+                sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
+            end
         end
     endgenerate
 
