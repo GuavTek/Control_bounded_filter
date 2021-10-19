@@ -119,24 +119,24 @@ module FIR_top #(
         localparam LookaheadRest = (N*Lookahead)% `MAX_LUT_SIZE;
         localparam LookbackRest = (N*Lookback) % `MAX_LUT_SIZE;
 
-        for (i = 0; i < LookaheadLUTs ; i++ ) begin
+        for (i = 0; i < LookaheadLUTs ; i++ ) begin : LUTb_Gen
             localparam offset = i*`MAX_LUT_SIZE;
             localparam floatType[0:`MAX_LUT_SIZE-1] hb_slice = GetHb(offset);
             if (i < $floor(N*Lookahead/`MAX_LUT_SIZE)) begin
-                LUT #(.size(`MAX_LUT_SIZE), .fact(hb_slice)) lut_ (.sel(sampleahead[offset +: `MAX_LUT_SIZE]), .result(lutResults[i]));
+                LUT #(.size(`MAX_LUT_SIZE), .fact(hb_slice)) lut_b (.sel(sampleahead[offset +: `MAX_LUT_SIZE]), .result(lutResults[i]));
             end else if (LookaheadRest > 0) begin
-                LUT #(.size(LookaheadRest), .fact(hb_slice[0:LookaheadRest-1])) CFL_ (.sel(sampleahead[offset +: LookaheadRest]), .result(lutResults[i]));
+                LUT #(.size(LookaheadRest), .fact(hb_slice[0:LookaheadRest-1])) CFL_b (.sel(sampleahead[offset +: LookaheadRest]), .result(lutResults[i]));
             end else
                 $error("Faulty LUT generation! Lookahead rest = %d", LookaheadRest);
         end
         
-        for (i = 0; i < LookbackLUTs; i++ ) begin
+        for (i = 0; i < LookbackLUTs; i++ ) begin : LUTf_Gen
             localparam offset = i*`MAX_LUT_SIZE;
             localparam floatType[0:`MAX_LUT_SIZE-1] hf_slice = GetHf(offset);
             if (i < $floor(N*Lookback/`MAX_LUT_SIZE)) begin
-                LUT #(.size(`MAX_LUT_SIZE), .fact(hf_slice)) lut_ (.sel(sampleback[offset +: `MAX_LUT_SIZE]), .result(lutResults[LookaheadLUTs + i]));
+                LUT #(.size(`MAX_LUT_SIZE), .fact(hf_slice)) lut_f (.sel(sampleback[offset +: `MAX_LUT_SIZE]), .result(lutResults[LookaheadLUTs + i]));
             end else if (LookbackRest > 0) begin
-                LUT #(.size(LookbackRest), .fact(hf_slice[0:LookbackRest-1])) CFL_ (.sel(sampleback[offset +: LookbackRest]), .result(lutResults[LookaheadLUTs + i]));
+                LUT #(.size(LookbackRest), .fact(hf_slice[0:LookbackRest-1])) CFL_f (.sel(sampleback[offset +: LookbackRest]), .result(lutResults[LookaheadLUTs + i]));
             end else
                 $error("Faulty LUT generation! Lookback rest = %d", LookbackRest);
         end
