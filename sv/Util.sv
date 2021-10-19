@@ -100,5 +100,12 @@ endfunction
         ftor = tempR;
         end
     endfunction
+
+    function real absr(real in);
+        if(in >= 0)
+            absr = in;
+        else
+            absr = -in;
+    endfunction
 //endpackage
 `endif  // _UTIL_SV_
