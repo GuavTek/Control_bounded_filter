@@ -8,6 +8,9 @@ top_pins.io
 Stratus/Batch_filter/Batch_filter.pro.user.1.3
 Stratus/Parallel_filter/Parallel_filter.pro.user.1.3
 sources.txt
+*.png
+*exp*.csv
+*mant*.csv
 
 tb/waves.shm/
 tb/.simvision/
