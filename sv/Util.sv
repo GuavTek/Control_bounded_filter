@@ -95,7 +95,7 @@ endfunction
         end else begin
             tempR = real'(tempF);
         end
-        tempR = tempR * 2**(bias);
+        tempR = tempR * 2.0**(bias);
 
         ftor = tempR;
         end
