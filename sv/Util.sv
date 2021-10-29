@@ -74,6 +74,11 @@ endfunction
             absIn = -in;
         end
             
+        // Prevent underflow for subnormal values
+        if ((exponent + floatBias) < 0) begin
+            exponent = -floatBias;
+        end
+            
         temp.exp = exponent + floatBias;
         mant = (absIn * 2.0**(`MANT_W-exponent));
         temp.mantis = mant[`MANT_W-1:0];
@@ -88,7 +93,10 @@ endfunction
         automatic real floatBias = 2 ** (`EXP_W - 1) - 1;
         automatic real bias = real'(in.exp) - floatBias - real'(`MANT_W);
 
+        if(in.exp > 0)
         tempF = {1'b1, in.mantis};
+        else
+            tempF = {1'b0, in.mantis};
         
         if (in.sign) begin
             tempR = -real'(tempF);
