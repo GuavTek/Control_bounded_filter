@@ -121,7 +121,7 @@ module TB_FIR #() ();
     // define reset cycle
     initial begin
         rst = 0;
-        repeat(2) @(posedge clk);
+        repeat(`OSR+1) @(posedge clk);
         rst = 1;
     end
 
