@@ -109,6 +109,25 @@ endfunction
         end
     endfunction
 
+    function complex cpow(real r, real i, int exp);
+        complex result;
+        real tempR, tempI;
+        tempR = r;
+        tempI = i;
+        for (int j = 1; j < exp ; j++ ) begin
+            //cmulcc.r = (a.r * b.r) - (a.i * b.i);
+            //cmulcc.i = (a.i * b.r) + (a.r * b.i);
+            real tempReal, tempImag;
+            tempReal = (tempR * r) - (tempI * i);
+            tempImag = (tempI * r) + (tempR * i);
+            tempR = tempReal;
+            tempI = tempImag;
+        end
+        result.r = rtof(tempR);
+        result.i = rtof(tempI);
+        return result;
+    endfunction
+
     function real absr(real in);
         if(in >= 0)
             absr = in;
