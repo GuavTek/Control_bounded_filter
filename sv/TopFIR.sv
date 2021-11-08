@@ -2,22 +2,25 @@
 `define TOPFIR_SV_
 
 `include "Util.sv"
-`include "Data/Coefficients_FIR1.sv"
+`include "Data/Coefficients.sv"
 `include "FPU.sv"
 `include "LUT.sv"
 
-`define MAX_LUT_SIZE 6
+`define MAX_LUT_SIZE 7
 
 module FIR_top #(
     parameter Lookahead = 240,
     parameter Lookback = 240,
     parameter OSR = 12
 ) (
-    input wire [Coefficients_FIR1::N-1:0] in,
-    input logic rst, clk,
-    output floatType out
+    in, rst, clk, out
 );
-    import Coefficients_FIR1::*;
+    import Coefficients::*;
+
+    input wire [N-1:0] in;
+    input logic rst, clk;
+    output floatType out;
+
     localparam Looktotal = Lookahead + Lookback;
     localparam int LookaheadLUTs = $ceil(N*Lookahead/`MAX_LUT_SIZE);
     localparam int LookbackLUTs = $ceil(N*Lookback/`MAX_LUT_SIZE);
@@ -109,7 +112,6 @@ module FIR_top #(
 
     function automatic floatType[0:`MAX_LUT_SIZE-1] GetHb (int startIndex);
         floatType[0:`MAX_LUT_SIZE-1] tempArray;
-        floatType temp;
         for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
             tempArray[i] = rtof(hb[startIndex + i]);
         end
