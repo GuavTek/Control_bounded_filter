@@ -11,6 +11,10 @@ sources.txt
 *.png
 *exp*.csv
 *mant*.csv
+*.pyc
+*.diag
+*.log
+*.cmd
 
 tb/waves.shm/
 tb/.simvision/
