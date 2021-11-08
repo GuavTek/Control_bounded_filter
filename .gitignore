@@ -15,6 +15,7 @@ sources.txt
 *.diag
 *.log
 *.cmd
+spectre_tb/
 
 tb/waves.shm/
 tb/.simvision/
