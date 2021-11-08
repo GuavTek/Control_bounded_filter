@@ -8,9 +8,6 @@
 `include "RecursionModule_prop.sv"
 `include "TopBatch_prop.sv"
 
-`define TestLength 24000
-`define T 4.167
-
 `ifndef DEPTH
     `define DEPTH 220
 `endif
@@ -22,6 +19,13 @@
 `ifndef VERBOSE_LVL
     `define VERBOSE_LVL 2
 `endif
+
+`ifndef OUT_FILE
+    `define OUT_FILE results_batch
+`endif
+
+`define TestLength 24000
+`define T 4.167
 
 module TB_BATCH #() ();
     logic rst = 1;
@@ -70,7 +74,8 @@ module TB_BATCH #() ();
     floatType result;
     initial begin
         // Open output file
-        static int fdo = $fopen("./Data/results_batch.csv", "w");
+        static string file_path = {"./Data/", `STRINGIFY(`OUT_FILE), ".csv"};
+        static int fdo = $fopen(file_path, "w");
         if (!fdo) begin
             $error("File output was not opened");
             $stop;
