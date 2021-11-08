@@ -37,12 +37,26 @@ fi
 # Set default value
 if [ -z ${TOP_MODULE} ]
 then
-	SUPERARG="${SUPERARG} -top work.TOP_BATCH"
-else
-	SUPERARG="${SUPERARG} -top work.$TOP_MODULE"
+	TOP_MODULE="TB_BATCH"
 fi
 
-if xrun -faccess +r -SV $SUPERARG -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ./*.sv
+SUPERARG="${SUPERARG} -top work.$TOP_MODULE"
+
+if [ "$TOP_MODULE" = "TB_BATCH" ]
+then
+	TOP_FILE="TB_BATCH.sv"
+elif [ "$TOP_MODULE" = "TB_FIR" ]
+then
+	TOP_FILE="TB_FIR.sv"
+elif [ "$TOP_MODULE" = "TB_FIR_Fixed" ]
+then
+	TOP_FILE="TB_FIR_Fixed.sv"
+elif [ "$TOP_MODULE" = "TB_BATCH_Fixed" ]
+then
+	TOP_FILE="TB_BATCH_Fixed.sv"
+fi
+
+if xrun -faccess +r -SV $SUPERARG -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ $TOP_FILE
 then
 	echo "Success"
 else
