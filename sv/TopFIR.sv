@@ -46,13 +46,25 @@ module FIR_top #(
         end
     endgenerate
 
-
-    // Shift register
     logic[N*Looktotal-1:0] inShift;
-    always @(posedge clk) begin
-        inShift[N*Looktotal-1:N] = inShift[N*Looktotal-N-1:0];
-        inShift[N-1:0] = in;
+    logic [N*OSR-1:0] inSample;
+    always @(posedge clkDS) begin
+        inShift[N*Looktotal-1:N*OSR] = inShift[N*Looktotal-N*OSR-1:0];
+        inShift[N*OSR-1:0] = inSample;
     end
+
+    // Reduce activity factor
+    generate
+        if (OSR > 1) begin
+    always @(posedge clk) begin
+                //inSample[N*OSR-1:N] = inSample[N*OSR-N-1:0];
+                inSample[N*(OSR - osrCount)-1 -: N] = in;
+    end
+        end else begin
+            assign inSample = in;
+        end
+    endgenerate
+    
 
     logic[N*Lookahead-1:0] sampleahead;
     logic[N*Lookback-1:0] sampleback;
