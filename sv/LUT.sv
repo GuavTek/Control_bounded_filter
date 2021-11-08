@@ -23,13 +23,14 @@ module LUT #(
                 temp -= ftor(fact[j]);
             end
         end
-        getVal = temp;
+        return temp;
     endfunction
 
     genvar i;
     generate
         for(i = 0; i < 2**size; i++) begin
-            assign mem[i] = rtof(getVal(i));
+            localparam floatType temp = rtof(getVal(i));
+            assign mem[i] = temp;
         end
     endgenerate
 
