@@ -24,7 +24,7 @@
 `endif
 
 module TB_BATCH #() ();
-    logic rst;
+    logic rst = 1;
     logic clk;
     import Coefficients::*;
 
@@ -111,8 +111,9 @@ module TB_BATCH #() ();
 
     // define reset cycle
     initial begin
+        repeat(4) @(posedge clk);
         rst = 0;
-        repeat(5) @(posedge clk);
+        repeat(2*`OSR + 1) @(posedge clk);
         rst = 1;
     end
 
