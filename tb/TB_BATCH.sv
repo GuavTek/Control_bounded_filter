@@ -82,6 +82,11 @@ module TB_BATCH #() ();
 
         // Write data
         for (int i = 0; i < `TestLength; i++) begin
+            // Write only one in OSR number of results
+            if (i % `OSR) begin 
+                @(posedge clk);
+                continue;
+            end
             $fwrite(fdo, "%f, ", ftor(result));
             //$fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 2)
@@ -125,7 +130,7 @@ module TB_BATCH #() ();
     RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_top #(.depth(`DEPTH), .OSR(1)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
+    Batch_top #(.depth(`DEPTH), .OSR(`OSR)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
