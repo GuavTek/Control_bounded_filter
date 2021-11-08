@@ -13,7 +13,7 @@ module FIR_prop #(
     out,
     lutResults, adderResults
 );
-    import Coefficients_FIR1::*;
+    import Coefficients::*;
     localparam Looktotal = Lookahead + Lookback;
     localparam int LookaheadLUTs = $ceil(N*Lookahead/`MAX_LUT_SIZE);
     localparam int LookbackLUTs = $ceil(N*Lookback/`MAX_LUT_SIZE);
@@ -34,7 +34,7 @@ module FIR_prop #(
         end
     endfunction
 
-    input wire [Coefficients_FIR1::N-1:0] in;
+    input wire [N-1:0] in;
     input logic rst, clk;
     input floatType out;
     input floatType lutResults[AddersNum-1:0];
@@ -53,7 +53,7 @@ module FIR_prop #(
         for (int i = 0; i < LookbackLUTs ; i++ ) begin
             automatic int offset = i*`MAX_LUT_SIZE;
             automatic floatType[0:`MAX_LUT_SIZE-1] temp_slice = FIR_top.GetHf(offset);
-        //    void'(CheckHf(offset, temp_slice));
+            void'(CheckHf(offset, temp_slice));
         end
 
     end
