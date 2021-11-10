@@ -1,5 +1,5 @@
-`ifndef FPU_PROP_SV_
-`define FPU_PROP_SV_
+`ifndef FIXPU_PROP_SV_
+`define FIXPU_PROP_SV_
 
 `include "../sv/Util.sv"
 `include "../sv/FixPU.sv"
@@ -19,21 +19,23 @@ module FixPU_prop #(
     input logic clk;
     input logic signed[n_tot:0] result;
 
+    localparam n_mult = 2*n_tot + 1;
+
     property Adder;
         @(negedge clk) result == A + B;
     endproperty
 
     property Multiplier;
-        @(negedge clk) result == ((A * B) >> n_mant);
+        @(negedge clk) result == ((n_mult'(A) * n_mult'(B)) >>> n_mant);
     endproperty
 
     // Verify correct module behaviour
     if (op == ADD) begin
         assert property (disable iff($isunknown(A) || $isunknown(B)) Adder)
-        else $display("Wrong FPU result! %f + %f != %f, expecting %f", $itor(A) * 2.0**(-n_mant), $itor(B) * 2.0**(-n_mant), $itor(result) * 2.0**(-n_mant), $itor(A + B)); 
+        else $display("Wrong FPU result! %f + %f != %f, expecting %f", $itor(A) * 2.0**(-n_mant), $itor(B) * 2.0**(-n_mant), $itor(result) * 2.0**(-n_mant), $itor(A + B) * 2.0**(-n_mant)); 
     end else begin
         assert property (disable iff($isunknown(A) || $isunknown(B)) Multiplier)
-        else $display("Wrong FPU result! %f * %f != %f, expecting %f", $itor(A) * 2.0**(-n_mant), $itor(B) * 2.0**(-n_mant), $itor(result), ($itor(A) * 2.0**(-n_mant)) * ($itor(B) * 2.0**(-n_mant))); 
+        else $display("Wrong FPU result! %f * %f != %f, expecting %f", $itor(A) * 2.0**(-n_mant), $itor(B) * 2.0**(-n_mant), $itor(result) * 2.0**(-n_mant), ($itor(A) * 2.0**(-n_mant)) * ($itor(B) * 2.0**(-n_mant))); 
     end
 
 endmodule

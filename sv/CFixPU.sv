@@ -28,7 +28,7 @@ generate
         begin
             //cmulcc.r = (a.r * b.r) - (a.i * b.i);
             //cmulcc.i = (a.i * b.r) + (a.r * b.i);
-            logic signed[n_tot:0] tempRR, tempRI, tempRI_n tempIR, tempII;
+            logic signed[n_tot:0] tempRR, tempRI, tempRI_n, tempIR, tempII;
             logic signed[n_tot:0] temp2;
             // Real result
             FixPU #(.op(MULT), .n_int(n_int), .n_mant(n_mant)) fr1 (.A(AR), .B(BR), .clk(clk), .result(tempRR));

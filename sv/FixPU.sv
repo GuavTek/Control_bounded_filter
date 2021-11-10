@@ -25,7 +25,7 @@ module FixPU #(
         begin 
             logic signed[2*n_tot:0] AB;
             assign AB = A * B;
-            assign result = {AB[2*n_tot], AB[n_mant +: n_tot]};
+            assign result = AB >>> n_mant;
         end
         endcase
     endgenerate
