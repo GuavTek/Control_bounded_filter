@@ -17,11 +17,11 @@ sources.txt
 *.cmd
 spectre_tb/
 
-tb/waves.shm/
-tb/.simvision/
-tb/xcelium.d/
-tb/sim_cov
-tb/transcript
-tb/xrun*
-tb/xmvlog*
-tb/vsim.wlf
+*waves.shm/
+*.simvision/
+*xcelium.d/
+*sim_cov
+*transcript
+*xrun*
+*xmvlog*
+*vsim.wlf
