@@ -35,8 +35,8 @@ module FIR_Fixed_top #(
     output logic valid;
 
     localparam Looktotal = Lookahead + Lookback;
-    localparam int LookaheadLUTs = $ceil(N*Lookahead/`MAX_LUT_SIZE);
-    localparam int LookbackLUTs = $ceil(N*Lookback/`MAX_LUT_SIZE);
+    localparam int LookaheadLUTs = $ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE);
+    localparam int LookbackLUTs = $ceil((0.0 + N*Lookback)/`MAX_LUT_SIZE);
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
     localparam n_int = `EXP_W;

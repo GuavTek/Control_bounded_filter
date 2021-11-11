@@ -61,7 +61,7 @@ module FixLUT_Unit #(
     input logic clk;
     output logic signed[n_tot:0] result;
 
-    localparam int AddersNum = $ceil(size/lut_size);
+    localparam int AddersNum = $ceil((0.0 + size)/lut_size);
     localparam AdderLayers = $clog2(AddersNum);
 
     function int GetAdderNum(int n);

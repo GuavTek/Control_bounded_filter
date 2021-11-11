@@ -35,7 +35,7 @@ module Batch_Fixed_top #(
     localparam SampleWidth = N*OSR; 
     localparam LUTsplit = $rtoi($ceil(N*OSR/`MAX_LUT_SIZE +1));
     localparam n_tot = n_int + n_mant;
-    localparam LUT_Delay = $clog2($ceil(SampleWidth/`MAX_LUT_SIZE));
+    localparam LUT_Delay = $clog2($rtoi($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE))) + 1;
 
     input wire [N-1:0] in;
     input logic rst, clk;
