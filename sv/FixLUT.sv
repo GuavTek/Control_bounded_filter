@@ -49,7 +49,8 @@ module FixLUT_Unit #(
                 lut_size = 6,
                 n_int = 8,
                 n_mant = 23,
-                is_comb = 0,
+                adders_comb = 0,
+                lut_comb = 0,
     parameter logic signed[size-1:0][n_int+n_mant:0] fact = 0
 ) (
     sel,
@@ -88,13 +89,13 @@ module FixLUT_Unit #(
 
     virtual class GetFact#(parameter slice_size = 1);
         static function logic signed[slice_size-1:0][n_tot:0] Get (int startIndex);
-        logic signed[slice_size-1:0][n_tot:0] tempArray;
-        
-        for (int i = 0; i < slice_size ; i++) begin
-            tempArray[i][n_tot:0] = fact[startIndex + i][n_tot:0];
-        end
-        return tempArray;
-    endfunction 
+            logic signed[slice_size-1:0][n_tot:0] tempArray;
+            
+            for (int i = 0; i < slice_size ; i++) begin
+                tempArray[i][n_tot:0] = fact[startIndex + i][n_tot:0];
+            end
+            return tempArray;
+        endfunction 
     endclass
 
     logic signed[n_tot:0] lutResults[AddersNum-1:0];
@@ -115,7 +116,7 @@ module FixLUT_Unit #(
                 FixLUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
             end
 
-            if (is_comb > 0) begin : Comb_Gen
+            if (lut_comb > 0) begin : Comb_Gen
                 assign lutResults[i] = tempResult;
             end else begin : FF_Gen
                 always @(posedge clk) begin
@@ -149,7 +150,7 @@ module FixLUT_Unit #(
                     end
                 end
 
-                if (is_comb > 0) begin : Comb_Gen
+                if ((i % adders_comb) > 0) begin : Comb_Gen
                     assign    adderResults[nextRes + ii] = tempResult;
                 end else begin : FF_Gen
                     always @(posedge clk) begin
