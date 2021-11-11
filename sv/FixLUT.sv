@@ -104,14 +104,23 @@ module FixLUT_Unit #(
         localparam LUTRest = size % lut_size;
 
         for (genvar i = 0; i < AddersNum ; i++ ) begin : LUT_Gen
+            logic signed[n_tot:0] tempResult;
             localparam offset = i*lut_size;
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
                 localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact#(lut_size)::Get(offset);
-                FixLUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_size]), .result(lutResults[i]));
+                FixLUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else if (lut_rem > 0) begin
                 localparam logic signed[lut_rem-1:0][n_tot:0] fact_slice = GetFact#(lut_rem)::Get(offset);
-                FixLUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(lutResults[i]));
+                FixLUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
+            end
+
+            if (is_comb > 0) begin : Comb_Gen
+                assign lutResults[i] = tempResult;
+            end else begin : FF_Gen
+                always @(posedge clk) begin
+                    lutResults[i] = tempResult;
+                end
             end
         end
     endgenerate
