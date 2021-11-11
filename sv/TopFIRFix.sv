@@ -55,7 +55,7 @@ module FIR_Fixed_top #(
                     osrCount++;
                 prevRst = rst;
 
-                if (osrCount == $floor(OSR/2))
+                if (osrCount == int'($floor(OSR/2)))
                     clkDS = 0;
                 if (osrCount == OSR) begin
                     osrCount = 0;
