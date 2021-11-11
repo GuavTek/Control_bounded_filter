@@ -15,6 +15,7 @@
 `include "FixToFix.sv"
 
 `define MAX_LUT_SIZE 6
+`define COMB_ADDERS 3
 `define OUT_WIDTH 14
 
 module FIR_Fixed_top #(
@@ -68,7 +69,7 @@ module FIR_Fixed_top #(
     endgenerate
     
     // Data valid counter
-    localparam int validTime = $ceil(Looktotal/OSR) + AdderLayers + 2;
+    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil(AdderLayers/`COMB_ADDERS) + 2;
     logic[$clog2(validTime):0] validCount;
     logic validResult;
     always @(posedge clkDS) begin
@@ -120,135 +121,45 @@ module FIR_Fixed_top #(
         end
     endgenerate
 
-    function int GetAdderNum(int n);
-        automatic real temp = AddersNum;
-        for(int i = 0; i < n; i++)
-            temp = $ceil(temp/2);
-        temp = $floor(temp/2);
-        $info("AdderNum returning %d", temp);
-        GetAdderNum = temp;
-    endfunction
+    function automatic logic signed[N*Lookahead-1:0][n_tot:0] GetHb (int startIndex);
+        logic signed[N*Lookahead-1:0][n_tot:0] tempArray;
 
-    function int GetRegsNum(int n);
-        automatic real temp = AddersNum;
-        for (int i = 0; i <= n; i++)
-            temp = $ceil(temp/2);
-        GetRegsNum = temp;
-    endfunction
-
-    function int GetFirstReg(int n);
-        automatic int temp = 0;
-        for (int i = 1; i < n; i++)
-            temp += GetRegsNum(i-1);
-        GetFirstReg = temp;
-    endfunction
-
-    function automatic logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] GetHb (int startIndex);
-        logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempArray;
-
-        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+        for (int i = 0; i < N*Lookahead ; i++) begin
             logic signed[n_tot:0] temp = hb[startIndex + i] >>> (COEFF_BIAS - n_mant);
             tempArray[i][n_tot:0] = temp;
         end
         return tempArray;
     endfunction
 
-
-    function automatic logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] GetHf (int startIndex);
-        logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempArray;
+    function automatic logic signed[N*Lookback-1:0][n_tot:0] GetHf (int startIndex);
+        logic signed[N*Lookback-1:0][n_tot:0] tempArray;
         
-        for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
+        for (int i = 0; i < N*Lookback ; i++) begin
             logic signed[n_tot:0] temp = hf[startIndex + i] >>> (COEFF_BIAS - n_mant);
             tempArray[i][n_tot:0] = temp;
         end
         return tempArray;
     endfunction 
 
-    /*
-    virtual class GetHf#(parameter startIndex);
-        static function logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] Get();
-            logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempArray;
+    logic signed[n_tot:0] lookbackResult, lookaheadResult, totResult;
+    localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = GetHf(0);
+    localparam logic signed[N*Lookback-1:0][n_tot:0] hb_slice = GetHb(0);
+    
+    FixLUT_Unit #(
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
+                .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
+            );
 
-            for (int i = 0; i < `MAX_LUT_SIZE ; i++) begin
-                localparam logic signed[n_tot:0] temp = (Coefficients_FIR1::hf[startIndex + i] * 2.0**n_mant);
-                tempArray[i][n_tot:0] = temp;
-            end
-            return tempArray;
-        endfunction
-    endclass
-    */
+    FixLUT_Unit #(
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookback), .lut_size(`MAX_LUT_SIZE), .fact(hf_slice), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
+                .sel(sampleback), .clk(clkDS), .result(lookbackResult)
+            );
 
-    logic signed[n_tot:0] lutResults[AddersNum-1:0];
-    logic signed[n_tot:0] adderResults[GetFirstReg(AdderLayers):0];
-    // Generate LUTs
-    generate
-        localparam LookaheadRest = (N*Lookahead)% `MAX_LUT_SIZE;
-        localparam LookbackRest = (N*Lookback) % `MAX_LUT_SIZE;
-
-        for (i = 0; i < LookaheadLUTs ; i++ ) begin : LUTb_Gen
-            localparam offset = i*`MAX_LUT_SIZE;
-            localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] hb_slice = GetHb(offset);
-            if (i < $floor(N*Lookahead/`MAX_LUT_SIZE)) begin
-                FixLUT #(.size(`MAX_LUT_SIZE), .n_int(n_int), .n_mant(n_mant), .fact(hb_slice)) lut_b (.sel(sampleahead[offset +: `MAX_LUT_SIZE]), .result(lutResults[i]));
-            end else if (LookaheadRest > 0) begin
-                FixLUT #(.size(LookaheadRest), .n_int(n_int), .n_mant(n_mant), .fact(hb_slice[LookaheadRest-1:0])) CFL_b (.sel(sampleahead[offset +: LookaheadRest]), .result(lutResults[i]));
-            end else
-                $error("Faulty LUT generation! Lookahead rest = %d", LookaheadRest);
-        end
-        
-        for (i = 0; i < LookbackLUTs; i++ ) begin : LUTf_Gen
-            localparam offset = i*`MAX_LUT_SIZE;
-            localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] hf_slice = GetHf(offset);
-            if (i < $floor(N*Lookback/`MAX_LUT_SIZE)) begin
-                FixLUT #(.size(`MAX_LUT_SIZE), .n_int(n_int), .n_mant(n_mant), .fact(hf_slice)) lut_f (.sel(sampleback[offset +: `MAX_LUT_SIZE]), .result(lutResults[LookaheadLUTs + i]));
-            end else if (LookbackRest > 0) begin
-                FixLUT #(.size(LookbackRest), .n_int(n_int), .n_mant(n_mant), .fact(hf_slice[LookbackRest-1:0])) CFL_f (.sel(sampleback[offset +: LookbackRest]), .result(lutResults[LookaheadLUTs + i]));
-            end else
-                $error("Faulty LUT generation! Lookback rest = %d", LookbackRest);
-        end
-    endgenerate
-
-    // Generate adders
-    generate
-        genvar ii;
-        $info("Generating adders");
-        for (i = 0; i < AdderLayers ; i++ ) begin
-            $info("Starting adder layer %d", i);
-            localparam addfloor = GetAdderNum(i);
-            $info("Number of adders %d", addfloor);
-            localparam addceil = GetRegsNum(i);
-            $info("Number of regs %d", addceil);
-            localparam firstRes = GetFirstReg(i);
-            $info("Start of last layer %d", firstRes);
-            localparam nextRes = GetFirstReg(i+1);
-            $info("Start of current layer %d", nextRes);
-            for ( ii = 0; ii < addceil; ii++) begin
-                logic signed[n_tot:0] tempResult;
-                if ( i == 0 ) begin
-                    if ( ii < addfloor ) begin
-                        FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clkDS), .result(tempResult));
-                    end else begin
-                        assign tempResult = lutResults[2*ii];
-                    end
-                end else begin
-                    if ( ii < addfloor) begin
-                        FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clkDS), .result(tempResult));
-                    end else begin
-                        assign tempResult = adderResults[firstRes + 2*ii];
-                    end
-                end
-
-                always @(posedge clkDS) begin
-                    adderResults[nextRes + ii] = tempResult;
-                end
-            end
-            
-        end
-    endgenerate
+    FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
 
     logic [`OUT_WIDTH-1:0] rectifiedResult;
     logic signed[`OUT_WIDTH-1:0] scaledResult;
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) FinalScaler (.in( adderResults[GetFirstReg(AdderLayers)] ), .out( scaledResult ) );
+    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) FinalScaler (.in( totResult ), .out( scaledResult ) );
 
     assign rectifiedResult[`OUT_WIDTH-1] = !scaledResult[`OUT_WIDTH-1];
     assign rectifiedResult[`OUT_WIDTH-2:0] = scaledResult[`OUT_WIDTH-2:0];
