@@ -143,8 +143,7 @@ module FixLUT_Unit #(
 
                 if (is_comb > 0) begin
                     assign    adderResults[nextRes + ii] = tempResult;
-                end else begin
-                    always @(posedge clkDS) begin
+                    always @(posedge clk) begin
                         adderResults[nextRes + ii] = tempResult;
                     end
                 end
