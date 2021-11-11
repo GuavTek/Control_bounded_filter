@@ -24,6 +24,7 @@ for arg in sys.argv:
         print("-mant=\t\t Number of mantissa bits used in design")
         print("-exp=\t\t Number of exponent bits (floating point) or integer bits (fixed point)")
         print("-osr=\t\t Downsampling rate")
+        print("-depth\t\t Define the size of filter/batches")
         print("-top=\t\t Name of testbench module")
         print("-verbose=\t Change how many checks are performed")
         print("-noplot\t\t Skip plotting of results")
