@@ -34,6 +34,6 @@ for arg in sys.argv:
         superarg = superarg + ' ' + arg
 print(superarg)
 for i in range(7, topMant+1):
-    os.system('./simulate.sh' + superarg + ' -out=' + outfileName + str(i) + ' -mant=' + str(i))
+    os.system('./simulate.py -noplot' + superarg + ' -out=' + outfileName + str(i) + ' -mant=' + str(i))
 plot.PlotSeries(outfileName, np.arange(7, topMant+1), topModule + ' with mantissa bits = ', 12, 240e6, topModule + " SNR", "Mantissa bits")
 

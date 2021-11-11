@@ -34,6 +34,6 @@ for arg in sys.argv:
         superarg = superarg + ' ' + arg
 print(superarg)
 for i in range(1, topExp+1):
-    os.system('./simulate.sh' + superarg + ' -out=' + outfileName + str(i) + ' -exp=' + str(i))
+    os.system('./simulate.py -noplot' + superarg + ' -out=' + outfileName + str(i) + ' -exp=' + str(i))
 plot.PlotSeries(outfileName, np.arange(1, topExp+1), topModule + ' with exponent bits = ', 12, 240e6, topModule + " SNR", "Exponent bits")
 
