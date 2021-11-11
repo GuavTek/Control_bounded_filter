@@ -10,21 +10,32 @@ module Batch_Fixed_prop #(
     parameter n_mant = 8,
     parameter n_int = 23
 ) (
-    input wire [Coefficients::N-1:0] in,
-    input logic rst, clk, clkDS, valid,
-    input logic[`OUT_WIDTH-1:0] out,
-    input logic[$clog2($rtoi($ceil(depth / OSR)))-1:0] dBatCount, dBatCountRev, delayBatCount[2:0], delayBatCountRev[2:0], 
-    input logic cyclePulse, regProp,
-    input logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc, delayCycle[2:0],
-    input logic[Coefficients::N*OSR-1:0] inShift,
-    input logic[Coefficients::N*OSR-1:0] slh, scob, sf_delay, scof,
-    input logic[`OUT_WIDTH-1:0] finF, finB, finResult, partMemF, partMemB,
-    input logic signed[n_mant+n_int:0] partResF[Coefficients::N], partResB[Coefficients::N]
+    in,
+    rst, clk, clkDS, valid,
+    out,
+    dBatCount, dBatCountRev, delayBatCount, delayBatCountRev, 
+    cyclePulse, regProp,
+    cycle, cycleLH, cycleIdle, cycleCalc, delayCycle,
+    inShift,
+    slh, scob, sf_delay, scof,
+    finF, finB, finResult, partMemF, partMemB,
+    partResF, partResB
 );
     import Coefficients::*;
     localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
-
+    localparam SampleWidth = N*OSR; 
+    localparam LUT_Delay = $clog2($rtoi($ceil(SampleWidth/`MAX_LUT_SIZE)));
     
+    input wire [N-1:0] in;
+    input logic rst, clk, clkDS, valid;
+    input logic[`OUT_WIDTH-1:0] out;
+    input logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev, delayBatCount[LUT_Delay + 2:0], delayBatCountRev[LUT_Delay + 2:0];
+    input logic cyclePulse, regProp;
+    input logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc, delayCycle[LUT_Delay + 2:0];
+    input logic[N*OSR-1:0] inShift;
+    input logic[N*OSR-1:0] slh, scob, sf_delay, scof;
+    input logic[`OUT_WIDTH-1:0] finF, finB, finResult, partMemF, partMemB;
+    input logic signed[n_mant+n_int:0] partResF[N], partResB[N];
 
     property continuity_p;
         1 |=> $abs($abs(out) - $abs($past(out))) * 2.0**(-n_mant) < 0.3;
