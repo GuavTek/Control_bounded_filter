@@ -13,7 +13,10 @@ topModule = 'Batch'
 topExp = 8
 for arg in sys.argv:
     content = arg.split('=')
-    if content[0] == '-exp':
+    if content[0] == 'help':
+        os.system('./simulate.py -help')
+        sys.exit()
+    elif content[0] == '-exp':
         topExp = int(content[1])
     elif content[0] == '-out':
         outfileName = content[1]

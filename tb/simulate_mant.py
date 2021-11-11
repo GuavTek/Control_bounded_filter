@@ -13,7 +13,10 @@ topModule = 'Batch'
 topMant = 23
 for arg in sys.argv:
     content = arg.split('=')
-    if content[0] == '-mant':
+    if content[0] == 'help':
+        os.system('./simulate.py -help')
+        sys.exit()
+    elif content[0] == '-mant':
         topMant = int(content[1])
     elif content[0] == '-out':
         outfileName = content[1]
