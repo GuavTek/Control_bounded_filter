@@ -119,30 +119,30 @@ module FixLUT_Unit #(
     // Generate adders
     generate
         genvar i, ii;
-        for (i = 0; i < AdderLayers ; i++ ) begin
+        for (i = 0; i < AdderLayers ; i++ ) begin : ADDER_Gen
             localparam addfloor = GetAdderNum(i);
             localparam addceil = GetRegsNum(i);
             localparam firstRes = GetFirstReg(i);
             localparam nextRes = GetFirstReg(i+1);
-
-            for ( ii = 0; ii < addceil; ii++) begin
+            for ( ii = 0; ii < addceil; ii++) begin : Layer_Instance_Gen
                 logic signed[n_tot:0] tempResult;
-                if ( i == 0 ) begin
-                    if ( ii < addfloor ) begin
+                if ( i == 0 ) begin : Core_Gen
+                    if ( ii < addfloor ) begin : ADD_Gen
                         FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clk), .result(tempResult));
-                    end else begin
+                    end else begin : Reg_Gen
                         assign tempResult = lutResults[2*ii];
                     end
-                end else begin
-                    if ( ii < addfloor) begin
+                end else begin : Layer_Gen
+                    if ( ii < addfloor) begin : ADD_Gen
                         FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clk), .result(tempResult));
-                    end else begin
+                    end else begin : Reg_Gen
                         assign tempResult = adderResults[firstRes + 2*ii];
                     end
                 end
 
-                if (is_comb > 0) begin
+                if (is_comb > 0) begin : Comb_Gen
                     assign    adderResults[nextRes + ii] = tempResult;
+                end else begin : FF_Gen
                     always @(posedge clk) begin
                         adderResults[nextRes + ii] = tempResult;
                     end
