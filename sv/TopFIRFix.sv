@@ -25,10 +25,10 @@ module FIR_Fixed_top #(
 ) ( 
     in, rst, clk, out, valid
 );
-    import Coefficients::hf;
-    import Coefficients::hb;
-    import Coefficients::N;
-    import Coefficients::COEFF_BIAS;
+    import Coefficients_Fx::hf;
+    import Coefficients_Fx::hb;
+    import Coefficients_Fx::N;
+    import Coefficients_Fx::COEFF_BIAS;
 
     input wire [N-1:0] in;
     input logic rst, clk;

@@ -30,8 +30,7 @@ module Batch_Fixed_top #(
     resAddrInF, resAddrInB, resAddrOutF, resAddrOutB, resClkF, resClkB, resWriteF, resWriteB,
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
-    import Coefficients::*;
-    localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
+    import Coefficients_Fx::*;
     localparam SampleWidth = N*OSR; 
     localparam LUTsplit = $rtoi($ceil(N*OSR/`MAX_LUT_SIZE +1));
     localparam n_tot = n_int + n_mant;
