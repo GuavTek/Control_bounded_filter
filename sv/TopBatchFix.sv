@@ -14,6 +14,7 @@
 `include "FixToFix.sv"
 
 `define MAX_LUT_SIZE 6
+`define COMB_ADDERS 1
 `define OUT_WIDTH 14
 
 module Batch_Fixed_top #(
@@ -31,60 +32,66 @@ module Batch_Fixed_top #(
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::*;
+    localparam int DownSampleDepth = $ceil((0.0 + depth) / OSR);
     localparam SampleWidth = N*OSR; 
-    localparam LUTsplit = $rtoi($ceil(N*OSR/`MAX_LUT_SIZE +1));
     localparam n_tot = n_int + n_mant;
-    localparam LUT_Delay = $clog2($rtoi($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE))) + 1;
+    localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
+    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
 
     input wire [N-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
     // Sample memory
-    output logic[$clog2(4*$rtoi($ceil(depth / OSR)))-1:0]  sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
+    output logic[$clog2(4*DownSampleDepth)-1:0]  sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
 	output logic sampleClk, sampleWrite;
 	output logic[N*OSR-1:0] sampleDataIn;
 	input logic[N*OSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3;
     // Part result memory
-    output logic[$clog2(2*$rtoi($ceil(depth / OSR)))-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB;
+    output logic[$clog2(2*DownSampleDepth)-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB;
 	output logic resClkF, resClkB, resWriteF, resWriteB;
 	output logic[`OUT_WIDTH-1:0] resDataInF, resDataInB;
 	input logic[`OUT_WIDTH-1:0] resDataOutF, resDataOutB;
 
     // Downsampled clock
-    logic[$clog2(OSR)-1:0] osrCount = 0;      // Prescale counter
-    logic clkDS, rstPrev;
+    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
+    logic clkDS;
+    logic prevRst;
     generate
         if(OSR > 1) begin
             always @(posedge clk) begin
-                if(!rst && rstPrev) begin
+                if (!rst && prevRst)
                     osrCount = 0;
+                else if (osrCount == (OSR-1)) begin
+                    osrCount = 0;
+                    clkDS = 1;
                 end else
                     osrCount++;
-                if (osrCount >= OSR) begin
-                    osrCount = 0;
-                end
-                rstPrev = rst;
+                prevRst = rst;
+
+                if (osrCount == OSR/2)
+                    clkDS = 0;
+                
             end
-            assign clkDS = (osrCount <= $rtoi($floor(OSR/2)));
         end else begin
             assign clkDS = clk;
         end
-    endgenerate
+    endgenerate 
 
     // Shifted input
-    logic[SampleWidth-1:0] inShift, inShiftTemp;
+    logic[SampleWidth-1:0] inShift, inSample;
+    logic[$clog2(SampleWidth)-1:0] inSel;
 
-    // Generates shift register if OSR > 1
+    // Generates register if OSR > 1
     generate
         if (OSR > 1) begin
             always @(posedge clk) begin
-                inShiftTemp[SampleWidth-1:N] = inShiftTemp[SampleWidth-N-1:0];
-                inShiftTemp[N-1:0] = in;
+                inSel = N*(OSR - osrCount)-1;
+                inSample[inSel -: N] = in;
             end
 
             always @(posedge clkDS) begin
-                inShift = inShiftTemp;
+                inShift = inSample;
             end
         end else begin
             always @(posedge clk) begin
@@ -95,13 +102,18 @@ module Batch_Fixed_top #(
 
     // Counters for batch cycle
     logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // counters for input samples
-    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[2:0], delayBatCountRev[2:0];
+    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[LUT_Delay + 2:0], delayBatCountRev[LUT_Delay + 2:0];
+    generate
+        for (genvar i = (LUT_Delay + 2); i > 0 ; i-- ) begin
+            always @(posedge clkDS) begin
+                delayBatCount[i] = delayBatCount[i - 1];
+                delayBatCountRev[i] = delayBatCountRev[i - 1];
+            end
+        end
+    endgenerate
+    
     always @(posedge clkDS) begin
-        delayBatCount[2] = delayBatCount[1];
-        delayBatCount[1] = delayBatCount[0];
         delayBatCount[0] = dBatCount;
-        delayBatCountRev[2] = delayBatCountRev[1];
-        delayBatCountRev[1] = delayBatCountRev[0];
         delayBatCountRev[0] = dBatCountRev;
         if(!rst || (dBatCount == (DownSampleDepth-1))) begin
             dBatCount = 'b0;
@@ -113,19 +125,20 @@ module Batch_Fixed_top #(
     end
 
     // Count valid samples
-    localparam ValidDelay = 4*DownSampleDepth + 2;
+    localparam ValidDelay = 4*DownSampleDepth + LUT_Delay + 2;
     logic[$clog2(ValidDelay):0] validCount;
     logic validResult, validCompute;
     always @(posedge clkDS) begin
-        if(!rst)
+        if(!rst) begin
             validCount = 'b0;
-        else if (!validResult) begin
+            validCompute = 'b0;
+        end else if (!validResult) begin
             validCount++;
         end   
+        validCompute = validCompute | (validCount == (3*DownSampleDepth + LUT_Delay));
     end
 
     assign validResult = validCount == ValidDelay;
-    assign validCompute = validCount > 3*DownSampleDepth;
     assign valid = validResult;
 
     // Is low when the cycle is ending
@@ -133,17 +146,25 @@ module Batch_Fixed_top #(
     assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
 
     // Recursion register propagation is delayed one half cycle
-    logic regProp;
+    logic[LUT_Delay:0] regProp;
     always @(negedge clkDS) begin
-        regProp = cyclePulse;
+        regProp = regProp << 1;
+        regProp[0] = cyclePulse;
     end
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    logic[1:0] delayCycle[2:0];
+    logic[1:0] delayCycle[LUT_Delay + 2:0];
+    
+    generate
+        for (genvar i = (LUT_Delay + 2); i > 0 ; i-- ) begin
+            always @(posedge clkDS) begin
+                delayCycle[i] = delayCycle[i - 1];
+            end
+        end
+    endgenerate
+
     always @(posedge clkDS) begin
-        delayCycle[2] = delayCycle[1];
-        delayCycle[1] = delayCycle[0];
         delayCycle[0] = cycle;
         if(!rst) begin
             cycle = 2'b00;
@@ -206,9 +227,9 @@ module Batch_Fixed_top #(
         addrLH = {dBatCountRev, cycleLH};
         addrBR = {dBatCountRev, cycleCalc};
         addrFR = {dBatCount, cycleCalc};
-        addrResIn = {delayBatCount[2], delayCycle[2][0]};
-        addrResOutB = {delayBatCountRev[1], !delayCycle[1][0]};
-        addrResOutF = {delayBatCount[1], !delayCycle[1][0]};
+        addrResIn = {delayBatCount[2 + LUT_Delay], delayCycle[2 + LUT_Delay][0]};
+        addrResOutB = {delayBatCountRev[1 + LUT_Delay], !delayCycle[1 + LUT_Delay][0]};
+        addrResOutF = {delayBatCount[1 + LUT_Delay], !delayCycle[1 + LUT_Delay][0]};
     end
 
     // Must reverse sample order for backward recursion LUTs
@@ -221,34 +242,34 @@ module Batch_Fixed_top #(
         end
     endgenerate
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbr (int row, int startIndex);
+    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbr (int row);
         logic signed[SampleWidth-1:0][n_tot:0] tempArray;
         for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Fbr[row][startIndex + i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i][n_tot:0] = Fbr[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbi (int row, int startIndex);
+    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbi (int row);
         logic signed[SampleWidth-1:0][n_tot:0] tempArray;
         for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Fbi[row][startIndex + i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i][n_tot:0] = Fbi[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfr (int row, int startIndex);
+    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfr (int row);
         logic signed[SampleWidth-1:0][n_tot:0] tempArray;
         for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Ffr[row][startIndex + i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i][n_tot:0] = Ffr[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfi (int row, int startIndex);
+    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfi (int row);
         logic signed[SampleWidth-1:0][n_tot:0] tempArray;
         for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Ffi[row][startIndex + i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i][n_tot:0] = Ffi[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
@@ -277,129 +298,48 @@ module Batch_Fixed_top #(
         for (i = 0; i < N ; i++ ) begin
             logic signed[n_tot:0] CF_inR, CF_inI, CB_inR, CB_inI, LH_inR, LH_inI;
             
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfr = GetFfr(i, 0);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbr = GetFbr(i, 0);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfi = GetFfi(i, 0);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbi = GetFbi(i, 0);
+            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfr = GetFfr(i);
+            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbr = GetFbr(i);
+            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfi = GetFfi(i);
+            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbi = GetFbi(i);
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) LH_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) LH_LUTr (
                 .sel(slh_rev), .clk(clkDS), .result(LH_inR)
                 );
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
                 .sel(scof), .clk(clkDS), .result(CF_inR)
                 );
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) CB_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) CB_LUTr (
                 .sel(scob_rev), .clk(clkDS), .result(CB_inR)
             );
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) LH_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) LH_LUTi (
                 .sel(slh_rev), .clk(clkDS), .result(LH_inI)
                 );
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
                 .sel(scof), .clk(clkDS), .result(CF_inI)
                 );
 
             FixLUT_Unit #(
-                .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) CB_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) CB_LUTi (
                 .sel(scob_rev), .clk(clkDS), .result(CB_inI)
             );
 
-            /*
-            // Split large LUTs
-            if (LUTsplit == 0) begin
-                $error("Can't generate 0 LUTs");
-            end
-            //if (LUTsplit > 1) begin
-                logic signed[n_tot:0] LH_in_partR[LUTsplit-1:0];
-                logic signed[n_tot:0] LH_in_partI[LUTsplit-1:0];
-                logic signed[n_tot:0] CF_in_partR[LUTsplit-1:0];
-                logic signed[n_tot:0] CF_in_partI[LUTsplit-1:0];
-                logic signed[n_tot:0] CB_in_partI[LUTsplit-1:0];
-                logic signed[n_tot:0] CB_in_partR[LUTsplit-1:0];
-
-                genvar lut_i;
-                for (lut_i = 0; lut_i < LUTsplit ; lut_i++ ) begin
-                    localparam lut_offset = `MAX_LUT_SIZE*lut_i;
-                    localparam lut_rem = SampleWidth - lut_offset;
-                    localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempFfr = GetFfr(i, lut_offset);
-                    localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempFbr = GetFbr(i, lut_offset);
-                    localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempFfi = GetFfi(i, lut_offset);
-                    localparam logic signed[`MAX_LUT_SIZE-1:0][n_tot:0] tempFbi = GetFbi(i, lut_offset);
-                    logic signed[n_tot:0] tempLHR, tempLHI, tempCFR, tempCFI, tempCBR, tempCBI;
-                    if (lut_rem >= `MAX_LUT_SIZE) begin
-                        // Lookahead
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) LHLR_ (.sel(slh_rev[lut_offset +: `MAX_LUT_SIZE]), .result(tempLHR));
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) LHLI_ (.sel(slh_rev[lut_offset +: `MAX_LUT_SIZE]), .result(tempLHI));
-                        // Compute
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CFLR_ (.sel(scof[lut_offset +: `MAX_LUT_SIZE]), .result(tempCFR));
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CFLI_ (.sel(scof[lut_offset +: `MAX_LUT_SIZE]), .result(tempCFI));
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) CBLR_ (.sel(scob_rev[lut_offset +: `MAX_LUT_SIZE]), .result(tempCBR));
-                        FixLUT #(.size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) CBLI_ (.sel(scob_rev[lut_offset +: `MAX_LUT_SIZE]), .result(tempCBI));
-                    end else if(lut_rem > 0) begin
-                        // Lookahead
-                        FixLUT #(.size(lut_rem), .fact(tempFbr[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) LHLR_ (.sel(slh_rev[lut_offset +: lut_rem]), .result(tempLHR));
-                        FixLUT #(.size(lut_rem), .fact(tempFbi[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) LHLI_ (.sel(slh_rev[lut_offset +: lut_rem]), .result(tempLHI));
-                        // Compute
-                        FixLUT #(.size(lut_rem), .fact(tempFfr[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) CFLR_ (.sel(scof[lut_offset +: lut_rem]), .result(tempCFR));
-                        FixLUT #(.size(lut_rem), .fact(tempFfi[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) CFLI_ (.sel(scof[lut_offset +: lut_rem]), .result(tempCFI));
-                        FixLUT #(.size(lut_rem), .fact(tempFbr[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) CBLR_ (.sel(scob_rev[lut_offset +: lut_rem]), .result(tempCBR));
-                        FixLUT #(.size(lut_rem), .fact(tempFbi[lut_rem-1:0]), .n_int(n_int), .n_mant(n_mant)) CBLI_ (.sel(scob_rev[lut_offset +: lut_rem]), .result(tempCBI));
-                    end else begin
-                        $error("Faulty LUT generation! LUT rest = %d", lut_rem);
-                    end
-
-                    // Sum results
-                    if (lut_i == 0) begin
-                        assign LH_in_partR[0] = tempLHR;
-                        assign CF_in_partR[0] = tempCFR;
-                        assign CB_in_partR[0] = tempCBR;
-                        assign LH_in_partI[0] = tempLHI;
-                        assign CF_in_partI[0] = tempCFI;
-                        assign CB_in_partI[0] = tempCBI;
-                    end else begin
-                        CFixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) LLH_ (.AR(LH_in_partR[lut_i-1]), .AI(LH_in_partI[lut_i-1]), .BR(tempLHR), .BI(tempLHI), .clk(clkDS), .resultR(LH_in_partR[lut_i]), .resultI(LH_in_partI[lut_i]));
-                        CFixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) LCF_ (.AR(CF_in_partR[lut_i-1]), .AI(CF_in_partI[lut_i-1]), .BR(tempCFR), .BI(tempCFI), .clk(clkDS), .resultR(CF_in_partR[lut_i]), .resultI(CF_in_partI[lut_i]));
-                        CFixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) LCB_ (.AR(CB_in_partR[lut_i-1]), .AI(CB_in_partI[lut_i-1]), .BR(tempCBR), .BI(tempCBI), .clk(clkDS), .resultR(CB_in_partR[lut_i]), .resultI(CB_in_partI[lut_i]));
-                    end
-                end
-
-                assign LH_inR = LH_in_partR[LUTsplit-1];
-                assign CF_inR = CF_in_partR[LUTsplit-1];
-                assign CB_inR = CB_in_partR[LUTsplit-1];
-                assign LH_inI = LH_in_partI[LUTsplit-1];
-                assign CF_inI = CF_in_partI[LUTsplit-1];
-                assign CB_inI = CB_in_partI[LUTsplit-1];
-            /*end else begin
-                localparam logic[n_tot:0] testFbi = GetFbi(i, 0);
-                localparam logic[n_tot:0] testFfr = GetFfr(i, 0);
-                localparam logic[n_tot:0] testFbr = GetFbr(i, 0);
-                localparam logic[n_tot:0] testFfi = GetFfi(i, 0);
-                // Lookahead
-                FixLUT #(.size(SampleWidth), .fact(testFbr[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) LHLR_ (.sel(slh_rev), .result(LH_in.r));
-                FixLUT #(.size(SampleWidth), .fact(testFbi[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) LHLI_ (.sel(slh_rev), .result(LH_in.i));
-                // Compute
-                FixLUT #(.size(SampleWidth), .fact(testFfr[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) CFLR_ (.sel(scof), .result(CF_in.r));
-                FixLUT #(.size(SampleWidth), .fact(testFfi[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) CFLI_ (.sel(scof), .result(CF_in.i));
-                FixLUT #(.size(SampleWidth), .fact(testFbr[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) CBLR_ (.sel(scob_rev), .result(CB_in.r));
-                FixLUT #(.size(SampleWidth), .fact(testFbi[0:SampleWidth-1]), .n_int(n_int), .n_mant(n_mant)) CBLI_ (.sel(scob_rev), .result(CB_in.i));
-            end*/
-
             localparam logic signed[1:0][n_tot:0] tempLb = cpow_fixed(Lbr[i], Lbi[i], OSR);
             localparam logic signed[1:0][n_tot:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], OSR);
-            localparam logic[n_tot:0] R_VAL = 0;
 
             logic signed[n_tot:0] LH_resR, LH_resI, CF_outR, CF_outI, CB_outR, CB_outI, WFR, WFI, WBR, WBI;
             // Lookahead 
             FixRecursionModule #(.factorR(tempLb[0][n_tot:0]), .factorI(tempLb[1][n_tot:0]), .n_int(n_int), .n_mant(n_mant)) LHR_ (
-                .inR(LH_inR), .inI(LH_inI), .rst(regProp & rst), .resetValR(R_VAL), .resetValI(R_VAL), .clk(clkDS), .outR(LH_resR), .outI(LH_resI)
+                .inR(LH_inR), .inI(LH_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(0), .resetValI(0), .clk(clkDS), .outR(LH_resR), .outI(LH_resI)
                 );
             // Compute
             logic signed[n_tot:0] RF_inR, RF_inI, RB_inR, RB_inI;
@@ -408,10 +348,10 @@ module Batch_Fixed_top #(
             assign RF_inI = validCompute ? CF_inI : 0;
             assign RB_inI = validCompute ? CB_inI : 0;
             FixRecursionModule #(.factorR(tempLf[0][n_tot:0]), .factorI(tempLf[1][n_tot:0]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(CF_inR), .inI(CF_inI), .rst(rst), .resetValR(R_VAL), .resetValI(R_VAL), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
+                .inR(CF_inR), .inI(CF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
                 );
             FixRecursionModule #(.factorR(tempLb[0][n_tot:0]), .factorI(tempLb[1][n_tot:0]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
-                .inR(CB_inR), .inI(CB_inI), .rst(regProp & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkDS), .outR(CB_outR), .outI(CB_outI)
+                .inR(CB_inR), .inI(CB_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkDS), .outR(CB_outR), .outI(CB_outI)
                 );
             
             assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);

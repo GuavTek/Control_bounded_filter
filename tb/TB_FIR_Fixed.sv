@@ -36,7 +36,7 @@
 module TB_FIR_Fixed #() ();
     logic rst;
     logic clk;
-    import Coefficients::*;
+    import Coefficients_Fx::*;
 
     // Read input file
     reg[N-1:0] inSample = 0;
@@ -74,8 +74,8 @@ module TB_FIR_Fixed #() ();
     end
 
     // Write output file
-    logic[13:0] dutResult;
-    logic signed[13:0] signedResult;
+    logic[`OUT_WIDTH-1:0] dutResult;
+    logic signed[`OUT_WIDTH-1:0] signedResult;
     logic isValid;
     initial begin
         // Open output file
@@ -100,7 +100,7 @@ module TB_FIR_Fixed #() ();
                 @(posedge clk);
                 continue;
             end
-            signedResult = {~dutResult[13], dutResult[12:0]};
+            signedResult = {~dutResult[`OUT_WIDTH-1], dutResult[`OUT_WIDTH-2:0]};
             $fwrite(fdo, "%0d, ", signedResult);
             //$fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 2)
@@ -133,7 +133,7 @@ module TB_FIR_Fixed #() ();
     end
 
     // Instantiate DUTs
-    FIR_Fixed_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .OSR(`OSR)) DUT_FIR (
+    FIR_Fixed_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .OSR(`OSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     

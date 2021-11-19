@@ -1,13 +1,6 @@
 `ifndef TOPFIRFIX_SV_
 `define TOPFIRFIX_SV_
 
-`ifndef EXP_W
-    `define EXP_W 0
-`endif  // EXP_W
-`ifndef MANT_W
-    `define MANT_W 14
-`endif  // MANT_W
-
 `include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
 `include "FixPU.sv"
@@ -21,7 +14,9 @@
 module FIR_Fixed_top #(
     parameter Lookahead = 96,
     parameter Lookback = 96,
-    parameter OSR = 12
+    parameter OSR = 12,
+    parameter n_int = 0,
+    parameter n_mant = 14
 ) ( 
     in, rst, clk, out, valid
 );
@@ -40,39 +35,38 @@ module FIR_Fixed_top #(
     localparam int LookbackLUTs = $ceil((0.0 + N*Lookback)/`MAX_LUT_SIZE);
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
-    localparam n_int = `EXP_W;
-    localparam n_mant = `MANT_W;
     localparam n_tot = n_int + n_mant;
 
     // Downsampled clock
     logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
-    logic clkDS, prevRst;
+    logic clkDS;
+    logic prevRst;
     generate
         if(OSR > 1) begin
             always @(posedge clk) begin
                 if (!rst && prevRst)
                     osrCount = 0;
-                else 
+                else if (osrCount == (OSR-1)) begin
+                    osrCount = 0;
+                    clkDS = 1;
+                end else
                     osrCount++;
                 prevRst = rst;
 
-                if (osrCount == int'($floor(OSR/2)))
+                if (osrCount == OSR/2)
                     clkDS = 0;
-                if (osrCount == OSR) begin
-                    osrCount = 0;
-                    clkDS = 1;
-                end
+                
             end
         end else begin
             assign clkDS = clk;
         end
-    endgenerate
+    endgenerate 
     
     // Data valid counter
-    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil(AdderLayers/`COMB_ADDERS) + 2;
+    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 5;
     logic[$clog2(validTime):0] validCount;
     logic validResult;
-    always @(posedge clkDS) begin
+    always @(posedge clkDS, negedge rst) begin
         if(!rst)
             validCount = 0;
         else if (!validResult)
@@ -85,8 +79,9 @@ module FIR_Fixed_top #(
     // Input shifting
     logic[N*Looktotal-1:0] inShift;
     logic [N*OSR-1:0] inSample;
+    logic[$clog2(N*OSR)-1:0] inSel;
     always @(posedge clkDS) begin
-        inShift[N*Looktotal-1:N*OSR] = inShift[N*Looktotal-N*OSR-1:0];
+        inShift <<= N*OSR;
         inShift[N*OSR-1:0] = inSample;
     end
 
@@ -94,56 +89,51 @@ module FIR_Fixed_top #(
     generate
         if (OSR > 1) begin
             always @(posedge clk) begin
-                //inSample[N*OSR-1:N] = inSample[N*OSR-N-1:0];
-                inSample[N*(OSR - osrCount)-1 -: N] = in;
+                inSel = N*(OSR - osrCount)-1;
+                inSample[inSel -: N] = in;
             end
         end else begin
             assign inSample = in;
         end
     endgenerate
     
+    
 
     logic[N*Lookahead-1:0] sampleahead;
     logic[N*Lookback-1:0] sampleback;
 
-    
-    //always @(posedge clkDS) begin
-        assign sampleback = inShift[N*Looktotal-1:N*Lookahead];
-    //end
+    assign sampleback = inShift[N*Looktotal-1:N*Lookahead];
 
     // Invert sample-order
     generate
-        genvar i;
-        for(i = 0; i < Lookahead; i++) begin
-            //always @(posedge clkDS) begin
-                assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
-            //end
+        for(genvar i = 0; i < Lookahead; i++) begin
+            assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
         end
     endgenerate
 
-    function automatic logic signed[N*Lookahead-1:0][n_tot:0] GetHb (int startIndex);
+    function automatic logic signed[N*Lookahead-1:0][n_tot:0] GetHb ();
         logic signed[N*Lookahead-1:0][n_tot:0] tempArray;
 
         for (int i = 0; i < N*Lookahead ; i++) begin
-            logic signed[n_tot:0] temp = hb[startIndex + i] >>> (COEFF_BIAS - n_mant);
+            logic signed[n_tot:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
             tempArray[i][n_tot:0] = temp;
         end
         return tempArray;
     endfunction
 
-    function automatic logic signed[N*Lookback-1:0][n_tot:0] GetHf (int startIndex);
+    function automatic logic signed[N*Lookback-1:0][n_tot:0] GetHf ();
         logic signed[N*Lookback-1:0][n_tot:0] tempArray;
         
         for (int i = 0; i < N*Lookback ; i++) begin
-            logic signed[n_tot:0] temp = hf[startIndex + i] >>> (COEFF_BIAS - n_mant);
+            logic signed[n_tot:0] temp = hf[i] >>> (COEFF_BIAS - n_mant);
             tempArray[i][n_tot:0] = temp;
         end
         return tempArray;
     endfunction 
 
     logic signed[n_tot:0] lookbackResult, lookaheadResult, totResult;
-    localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = GetHf(0);
-    localparam logic signed[N*Lookback-1:0][n_tot:0] hb_slice = GetHb(0);
+    localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = GetHf();
+    localparam logic signed[N*Lookahead-1:0][n_tot:0] hb_slice = GetHb();
     
     FixLUT_Unit #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (

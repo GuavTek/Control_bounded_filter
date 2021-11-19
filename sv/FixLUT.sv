@@ -65,54 +65,68 @@ module FixLUT_Unit #(
     localparam int AddersNum = $ceil((0.0 + size)/lut_size);
     localparam AdderLayers = $clog2(AddersNum);
 
-    function int GetAdderNum(int n);
-        automatic real temp = AddersNum;
-        for(int i = 0; i < n; i++)
-            temp = $ceil(temp/2);
-        temp = $floor(temp/2);
+    function automatic int GetAdderNum(int n);
+        int temp = AddersNum;
+        for(int i = 0; i < n; i++) begin
+            //temp = $ceil(temp/2);
+            temp += 1;
+            temp >>= 1;
+        end
+        //temp = $floor(temp/2);
+        temp >>= 1;
         GetAdderNum = temp;
     endfunction
 
-    function int GetRegsNum(int n);
-        automatic real temp = AddersNum;
-        for (int i = 0; i <= n; i++)
-            temp = $ceil(temp/2);
+    function automatic int GetRegsNum(int n);
+        int temp = AddersNum;
+        for (int i = 0; i <= n; i++) begin
+            //temp = $ceil(temp/2);
+            temp += 1;
+            temp >>= 1;
+        end
         GetRegsNum = temp;
     endfunction
 
-    function int GetFirstReg(int n);
-        automatic int temp = 0;
+    function automatic int GetFirstReg(int n);
+        int temp = 0;
         for (int i = 1; i < n; i++)
             temp += GetRegsNum(i-1);
         GetFirstReg = temp;
     endfunction
 
-    virtual class GetFact#(parameter slice_size = 1);
-        static function logic signed[slice_size-1:0][n_tot:0] Get (int startIndex);
-            logic signed[slice_size-1:0][n_tot:0] tempArray;
+    localparam LUTRest = size % lut_size;
+    function logic signed[lut_size-1:0][n_tot:0] GetFact (int startIndex);
+        logic signed[lut_size-1:0][n_tot:0] tempArray;
             
-            for (int i = 0; i < slice_size ; i++) begin
-                tempArray[i][n_tot:0] = fact[startIndex + i][n_tot:0];
-            end
-            return tempArray;
-        endfunction 
-    endclass
+        for (int i = 0; i < lut_size ; i++) begin
+            tempArray[i][n_tot:0] = fact[startIndex + i][n_tot:0];
+        end
+        return tempArray;
+    endfunction
+
+    function logic signed[LUTRest-1:0][n_tot:0] GetFactRest (int startIndex);
+        logic signed[LUTRest-1:0][n_tot:0] tempArray;
+            
+        for (int i = 0; i < LUTRest ; i++) begin
+            tempArray[i][n_tot:0] = fact[startIndex + i][n_tot:0];
+        end
+        return tempArray;
+    endfunction
 
     logic signed[n_tot:0] lutResults[AddersNum-1:0];
     logic signed[n_tot:0] adderResults[GetFirstReg(AdderLayers):0];
     // Generate LUTs
     generate
-        localparam LUTRest = size % lut_size;
 
         for (genvar i = 0; i < AddersNum ; i++ ) begin : LUT_Gen
             logic signed[n_tot:0] tempResult;
             localparam offset = i*lut_size;
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
-                localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact#(lut_size)::Get(offset);
+                localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact(offset);
                 FixLUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else if (lut_rem > 0) begin
-                localparam logic signed[lut_rem-1:0][n_tot:0] fact_slice = GetFact#(lut_rem)::Get(offset);
+                localparam logic signed[lut_rem-1:0][n_tot:0] fact_slice = GetFactRest(offset);
                 FixLUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
             end
 
@@ -128,12 +142,18 @@ module FixLUT_Unit #(
 
     // Generate adders
     generate
-        genvar i, ii;
-        for (i = 0; i < AdderLayers ; i++ ) begin : ADDER_Gen
+        genvar layer, ii;
+        if (AdderLayers == 0) begin : No_Adders
+            assign adderResults[0] = lutResults[0];
+        end
+        
+        for (layer = AdderLayers; layer > 0 ; layer-- ) begin : ADDER_Gen
+            localparam i = layer - 1;
             localparam addfloor = GetAdderNum(i);
             localparam addceil = GetRegsNum(i);
             localparam firstRes = GetFirstReg(i);
             localparam nextRes = GetFirstReg(i+1);
+            $info("layer: %3d, addfloor: %4d, addceil: %4d, firstres: %4d, nextres: %4d", i, addfloor, addceil, firstRes, nextRes);
             for ( ii = 0; ii < addceil; ii++) begin : Layer_Instance_Gen
                 logic signed[n_tot:0] tempResult;
                 if ( i == 0 ) begin : Core_Gen

@@ -28,7 +28,7 @@
 module TB_BATCH_Fixed #() ();
     logic rst;
     logic clk;
-    import Coefficients::*;
+    import Coefficients_Fx::*;
 
     localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `OSR));
     localparam SampleWidth = N*`OSR; 
@@ -69,8 +69,8 @@ module TB_BATCH_Fixed #() ();
     end
 
     // Write output file
-    logic[13:0] dutResult;
-    logic signed[13:0] signedResult;
+    logic[`OUT_WIDTH-1:0] dutResult;
+    logic signed[`OUT_WIDTH-1:0] signedResult;
     logic isValid;
     initial begin
         // Open output file
@@ -98,7 +98,7 @@ module TB_BATCH_Fixed #() ();
                 continue;
             end
 
-            signedResult = {~dutResult[13], dutResult[12:0]};
+            signedResult = {~dutResult[`OUT_WIDTH-1], dutResult[`OUT_WIDTH-2:0]};
             $fwrite(fdo, "%0d, ", signedResult);
             //$fwrite(fdo, "%b;\n", result);
             if (`VERBOSE_LVL > 2)
@@ -127,9 +127,9 @@ module TB_BATCH_Fixed #() ();
     // define reset cycle
     initial begin
         rst = 1;
-        repeat(4) @(posedge clk);
+        repeat(`OSR) @(posedge clk);
         rst = 0;
-        repeat(`OSR*2 + 1) @(posedge clk);
+        repeat(`OSR*6 + 1) @(posedge clk);
         rst = 1;
     end
 

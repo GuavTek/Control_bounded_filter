@@ -21,11 +21,13 @@ module Batch_Fixed_prop #(
     finF, finB, finResult, partMemF, partMemB,
     partResF, partResB
 );
-    import Coefficients::*;
-    localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
+    import Coefficients_Fx::*;
+    localparam int DownSampleDepth = $ceil((0.0 + depth) / OSR);
     localparam SampleWidth = N*OSR; 
-    localparam LUT_Delay = $clog2($rtoi($ceil(SampleWidth/`MAX_LUT_SIZE)));
-    
+    localparam n_tot = n_int + n_mant;
+    localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
+    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
+
     input wire [N-1:0] in;
     input logic rst, clk, clkDS, valid;
     input logic[`OUT_WIDTH-1:0] out;
@@ -95,18 +97,18 @@ module Batch_Fixed_prop #(
     property resF_p;
         int delay;
         logic[`OUT_WIDTH-1:0] resSample;
-        1 |-> (1, delay=delayBatCount[2]) ##0 (1, resSample=partMemF) ##[0:DownSampleDepth+1] (delay==delayBatCount[1]) ##1 (1, resF_a(resSample));
+        1 |-> (1, delay=delayBatCount[LUT_Delay + 2]) ##0 (1, resSample=partMemF) ##[0:DownSampleDepth+1] (delay==delayBatCount[LUT_Delay + 1]) ##1 (1, resF_a(resSample));
     endproperty
 
     task automatic resB_a(input logic[`OUT_WIDTH-1:0] resultSample);
         if (resultSample != finB)
-            $error("Backward result misplaced!! %h was sent in, but %h came out. Index %d", resultSample, finB, delayBatCountRev[1]);
+            $error("Backward result misplaced!! %h was sent in, but %h came out. Index %d", resultSample, finB, delayBatCountRev[LUT_Delay + 1]);
     endtask
 
     property resB_p;
         int delay;
         logic[`OUT_WIDTH-1:0] resSample;
-        1 |-> (1, delay=delayBatCount[2]) ##0 (1, resSample=partMemB) ##[0:DownSampleDepth+1] !$stable(delayCycle[1]) ##[0:DownSampleDepth+1] (delay==delayBatCountRev[1]) ##1 (1, resB_a(resSample));
+        1 |-> (1, delay=delayBatCount[LUT_Delay + 2]) ##0 (1, resSample=partMemB) ##[0:DownSampleDepth+1] !$stable(delayCycle[LUT_Delay + 1]) ##[0:DownSampleDepth+1] (delay==delayBatCountRev[LUT_Delay + 1]) ##1 (1, resB_a(resSample));
     endproperty
 
     assert property (@(negedge clkDS) disable iff(!rst) lookahead_p)
