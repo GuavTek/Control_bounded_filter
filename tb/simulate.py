@@ -3,8 +3,9 @@
 import os
 import sys
 import plot
+import math
 
-os.system("rm -rf work*")
+#os.system("rm -rf work*")
 
 # Arguments to pass directly to xcelium script
 superarg = ''
@@ -63,12 +64,16 @@ elif topModule == 'TB_FIR_Fixed':
     topName = 'FIR Fixedpoint'
 elif topModule == 'TB_BATCH_Fixed':
     topName = 'Batch Fixedpoint'
+elif topModule == 'TB_CUMUL_Fixed':
+    topName = 'Cumulative'
+elif topModule == 'TB_HYBRID_Fixed':
+    topName = 'Hybrid Fixedpoint'
 
 superarg += ' -top work.' + topModule + ' ' + topModule + '.sv'
 print(superarg)
 if os.system('xrun -faccess +r -SV -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
     print("Failure... :(")
-    sys.exit(1)
+    #sys.exit(1)
 else:
     print("Success! :)")
 
@@ -80,5 +85,7 @@ if plotResults:
         label = topName + f" with format {exp}p{mant}, {depth} coefficients, and OSR={OSR}"
     elif topModule.find('CUMUL') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and OSR={OSR}"
-    plot.PlotFigure(res[int(1920/OSR):-int(1920/OSR)], int(960/OSR), label, outfileName, 240e6/OSR)
+    elif topModule.find('HYBRID') != -1:
+        label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and OSR={OSR}"
+    plot.PlotFigure(res[int(math.ceil(1920/OSR)):int(-1920/OSR)], int(960/OSR), label, outfileName, 240e6/OSR)
 
