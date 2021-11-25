@@ -12,9 +12,15 @@
     `define DEPTH 220
 `endif
 
-`ifndef OSR
-    `define OSR 1
+`ifndef OSR1
+    `define OSR1 2
 `endif
+
+`ifndef OSR2
+    `define OSR2 6
+`endif
+
+`define OSR (`OSR1 * `OSR2)
 
 `ifndef VERBOSE_LVL
     `define VERBOSE_LVL 2
@@ -124,7 +130,7 @@ module TB_HYBRID_Fixed #() ();
     end
 
     // Instantiate DUTs
-    Hybrid_Fixed_top #(.depth(`DEPTH), .OSR(`OSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_HYBRID (
+    Hybrid_Fixed_top #(.depth(`DEPTH), .OSR1(`OSR1), .OSR2(`OSR2), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_HYBRID (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     // Bind Modules to property checkers

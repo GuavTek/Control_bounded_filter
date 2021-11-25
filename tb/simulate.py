@@ -49,6 +49,12 @@ for arg in sys.argv:
     elif content[0] == '-osr':
         OSR = int(content[1])
         superarg += ' -define OSR=' + content[1]
+    elif content[0] == '-osr1':
+        OSR *= int(content[1])
+        superarg += ' -define OSR1=' + content[1]
+    elif content[0] == '-osr2':
+        OSR *= int(content[1])
+        superarg += ' -define OSR2=' + content[1]
     elif content[0] == '-top':
         topModule = content[1]
     elif content[0].find('.py') != -1:

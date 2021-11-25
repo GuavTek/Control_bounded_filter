@@ -21,20 +21,24 @@
 
 module Hybrid_Fixed_top #(
     parameter   depth = 72,
-                OSR = 12,
+                OSR1 = 2,
+                OSR2 = 6,
                 n_mant = 15,
                 n_int = 9
 ) (
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::*;
+    localparam OSR = OSR1 * OSR2;
     localparam int DownSampleDepth = $ceil((0.0 + depth) / OSR);
     localparam SampleWidth = N*OSR; 
     localparam n_tot = n_int + n_mant;
-    localparam Lookahead = DownSampleDepth * OSR;
+    localparam Lookahead = depth;
+    localparam ShiftDepth = DownSampleDepth * OSR;
     localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE)));
     localparam int LUTahead_Delay = $ceil((0.0 + LUTahead_Layers)/`COMB_ADDERS);
-    localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
+    localparam int LUTback_Width = N*OSR1;
+    localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + LUTback_Width)/`MAX_LUT_SIZE)));
     localparam int LUTback_Delay = $ceil((0.0 + LUTback_Layers)/`COMB_ADDERS);
 
     input wire [N-1:0] in;
@@ -42,33 +46,57 @@ module Hybrid_Fixed_top #(
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
 
-    // Downsampled clock
-    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
-    logic clkDS;
-    logic prevRst;
+    // Downsampled clocks
+    logic[$clog2(OSR)-1:0] osrCount;
+    logic[$clog2(OSR1)-1:0] osrCount1;
+    logic[$clog2(OSR2)-1:0] osrCount2;      // Prescale counter
+    logic clkDS, clkRecurse, prevRst1, prevRst2;
+    assign osrCount = osrCount1 + osrCount2 * OSR1;
     generate
-        if(OSR > 1) begin
-            always @(posedge clk) begin
-                if (!rst && prevRst)
-                    osrCount = 0;
-                else if (osrCount == (OSR-1)) begin
-                    osrCount = 0;
-                    clkDS = 1;
-                end else
-                    osrCount++;
-                prevRst = rst;
+        if(OSR2 > 1) begin
+            always @(posedge clkRecurse) begin
+                if ((!rst && prevRst2) || (osrCount2 == (OSR2-1)))
+                    osrCount2 = 'b0;
+                else
+                    osrCount2++;
 
-                if (osrCount == OSR/2)
+                if (1)
+                    prevRst2 = rst;
+
+                if (osrCount2 == 0)
+                    clkDS = 1;
+                if (osrCount2 == OSR2/2)
                     clkDS = 0;
                 
             end
         end else begin
-            assign clkDS = clk;
+            assign clkDS = clkRecurse;
+            assign osrCount2 = 0;
+        end
+
+        if(OSR1 > 1) begin
+            always @(posedge clk) begin
+                if ((!rst && prevRst1) || (osrCount1 == (OSR1-1)))
+                    osrCount1 = 'b0;
+                else
+                    osrCount1++;
+
+                if (1)
+                    prevRst1 = rst;
+
+                if (osrCount1 == 0)
+                    clkRecurse = 1;
+                if (osrCount1 == OSR1/2)
+                    clkRecurse = 0;
+                
+            end
+        end else begin
+            assign clkRecurse = clk;
         end
     endgenerate 
 
     // Input shifting
-    logic[N*Lookahead-1:0] inShift;
+    logic[N*ShiftDepth-1:0] inShift;
     logic [SampleWidth-1:0] inSample;
     logic[$clog2(SampleWidth)-1:0] inSel;
     always @(posedge clkDS) begin
@@ -89,14 +117,20 @@ module Hybrid_Fixed_top #(
     endgenerate
 
     logic[N*Lookahead-1:0] sampleahead;
-    logic[SampleWidth-1:0] sampleback;
+    logic[LUTback_Width-1:0] sampleback, slicedSampleBack[OSR2];
 
-    assign sampleback = inShift[N*Lookahead-1 -: SampleWidth];
+    generate
+        for (genvar i = 0; i < OSR2 ; i++ ) begin
+            assign slicedSampleBack[i] = inShift[N*ShiftDepth-1-N*OSR1*(i + LUTback_Delay) -: LUTback_Width];
+        end
+    endgenerate
+
+    assign    sampleback = slicedSampleBack[osrCount2];
 
     // Invert sample-order
     generate
         for(genvar i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
+            assign sampleahead[N*i +: N] = inShift[N*(ShiftDepth-i-1) +: N];
         end
     endgenerate
 
@@ -126,8 +160,20 @@ module Hybrid_Fixed_top #(
     FixToFix #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
     FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
 
-    Delay #(.size(`OUT_WIDTH), .delay(LUTahead_Delay - LUTback_Delay - 1)) backDelay (.in(scaledResBack), .clk(clkDS), .out(delayedBack));
-    Delay #(.size(`OUT_WIDTH), .delay(LUTback_Delay - LUTahead_Delay + 1)) aheadDelay (.in(scaledResAhead), .clk(clkDS), .out(delayedAhead));
+    localparam backResDelay = LUTahead_Delay - 1;
+    localparam aheadResDelay = 1 - LUTahead_Delay;
+    generate
+        if (backResDelay > 0)
+            Delay #(.size(`OUT_WIDTH), .delay(backResDelay)) backDelay (.in(scaledResBack), .clk(clkDS), .out(delayedBack));
+        else
+            assign delayedBack = scaledResBack;
+
+        if (aheadResDelay > 0)
+            Delay #(.size(`OUT_WIDTH), .delay(aheadResDelay)) aheadDelay (.in(scaledResAhead), .clk(clkDS), .out(delayedAhead));
+        else
+            assign delayedAhead = scaledResAhead;
+    endgenerate
+    
 
     // Final final result
     FixPU #(.op(ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
@@ -145,17 +191,17 @@ module Hybrid_Fixed_top #(
         return tempArray;
     endfunction
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfr (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
+    function automatic logic signed[LUTback_Width-1:0][n_tot:0] GetFfr (int row);
+        logic signed[LUTback_Width-1:0][n_tot:0] tempArray;
+        for (int i = 0; i < LUTback_Width ; i++) begin
             tempArray[i][n_tot:0] = Ffr[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfi (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
+    function automatic logic signed[LUTback_Width-1:0][n_tot:0] GetFfi (int row);
+        logic signed[LUTback_Width-1:0][n_tot:0] tempArray;
+        for (int i = 0; i < LUTback_Width ; i++) begin
             tempArray[i][n_tot:0] = Ffi[row][i] >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
@@ -194,20 +240,21 @@ module Hybrid_Fixed_top #(
         for (i = 0; i < N ; i++ ) begin
             logic signed[n_tot:0] CF_inR, CF_inI;
             
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfr = GetFfr(i);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfi = GetFfi(i);
+            localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfr = GetFfr(i);
+            localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfi = GetFfi(i);
 
             FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
-                .sel(sampleback), .clk(clkDS), .result(CF_inR)
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
+                .sel(sampleback), .clk(clkRecurse), .result(CF_inR)
             );
 
             FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
-                .sel(sampleback), .clk(clkDS), .result(CF_inI)
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
+                .sel(sampleback), .clk(clkRecurse), .result(CF_inI)
             );
 
-            localparam logic signed[1:0][n_tot:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], OSR);
+            localparam logic signed[1:0][n_tot:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], OSR1);
+            localparam logic signed[n_tot:0] resetZero = 'b0;
 
             logic signed[n_tot:0] CF_outR, CF_outI, WFR, WFI;
 
@@ -217,13 +264,13 @@ module Hybrid_Fixed_top #(
             assign RF_inI = validCompute ? CF_inI : 0;
             FixRecursionModule #(
                 .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
+                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkRecurse), .outR(CF_outR), .outI(CF_outI)
             );
             
             assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);
             assign WFI = Wfi[i] >>> (COEFF_BIAS - n_mant);
 
-            // Save in registers to reduce timing requirements
+            // Save in registers to relax timing requirements
             logic signed[n_tot:0] F_outR, F_outI;
             always @(posedge clkDS) begin
                 F_outR = CF_outR;
