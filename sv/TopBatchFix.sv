@@ -56,19 +56,16 @@ module Batch_Fixed_top #(
     // Downsampled clock
     logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
     logic clkDS;
-    logic prevRst;
     generate
         if(OSR > 1) begin
             always @(posedge clk) begin
-                if (!rst && prevRst)
-                    osrCount = 0;
-                else if (osrCount == (OSR-1)) begin
-                    osrCount = 0;
-                    clkDS = 1;
-                end else
+                if ((!rst) || (osrCount == (OSR-1)))
+                    osrCount[$clog2(OSR)-1:0] = 'b0;
+                else
                     osrCount++;
-                prevRst = rst;
 
+                if (osrCount == 0)
+                    clkDS = 1;
                 if (osrCount == OSR/2)
                     clkDS = 0;
                 
@@ -125,20 +122,21 @@ module Batch_Fixed_top #(
     end
 
     // Count valid samples
-    localparam ValidDelay = 4*DownSampleDepth + LUT_Delay + 2;
-    logic[$clog2(ValidDelay):0] validCount;
-    logic validResult, validCompute;
-    always @(posedge clkDS) begin
+    localparam validTime = 4*DownSampleDepth + LUT_Delay + 5;
+    logic[$clog2(validTime):0] validCount;
+    logic validClk, validResult, validCompute;
+    always @(posedge validClk, negedge rst) begin
         if(!rst) begin
             validCount = 'b0;
             validCompute = 'b0;
-        end else if (!validResult) begin
+        end else begin
             validCount++;
-        end   
-        validCompute = validCompute | (validCount == (3*DownSampleDepth + LUT_Delay));
+            validCompute = validCompute | (validCount == (3*DownSampleDepth + LUT_Delay + 2));
+        end        
     end
 
-    assign validResult = validCount == ValidDelay;
+    assign validResult = validCount == validTime;
+    assign validClk = clkDS && !validResult;
     assign valid = validResult;
 
     // Is low when the cycle is ending
@@ -348,10 +346,10 @@ module Batch_Fixed_top #(
             assign RF_inI = validCompute ? CF_inI : 0;
             assign RB_inI = validCompute ? CB_inI : 0;
             FixRecursionModule #(.factorR(tempLf[0][n_tot:0]), .factorI(tempLf[1][n_tot:0]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(CF_inR), .inI(CF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
+                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
                 );
             FixRecursionModule #(.factorR(tempLb[0][n_tot:0]), .factorI(tempLb[1][n_tot:0]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
-                .inR(CB_inR), .inI(CB_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkDS), .outR(CB_outR), .outI(CB_outI)
+                .inR(RB_inR), .inI(RB_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkDS), .outR(CB_outR), .outI(CB_outI)
                 );
             
             assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);
