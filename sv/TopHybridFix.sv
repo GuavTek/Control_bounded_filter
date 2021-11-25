@@ -135,20 +135,22 @@ module Hybrid_Fixed_top #(
     endgenerate
 
     // Count valid samples
-    localparam int ValidDelay = DownSampleDepth + 1 + (LUTahead_Delay > LUTback_Delay ? LUTahead_Delay : LUTback_Delay);
+    localparam int ValidDelay = DownSampleDepth + 2 + ((LUTahead_Delay > LUTback_Delay) ? LUTahead_Delay : 0);
     logic[$clog2(ValidDelay):0] validCount;
-    logic validResult, validCompute;
-    always @(posedge clkDS) begin
+    logic validClk, validResult, validCompute;
+    always @(posedge validClk) begin
         if(!rst) begin
             validCount = 'b0;
             validCompute = 'b0;
-        end else if (!validResult) begin
+        end else begin
             validCount++;
-        end   
-        validCompute = validCompute | (validCount == (DownSampleDepth + LUTback_Delay));
+            validCompute = validCompute | (validCount == (DownSampleDepth));
+        end        
+        
     end
 
     assign validResult = validCount == ValidDelay;
+    assign validClk = clkDS && !validResult;
     assign valid = validResult;
 
     // Outputs from generate blocks
