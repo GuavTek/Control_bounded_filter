@@ -40,19 +40,16 @@ module FIR_Fixed_top #(
     // Downsampled clock
     logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
     logic clkDS;
-    logic prevRst;
     generate
         if(OSR > 1) begin
             always @(posedge clk) begin
-                if (!rst && prevRst)
-                    osrCount = 0;
-                else if (osrCount == (OSR-1)) begin
-                    osrCount = 0;
-                    clkDS = 1;
-                end else
+                if (!rst || (osrCount == (OSR-1)))
+                    osrCount[$clog2(OSR)-1:0] = 'b0;
+                else
                     osrCount++;
-                prevRst = rst;
 
+                if (osrCount == 0)
+                    clkDS = 1;
                 if (osrCount == OSR/2)
                     clkDS = 0;
                 
@@ -63,17 +60,18 @@ module FIR_Fixed_top #(
     endgenerate 
     
     // Data valid counter
-    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 5;
+    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 1;
     logic[$clog2(validTime):0] validCount;
-    logic validResult;
-    always @(posedge clkDS, negedge rst) begin
+    logic validClk, validResult;
+    always @(posedge validClk, negedge rst) begin
         if(!rst)
             validCount = 0;
-        else if (!validResult)
+        else
             validCount++;
     end
 
     assign validResult = validCount == validTime;
+    assign validClk = clkDS || validResult;
     assign valid = validResult;
 
     // Input shifting
@@ -96,8 +94,6 @@ module FIR_Fixed_top #(
             assign inSample = in;
         end
     endgenerate
-    
-    
 
     logic[N*Lookahead-1:0] sampleahead;
     logic[N*Lookback-1:0] sampleback;
