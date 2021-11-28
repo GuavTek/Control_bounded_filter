@@ -14,11 +14,11 @@
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "../sv/FPU.sv"
-`include "FPU_prop.sv"
-`include "RAM_prop.sv"
-`include "LUT_prop.sv"
-`include "RecursionModule_prop.sv"
-`include "TopBatch_prop.sv"
+//`include "FPU_prop.sv"
+//`include "RAM_prop.sv"
+//`include "LUT_prop.sv"
+//`include "RecursionModule_prop.sv"
+//`include "TopBatch_prop.sv"
 
 `ifndef DEPTH
     `define DEPTH 220
@@ -29,7 +29,7 @@
 `endif
 
 `ifndef VERBOSE_LVL
-    `define VERBOSE_LVL 2
+    `define VERBOSE_LVL 1
 `endif
 
 `ifndef OUT_FILE
@@ -42,9 +42,9 @@
 module TB_BATCH #() ();
     logic rst = 1;
     logic clk;
-    import Coefficients::*;
+    import Coefficients_Fx::*;
 
-    localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `OSR));
+    localparam int DownSampleDepth = ($ceil((0.0 + `DEPTH) / `OSR));
     localparam SampleWidth = N*`OSR; 
 
     // Read input file
@@ -83,7 +83,9 @@ module TB_BATCH #() ();
     end
 
     // Write output file
-    floatType result;
+    logic[`OUT_WIDTH-1:0] dutResult;
+    logic signed[`OUT_WIDTH-1:0] signedResult;
+    logic isValid;
     initial begin
         // Open output file
         static string file_path = {"./Data/", `STRINGIFY(`OUT_FILE), ".csv"};
@@ -97,6 +99,9 @@ module TB_BATCH #() ();
         @(negedge rst);
         @(posedge rst);
 
+        // Wait for valid data from dut
+        @(posedge isValid);
+
         // Write data
         for (int i = 0; i < `TestLength; i++) begin
             // Write only one in OSR number of results
@@ -104,8 +109,10 @@ module TB_BATCH #() ();
                 @(posedge clk);
                 continue;
             end
-            $fwrite(fdo, "%f, ", ftor(result));
-            //$fwrite(fdo, "%b;\n", result);
+            
+            signedResult = {~dutResult[`OUT_WIDTH-1], dutResult[`OUT_WIDTH-2:0]};
+            $fwrite(fdo, "%f, ", signedResult);
+            
             if (`VERBOSE_LVL > 2)
                 $display("Write result %d.\n", i);
             @(posedge clk);
@@ -137,18 +144,18 @@ module TB_BATCH #() ();
     // Instantiate DUTs
     logic[SampleWidth-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3, sampleDataIn;
     logic[$clog2(4*DownSampleDepth)-1:0] sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
-    floatType resDataInB, resDataInF, resDataOutB, resDataOutF;
+    logic[`OUT_WIDTH-1:0] resDataInB, resDataInF, resDataOutB, resDataOutF;
     logic[$clog2(2*DownSampleDepth)-1:0] resAddrInB, resAddrInF, resAddrOutB, resAddrOutF;
     logic sampleClk, resClkF, resClkB, sampleWrite, resWriteB, resWriteF;
     RAM_triple #(.depth(4*DownSampleDepth), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
             .dataOut1(sampleDataOut1), .dataOut2(sampleDataOut2), .dataOut3(sampleDataOut3), .addrOut1(sampleAddrOut1), .addrOut2(sampleAddrOut2), .addrOut3(sampleAddrOut3));
 
-    RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
+    RAM_single #(.depth(2*DownSampleDepth), .d_width(`OUT_WIDTH)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
             .dataOut(resDataOutB), .addrOut(resAddrOutB));
-    RAM_single #(.depth(2*DownSampleDepth), .d_width((`EXP_W + `MANT_W)+1)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
+    RAM_single #(.depth(2*DownSampleDepth), .d_width(`OUT_WIDTH)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_top #(.depth(`DEPTH), .OSR(`OSR)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(result),
+    Batch_top #(.depth(`DEPTH), .OSR(`OSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -157,11 +164,11 @@ module TB_BATCH #() ();
 	.resDataInF(resDataInF), .resDataInB(resDataInB), .resDataOutF(resDataOutF), .resDataOutB(resDataOutB));
     
     // Bind Modules to property checkers
-    bind FPU FPU_prop #(.op(op)) flprop_i (.*);  
-    bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.rst(rst), .*);
-    bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
-    bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
-    bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
-    bind Batch_top Batch_top_prop #(.depth(depth), .OSR(OSR)) batchprop_i (.*);
+    //bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);  
+    //bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.rst(rst), .*);
+    //bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
+    //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
+    //bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
+    //bind Batch_top Batch_top_prop #(.depth(depth), .OSR(OSR)) batchprop_i (.*);
 
 endmodule
