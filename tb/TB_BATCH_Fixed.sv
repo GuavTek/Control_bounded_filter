@@ -15,9 +15,15 @@
     `define DEPTH 220
 `endif
 
-`ifndef OSR
-    `define OSR 1
+`ifndef OSR1
+    `define OSR1 2
 `endif
+
+`ifndef OSR2
+    `define OSR2 6
+`endif
+
+`define OSR (`OSR1 * `OSR2)
 
 `ifndef VERBOSE_LVL
     `define VERBOSE_LVL 2
@@ -31,8 +37,9 @@ module TB_BATCH_Fixed #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
-
-    localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `OSR));
+    
+    localparam int DownResultDepth = $ceil(0.0 + `DEPTH / `OSR);
+    localparam int DownSampleDepth = DownResultDepth * `OSR2;
     localparam SampleWidth = N*`OSR; 
 
     // Read input file
@@ -49,6 +56,7 @@ module TB_BATCH_Fixed #() ();
         $fscanf(fdi, "%b,\n", inSample);
 
         // Wait for reset cycle
+        @(negedge rst);
         @(negedge rst);
         @(posedge rst);
 
@@ -84,6 +92,7 @@ module TB_BATCH_Fixed #() ();
         end
 
         // Wait for reset
+        @(negedge rst);
         @(negedge rst);
         @(posedge rst);
 
@@ -129,29 +138,33 @@ module TB_BATCH_Fixed #() ();
     // define reset cycle
     initial begin
         rst = 1;
-        repeat(`OSR) @(posedge clk);
+        repeat(`OSR*2) @(posedge clk);
         rst = 0;
-        repeat(`OSR*6 + 1) @(posedge clk);
+        repeat(`OSR*2) @(posedge clk);
+        rst = 1;
+        repeat(`OSR*2) @(posedge clk);
+        rst = 0;
+        repeat(`OSR*2) @(posedge clk);
         rst = 1;
     end
 
-    localparam out_w = 14;
+    localparam out_w = `OUT_WIDTH;
 
     // Instantiate DUTs
     logic[SampleWidth-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3, sampleDataIn;
     logic[$clog2(4*DownSampleDepth)-1:0] sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
     logic[out_w-1:0] resDataInB, resDataInF, resDataOutB, resDataOutF;
-    logic[$clog2(2*DownSampleDepth)-1:0] resAddrInB, resAddrInF, resAddrOutB, resAddrOutF;
+    logic[$clog2(2*DownResultDepth)-1:0] resAddrInB, resAddrInF, resAddrOutB, resAddrOutF;
     logic sampleClk, resClkF, resClkB, sampleWrite, resWriteB, resWriteF;
-    RAM_triple #(.depth(4*DownSampleDepth), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
+    RAM_triple #(.depth(4*DownSampleDepth + 4), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
             .dataOut1(sampleDataOut1), .dataOut2(sampleDataOut2), .dataOut3(sampleDataOut3), .addrOut1(sampleAddrOut1), .addrOut2(sampleAddrOut2), .addrOut3(sampleAddrOut3));
 
-    RAM_single #(.depth(2*DownSampleDepth), .d_width(out_w)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
+    RAM_single #(.depth(2*DownResultDepth + 2), .d_width(out_w)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
             .dataOut(resDataOutB), .addrOut(resAddrOutB));
-    RAM_single #(.depth(2*DownSampleDepth), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
+    RAM_single #(.depth(2*DownResultDepth + 2), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_Fixed_top #(.depth(`DEPTH), .OSR(`OSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Fixed_top #(.depth(`DEPTH), .OSR1(`OSR1), .OSR2(`OSR2), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -163,6 +176,6 @@ module TB_BATCH_Fixed #() ();
     // Bind Modules to property checkers
     bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
-    bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .OSR(`OSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
+    //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .OSR(`OSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
 
 endmodule
