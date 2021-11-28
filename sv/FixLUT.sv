@@ -153,7 +153,12 @@ module FixLUT_Unit #(
             localparam addceil = GetRegsNum(i);
             localparam firstRes = GetFirstReg(i);
             localparam nextRes = GetFirstReg(i+1);
-            $info("layer: %3d, addfloor: %4d, addceil: %4d, firstres: %4d, nextres: %4d", i, addfloor, addceil, firstRes, nextRes);
+
+            `ifdef VERBOSE_LVL
+                if(`VERBOSE_LVL > 2)
+                    $info("layer: %3d, addfloor: %4d, addceil: %4d, firstres: %4d, nextres: %4d", i, addfloor, addceil, firstRes, nextRes);
+            `endif
+
             for ( ii = 0; ii < addceil; ii++) begin : Layer_Instance_Gen
                 logic signed[n_tot:0] tempResult;
                 if ( i == 0 ) begin : Core_Gen
