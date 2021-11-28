@@ -51,6 +51,7 @@ module TB_HYBRID_Fixed #() ();
 
         // Wait for reset cycle
         @(negedge rst);
+        @(negedge rst);
         @(posedge rst);
 
         if(`VERBOSE_LVL > 0)
@@ -85,6 +86,7 @@ module TB_HYBRID_Fixed #() ();
         end
 
         // Wait for reset
+        @(negedge rst);
         @(negedge rst);
         @(posedge rst);
 
@@ -124,7 +126,11 @@ module TB_HYBRID_Fixed #() ();
     // define reset cycle
     initial begin
         rst = 1;
-        repeat(2) @(posedge clk);
+        repeat(`OSR*2) @(posedge clk);
+        rst = 0;
+        repeat(`OSR*2) @(posedge clk);
+        rst = 1;
+        repeat(`OSR*2) @(posedge clk);
         rst = 0;
         repeat(`OSR*2) @(posedge clk);
         rst = 1;
