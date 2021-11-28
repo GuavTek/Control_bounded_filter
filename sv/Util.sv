@@ -2,12 +2,12 @@
 `define _UTIL_SV_
 // Misc utilities used in several modules
 
-`define STRINGIFY(x) $sformatf("%0s", `"x`")
-
-typedef enum int { 
-    ADD = 0,
-    MULT = 1
-} FPU_opcode;
+package FPU_p;
+    typedef enum { 
+        ADD = 0,
+        MULT = 1
+    } opcode;
+endpackage
 
 // Floored log2
 function int signed flog2(real in);

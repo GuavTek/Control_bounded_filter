@@ -4,7 +4,7 @@
 `include "Util.sv"
 
 module FixPU #(
-    parameter   FPU_opcode op = ADD,
+    parameter   FPU_p::opcode op = FPU_p::ADD,
     parameter   n_int = 8,
                 n_mant = 23
     ) (
@@ -17,11 +17,11 @@ module FixPU #(
 
     generate
         case (op)
-        ADD:
+        FPU_p::ADD:
         begin
             assign result = A + B;
         end
-        MULT:
+        FPU_p::MULT:
         begin 
             logic signed[2*n_tot:0] AB;
             assign AB = A * B;

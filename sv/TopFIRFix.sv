@@ -141,7 +141,7 @@ module FIR_Fixed_top #(
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
 
-    FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
+    FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
 
     logic [`OUT_WIDTH-1:0] rectifiedResult;
     logic signed[`OUT_WIDTH-1:0] scaledResult;

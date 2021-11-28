@@ -158,13 +158,13 @@ module FixLUT_Unit #(
                 logic signed[n_tot:0] tempResult;
                 if ( i == 0 ) begin : Core_Gen
                     if ( ii < addfloor ) begin : ADD_Gen
-                        FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clk), .result(tempResult));
+                        FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clk), .result(tempResult));
                     end else begin : Reg_Gen
                         assign tempResult = lutResults[2*ii];
                     end
                 end else begin : Layer_Gen
                     if ( ii < addfloor) begin : ADD_Gen
-                        FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clk), .result(tempResult));
+                        FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clk), .result(tempResult));
                     end else begin : Reg_Gen
                         assign tempResult = adderResults[firstRes + 2*ii];
                     end

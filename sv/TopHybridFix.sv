@@ -178,7 +178,7 @@ module Hybrid_Fixed_top #(
     
 
     // Final final result
-    FixPU #(.op(ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
+    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end
@@ -280,7 +280,7 @@ module Hybrid_Fixed_top #(
             end
 
             logic signed[n_tot:0] resFR, resFI;
-            CFixPU #(.op(MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
+            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
 
             // Final add
             logic signed[n_tot:0] tempRes;
@@ -291,7 +291,7 @@ module Hybrid_Fixed_top #(
             if(i == 0) begin
                 assign partResBack[0] = tempRes;
             end else begin
-                FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
+                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
             end
         end
     endgenerate

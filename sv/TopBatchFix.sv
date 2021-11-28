@@ -367,8 +367,8 @@ module Batch_Fixed_top #(
             end
 
             logic signed[n_tot:0] resFR, resFI, resBR, resBI;
-            CFixPU #(.op(MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
-            CFixPU #(.op(MULT), .n_int(n_int), .n_mant(n_mant)) WBR_ (.AR(B_outR), .AI(B_outI), .BR(WBR), .BI(WBI), .clk(clkDS), .resultR(resBR), .resultI(resBI));
+            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
+            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WBR_ (.AR(B_outR), .AI(B_outI), .BR(WBR), .BI(WBI), .clk(clkDS), .resultR(resBR), .resultI(resBI));
 
 
 
@@ -383,14 +383,14 @@ module Batch_Fixed_top #(
                 assign partResF[0] = forward;
                 assign partResB[0] = backward;
             end else begin
-                FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
-                FixPU #(.op(ADD), .n_int(n_int), .n_mant(n_mant)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
+                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
+                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
             end
         end
     endgenerate
 
     // Final final result
-    FixPU #(.op(ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
+    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end
