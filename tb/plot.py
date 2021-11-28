@@ -99,7 +99,7 @@ def ReadResultFile(fileName, exp):
 def PlotSeries(prefix, suffixes, label, osr, fs, tit, paramX):
     SNRs = []
     for num in suffixes:
-        results = ReadResultFile("Data/" + prefix + str(num), 0)
+        results = ReadResultFile("Data/" + prefix + str(num), 13)
         SNRs.append(PlotFigure(results[int(2880/osr):-int(2880/osr)], int(960/osr), label + str(num), prefix + str(num), fs))
     PlotSNR(suffixes, SNRs, tit, paramX, prefix + "_SNR")
 

@@ -77,6 +77,7 @@ elif topModule == 'TB_HYBRID_Fixed':
 
 superarg += ' -top work.' + topModule + ' ' + topModule + '.sv'
 print(superarg)
+
 if os.system('xrun -faccess +r -SV -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
     print("Failure... :(")
     #sys.exit(1)
@@ -84,7 +85,7 @@ else:
     print("Success! :)")
 
 if plotResults:
-    res = plot.ReadResultFile('Data/' + outfileName, 0)
+    res = plot.ReadResultFile('Data/' + outfileName, 13)
     if topModule.find('BATCH') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} batch size, and OSR={OSR}"
     elif topModule.find('FIR') != -1:
