@@ -17,8 +17,10 @@ sources.txt
 *.cmd
 spectre_tb/
 
+*.bpad
 *waves.shm/
 *.simvision/
+*innovus_tb/
 *xcelium.d/
 *sim_cov
 *transcript
