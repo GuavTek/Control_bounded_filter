@@ -2,6 +2,7 @@
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "../sv/FixPU.sv"
+`include "../sv/RAM.sv"
 `include "FixPU_prop.sv"
 //`include "FixLUT_prop.sv"
 `include "TopBatchFix_prop.sv"

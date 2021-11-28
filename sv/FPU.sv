@@ -1,7 +1,9 @@
 `ifndef FPU_SV_
 `define FPU_SV_
 
+/*
 `include "HardFloat-1/source/HardFloat_consts.vi"
+`include "HardFloat-1/source/HardFloat_specialize.vi"
 `include "HardFloat-1/source/HardFloat_primitives.v"
 `include "HardFloat-1/source/isSigNaNRecFN.v"
 `include "HardFloat-1/source/HardFloat_rawFN.v"
@@ -9,6 +11,7 @@
 `include "HardFloat-1/source/recFNToFN.v"
 `include "HardFloat-1/source/addRecFN.v"
 `include "HardFloat-1/source/mulRecFN.v"
+/**/
 `include "Util.sv"
 
 module FPU #(parameter FPU_opcode op = ADD) (

@@ -1,3 +1,13 @@
+`include "HardFloat-1/source/HardFloat_consts.vi"
+`include "HardFloat-1/source/HardFloat_specialize.vi"
+`include "HardFloat-1/source/HardFloat_primitives.v"
+`include "HardFloat-1/source/isSigNaNRecFN.v"
+`include "HardFloat-1/source/HardFloat_rawFN.v"
+`include "HardFloat-1/source/fNToRecFN.v"
+`include "HardFloat-1/source/recFNToFN.v"
+`include "HardFloat-1/source/addRecFN.v"
+`include "HardFloat-1/source/mulRecFN.v"
+
 `include "Util_TB.sv"
 `include "../sv/TopFIR.sv"
 `include "../sv/Util.sv"
