@@ -122,7 +122,7 @@ module FIR_Fixed_top #(
         
         for (int i = 0; i < N*Lookback ; i++) begin
             logic signed[n_tot:0] temp = hf[i] >>> (COEFF_BIAS - n_mant);
-            tempArray[i][n_tot:0] = temp;
+            tempArray[i] = temp;
         end
         return tempArray;
     endfunction 

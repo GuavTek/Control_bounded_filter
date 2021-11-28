@@ -9,10 +9,10 @@ module FixLUT #(
                 n_int = 8,
                 n_mant = 23,
     parameter logic signed[size-1:0][n_int+n_mant:0] fact = 'b0
-) (
+    ) (
     sel,
     result
-);
+    );
     localparam n_tot = n_int + n_mant;
     input logic[size-1:0] sel;
     output logic signed[n_tot:0] result;
@@ -52,11 +52,11 @@ module FixLUT_Unit #(
                 adders_comb = 0,
                 lut_comb = 0,
     parameter logic signed[size-1:0][n_int+n_mant:0] fact = 0
-) (
+    ) (
     sel,
     clk,
     result
-);
+    );
     localparam n_tot = n_int + n_mant;
     input logic[size-1:0] sel;
     input logic clk;
