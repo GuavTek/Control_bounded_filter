@@ -1,7 +1,7 @@
 `include "../sv/TopFIRFix.sv"
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
-`include "../sv/FixPU.sv"
+`include "FixPU_prop.sv"
 //`include "FPU_prop.sv"
 //`include "LUT_prop.sv"
 //`include "TopFIRFix_prop.sv"

@@ -5,7 +5,7 @@
 `include "../sv/FixPU.sv"
 
 module FixPU_prop #(
-    parameter   FPU_opcode op = ADD,
+    parameter   FPU_p::opcode op = FPU_p::ADD,
     parameter   n_int = 8,
                 n_mant = 23
 ) (
@@ -30,7 +30,7 @@ module FixPU_prop #(
     endproperty
 
     // Verify correct module behaviour
-    if (op == ADD) begin
+    if (op == FPU_p::ADD) begin
         assert property (disable iff($isunknown(A) || $isunknown(B)) Adder)
         else $display("Wrong FPU result! %f + %f != %f, expecting %f", $itor(A) * 2.0**(-n_mant), $itor(B) * 2.0**(-n_mant), $itor(result) * 2.0**(-n_mant), $itor(A + B) * 2.0**(-n_mant)); 
     end else begin
