@@ -1,5 +1,6 @@
 `include "../sv/TopBatchFix.sv"
 `include "../sv/Util.sv"
+`include "Util_TB.sv"
 `include "../sv/FixPU.sv"
 `include "FixPU_prop.sv"
 //`include "FixLUT_prop.sv"

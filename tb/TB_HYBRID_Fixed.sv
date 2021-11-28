@@ -1,5 +1,6 @@
 `include "../sv/TopHybridFix.sv"
 `include "../sv/Util.sv"
+`include "Util_TB.sv"
 `include "FixPU_prop.sv"
 //`include "LUT_prop.sv"
 //`include "TopFIRFix_prop.sv"

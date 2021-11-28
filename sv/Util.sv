@@ -9,130 +9,76 @@ package FPU_p;
     } opcode;
 endpackage
 
-// Floored log2
-function int signed flog2(real in);
-    begin
-    if(in <= 0) begin
-        $error("Logarithm of 0 or less is not attainable");
-        flog2 = 0;
-    end else begin
-        automatic int signed temp = 0;
-        if (in >= 1)
-            while(in > 1) begin
-                in = in / 2;
-                if (in >= 1) temp++;
-            end
-        else
-            while(in < 1) begin
-                in = in * 2;
-                temp--;
-            end
-        flog2 = temp;
-    end
-	end
-endfunction
+//package Float_p;
+virtual class convert #(parameter n_int = 8, n_mant = 23, f_exp = 8, f_mant = 23);
+    static function logic[f_mant+f_exp:0] itof(logic signed[n_int+n_mant:0] in);
+        logic[f_mant+f_exp:0] temp;
+        int signed exponent;
+        int signed mant_shift;
+        logic[f_mant+n_mant:0] temp_mant;
+        logic signed[n_int+n_mant:0] absIn;
+        logic signed[n_int+n_mant:0] tempClog;
+        int countClog = 0;
+        int floatBias = 2 ** (f_exp - 1) - 1;
 
-//package float_p;
-    `ifndef EXP_W
-        `define EXP_W 5
-    `endif  // EXP_W
-    `ifndef MANT_W
-        `define MANT_W 11
-    `endif  // MANT_W
-
-    typedef struct packed { 
-        logic sign; 
-        logic[`EXP_W-1:0] exp;
-        logic[`MANT_W-1:0] mantis;
-    } floatType;
-
-    typedef struct packed {
-        floatType r;
-        floatType i;
-    } complex;
-
-    function floatType rtof(real in);
-        begin
-        floatType temp;
-        int floatBias;
-        real absIn;
-        logic[`MANT_W:0] mant;
-        automatic int signed exponent;
-        floatBias = 2 ** (`EXP_W - 1) - 1;
-            
         if (in == 0) begin
-            temp.sign = 0;
+            temp[f_mant+f_exp] = 0; // Sign
             exponent = -floatBias;
             absIn = 0;
-        end else if (in > 0) begin
-            temp.sign = 0;
-            exponent = flog2(in);
-            absIn = in;
+        end else begin    
+            if (in < 0) begin
+                absIn = -in;
+                temp[f_mant+f_exp] = 1; // Sign
+            end else begin
+                absIn = in;
+                temp[f_mant+f_exp] = 0; // Sign
+            end
+                
+            tempClog = absIn;
+
+            for (countClog = 0; tempClog > 0 ; countClog++) begin
+                tempClog >>= 1;
+            end
+
+            exponent = countClog - n_mant - 1;
+        end
+        //$display("absIn = %h", absIn);
+        //$display("exponent = %3d - %2d - 1 = %3d", $clog2(absIn + 1), n_mant, exponent);
+                
+        // Clamp exponent for subnormal numbers
+        if (-exponent > floatBias) begin
+            mant_shift = -floatBias + n_mant - f_mant;
+            temp[f_mant +: f_exp] = 0; // Exponent
         end else begin
-            temp.sign = 1;
-            exponent = flog2(-in);
-            absIn = -in;
+            mant_shift = n_mant - f_mant + exponent;
+            temp[f_mant +: f_exp] = exponent + floatBias; // Exponent
         end
-            
-        // Prevent underflow for subnormal values
-        if ((exponent + floatBias) < 0) begin
-            exponent = -floatBias;
+
+        if (mant_shift < 0) begin
+            temp_mant = absIn << -mant_shift;
+        end else begin
+            temp_mant = absIn >> mant_shift;
         end
-            
-        temp.exp = exponent + floatBias;
-        mant = (absIn * 2.0**(`MANT_W-exponent));
-        temp.mantis = mant[`MANT_W-1:0];
+
+        //$display("temp_mant = %h >> %3d = %h", absIn, mant_shift, temp_mant);
+
+        temp[0 +: f_mant] = temp_mant;
+
         return temp;
-        end
-    endfunction
-
-    function real ftor(floatType in);
-        begin
-        real tempR;    
-        logic[`MANT_W:0] tempF;
-        automatic real floatBias = 2 ** (`EXP_W - 1) - 1;
-        automatic real bias = real'(in.exp) - floatBias - real'(`MANT_W);
-
-        if(in.exp > 0)
-        tempF = {1'b1, in.mantis};
-        else
-            tempF = {1'b0, in.mantis};
+    endfunction //itof()
         
-        if (in.sign) begin
-            tempR = -real'(tempF);
-        end else begin
-            tempR = real'(tempF);
-        end
-        tempR = tempR * 2.0**(bias);
+    //function logic signed[n_int+n_mant:0] ftoi(float_t in);
+            
+    //endfunction //ftoi()
+    
+endclass //convert
 
-        ftor = tempR;
-        end
-    endfunction
-
-    function complex cpow(real r, real i, int exp);
-        complex result;
-        real tempR, tempI;
-        tempR = r;
-        tempI = i;
-        for (int j = 1; j < exp ; j++ ) begin
-            //cmulcc.r = (a.r * b.r) - (a.i * b.i);
-            //cmulcc.i = (a.i * b.r) + (a.r * b.i);
-            real tempReal, tempImag;
-            tempReal = (tempR * r) - (tempI * i);
-            tempImag = (tempI * r) + (tempR * i);
-            tempR = tempReal;
-            tempI = tempImag;
-        end
-        result.r = rtof(tempR);
-        result.i = rtof(tempI);
-        return result;
-    endfunction
-
-    function real absr(real in);
-        if(in >= 0)
-            absr = in;
-        else
-            absr = -in;
-    endfunction
+function automatic int GetFloatExpBias(int exp_bits);
+    int floatBias;
+    floatBias = 2 ** (exp_bits - 1) - 1;
+    return floatBias;
+endfunction
 //endpackage
+
+
 `endif  // _UTIL_SV_
