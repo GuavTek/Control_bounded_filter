@@ -2,23 +2,30 @@
 `define RECURSIONMODULE_SV_
 
 `include "Util.sv"
+//import Float_p::convert;
 
 module RecursionModule #(
-    parameter floatType factorR = rtof(0.0),
-                factorI = rtof(0.0)
+    parameter logic signed[63:0] factorR = 0,
+                        factorI = 0,
+    parameter           n_int = 15,
+                        n_mant = 48,
+                        f_exp = 8,
+                        f_mant = 23,
+    type float_t = struct {logic sign; logic[f_exp-1:0] exp; logic[f_mant-1:0] mant;},
+    type complex_t = struct {float_t r; float_t i;}
 ) (
-    input complex in,
-    input complex resetVal,
+    input complex_t in,
+    input complex_t resetVal,
     input logic rst, clk,
-    output complex out
+    output complex_t out
 );
-    complex prod, sum, prev, factor;
-    assign factor.r = factorR;
-    assign factor.i = factorI;
+    complex_t prod, sum, prev, factor;
+    assign factor.r = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorR);
+    assign factor.i = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorI);
     assign out = sum;
 
-    CFPU #(.op(MULT)) c1 (.A(prev), .B(factor), .clk(clk), .result(prod));
-    CFPU #(.op(ADD)) c2 (.A(prod), .B(in), .clk(clk), .result(sum));
+    CFPU #(.op(FPU_p::MULT), .n_exp(f_exp), .n_mant(f_mant), .float_t(float_t), .complex_t(complex_t)) c1 (.A(prev), .B(factor), .clk(clk), .result(prod));
+    CFPU #(.op(FPU_p::ADD), .n_exp(f_exp), .n_mant(f_mant), .float_t(float_t), .complex_t(complex_t)) c2 (.A(prod), .B(in), .clk(clk), .result(sum));
 
     always_ff @(posedge clk) begin : recurse
         if (!rst)

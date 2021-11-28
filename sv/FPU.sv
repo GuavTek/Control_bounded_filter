@@ -14,28 +14,35 @@
 /**/
 `include "Util.sv"
 
-module FPU #(parameter FPU_opcode op = ADD) (
-    input floatType A, B,
-    input logic clk,
-    output floatType result
+module FPU #(
+    parameter FPU_p::opcode op = FPU_p::ADD,
+    parameter   n_exp = 8, n_mant = 23,
+    parameter type float_t = struct {logic sign; logic[7:0] exp; logic[22:0] mant;}
+    ) (
+    A, B, clk, result
 );
-    logic[(`MANT_W + `EXP_W + 1):0] s1, s2, r1;
+    input float_t A, B;
+    input logic clk;
+    output float_t result;
+    localparam n_tot = n_exp + n_mant;
 
-    fNToRecFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) aConv (.in(A), .out(s1));
-    fNToRecFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) bConv (.in(B), .out(s2));
-    recFNToFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) resConv (.in(r1), .out(result));
+    logic[n_tot + 1:0] s1, s2, r1;
+
+    fNToRecFN #(.expWidth(n_exp), .sigWidth(n_mant+1)) aConv (.in(A), .out(s1));
+    fNToRecFN #(.expWidth(n_exp), .sigWidth(n_mant+1)) bConv (.in(B), .out(s2));
+    recFNToFN #(.expWidth(n_exp), .sigWidth(n_mant+1)) resConv (.in(r1), .out(result));
 
     generate
         case (op)
-        ADD:
+        FPU_p::ADD:
         begin
             logic[4:0] dummy;
-            addRecFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) add1 (.control(`flControl_tininessAfterRounding), .subOp(1'b0), .a(s1), .b(s2), .roundingMode(`round_near_even), .out(r1), .exceptionFlags(dummy));
+            addRecFN #(.expWidth(n_exp), .sigWidth(n_mant+1)) add1 (.control(`flControl_tininessAfterRounding), .subOp(1'b0), .a(s1), .b(s2), .roundingMode(`round_near_even), .out(r1), .exceptionFlags(dummy));
         end
-        MULT:
+        FPU_p::MULT:
         begin 
             logic[4:0] dummy;
-            mulRecFN #(.expWidth(`EXP_W), .sigWidth(`MANT_W+1)) mul1 (.control(`flControl_tininessAfterRounding), .a(s1), .b(s2), .roundingMode(`round_near_even), .out(r1), .exceptionFlags(dummy));
+            mulRecFN #(.expWidth(n_exp), .sigWidth(n_mant+1)) mul1 (.control(`flControl_tininessAfterRounding), .a(s1), .b(s2), .roundingMode(`round_near_even), .out(r1), .exceptionFlags(dummy));
         end
         endcase
     endgenerate
