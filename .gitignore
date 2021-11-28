@@ -17,6 +17,7 @@ sources.txt
 *.cmd
 spectre_tb/
 
+*.err
 *.bpad
 *waves.shm/
 *.simvision/
