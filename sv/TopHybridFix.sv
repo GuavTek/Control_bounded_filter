@@ -91,6 +91,7 @@ module Hybrid_Fixed_top #(
                 
             end
         end else begin
+            assign osrCount1 = 0;
             assign clkRecurse = clk;
         end
     endgenerate 
@@ -138,7 +139,7 @@ module Hybrid_Fixed_top #(
     localparam int ValidDelay = DownSampleDepth + 2 + ((LUTahead_Delay > LUTback_Delay) ? LUTahead_Delay : 0);
     logic[$clog2(ValidDelay):0] validCount;
     logic validClk, validResult, validCompute;
-    always @(posedge validClk) begin
+    always @(posedge validClk, negedge rst) begin
         if(!rst) begin
             validCount = 'b0;
             validCompute = 'b0;
