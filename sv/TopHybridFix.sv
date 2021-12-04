@@ -48,8 +48,8 @@ module Hybrid_Fixed_top #(
 
     // Downsampled clocks
     logic[$clog2(OSR)-1:0] osrCount;
-    logic[$clog2(OSR1)-1:0] osrCount1;
-    logic[$clog2(OSR2)-1:0] osrCount2;      // Prescale counter
+    logic[$clog2(OSR1):0] osrCount1;
+    logic[$clog2(OSR2):0] osrCount2;      // Prescale counter
     logic clkDS, clkRecurse, prevRst1, prevRst2;
     assign osrCount = osrCount1 + osrCount2 * OSR1;
     generate
