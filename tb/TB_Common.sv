@@ -66,7 +66,7 @@ module TB_COM #(
     logic signed[`OUT_WIDTH-1:0] signedResult;
     initial begin
         // Open output file
-        static string file_path = {"./Data/", OUT_FILE, ".csv"};
+        static string file_path = {"./results/", OUT_FILE, ".csv"};
         static int fdo = $fopen(file_path, "w");
         if (!fdo) begin
             $error("File output was not opened");

@@ -3,7 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 import csv
 
-def PlotSNR(ticks, SNRs, tit, paramX, fileName):
+def PlotSNR(ticks, SNRs, tit, paramX, fileName, legend=[]):
     # Display every 4th tick
     xdisp = []
     for i in range(0, ticks.size):
@@ -17,20 +17,23 @@ def PlotSNR(ticks, SNRs, tit, paramX, fileName):
     #if (np.size(where) > 1):
     #    where = where[0]
     plt.figure(figsize=(10,8))
-    plt.plot(ticks, SNRs)
-    plt.title(tit)
+    plt.rc('font', **{'family' : 'DejaVu Sans', 'weight' : 'normal', 'size' : 12})
+    for wav in SNRs:
+        plt.plot(ticks, wav)
+    if len(legend) > 0:
+        plt.legend(legend)
+    plt.title(tit, fontsize=16)
     plt.ylabel("SNR [dB]")
     plt.xlabel(paramX)
     plt.minorticks_off()
     plt.xticks(ticks, xdisp, rotation=45)
     #plt.figtext(0.13, 0.85, "Peak is " + ('%.2f' % peak) + "dB with " + paramX + " = " + str(int(ticks[where])))
     plt.grid(True)
-    plt.savefig("Data/plots/" + fileName)
+    plt.savefig("plots/" + fileName)
 
 # Plot a section of the wave
-def PlotWave(arr, length, tit):
+def PlotWave(arr, length):
 	k = np.arange(0, length)
-	plt.title(tit)
 	plt.xlabel("time k")
 	plt.ylabel("result u")
 	plt.plot(k, arr[:length])
@@ -57,6 +60,9 @@ def PlotPSD(arr, freq, sig_leak=1):
 		Ps = Ps + arr_f[i]
 		arr_f[i] = 0
 
+	arr_f[0] = 0
+	arr_f[1] = 0
+
 	#Calculate noise power
 	Pn = sum(arr_f)
 
@@ -66,13 +72,15 @@ def PlotPSD(arr, freq, sig_leak=1):
 # Makes a figure of wave arr, and returns SNR
 def PlotFigure(arr, plotLength, label, fileName, fs):
 	plt.figure(figsize=(10, 8))
+	plt.rc('font', **{'family' : 'DejaVu Sans', 'weight' : 'normal', 'size' : 12})
 	plt.subplot(2,1,1)
-	PlotWave(arr, plotLength, label)
+	plt.title(label, fontsize=16)
+	PlotWave(arr, plotLength)
 
 	plt.subplot(2,1,2)
 	SNR = PlotPSD(arr, fs, 1)
 	plt.figtext(0.13, 0.42, "SNR = " + ('%.2f' % SNR) + "dB")
-	plt.savefig(("Data/plots/" + fileName))
+	plt.savefig("plots/" + fileName)
 	plt.close()
 	return SNR
 
@@ -91,19 +99,38 @@ def ReadResultFile(fileName, exp):
 	#	while (len(temp) < self.S_Length):
 	#		temp.append(0.0)
 	temp = np.array(temp)
+
 	print("Read " + str(temp.size) + " samples")
 	csvfile.close()
 	return temp
 
 
 def PlotSeries(prefix, suffixes, label, osr, fs, tit, paramX):
-    SNRs = []
-    for num in suffixes:
-        results = ReadResultFile("Data/" + prefix + str(num), 13)
-        SNRs.append(PlotFigure(results[int(2880/osr):-int(2880/osr)], int(960/osr), label + str(num), prefix + str(num), fs))
-    PlotSNR(suffixes, SNRs, tit, paramX, prefix + "_SNR")
+	allSNR = []
+	legend = []
+	if type(prefix) != list:
+		prefix = [prefix]
+	if type(osr) != list:
+		osr = [osr]
+	i = 0
+	for s in prefix:
+		SNRs = []
+		o = osr[i]
+		legend.append('DSR=' + str(o))
+		ffff = open('results/' + s + '_SNR.csv', 'w', newline='')
+		w = csv.writer(ffff, delimiter=',')
+		for num in suffixes:
+			results = ReadResultFile("results/" + s + str(num), 13)
+			tempSNR = PlotFigure(results[int(1920/o):-int(1920/o)], int(960/o), label + str(num), s + str(num), fs/o)
+			SNRs.append(tempSNR)
+			w.writerow([num, tempSNR])
+		ffff.close()
+		allSNR.append(SNRs)
+		i += 1
+	PlotSNR(suffixes, allSNR, tit, paramX, prefix[0] + "_SNR", legend)
+	
 
-#PlotSeries("results_batch_exp", np.arange(3, 9), 'Batch with exponent bits = ', 12, 240e6, "Batch SNR", "Exponent bits")
+#PlotSeries("fir_fx0p18_dsr12_c", np.arange(40, 201, 4), '', 12, 240e6, "FIR fixedpoint - SNR vs Filter depth", "Depth")
 #PlotSeries("results_batch_mant", np.arange(7, 24), 'Batch with mantissa bits = ', 12, 240e6, "Batch SNR", "Mantissa bits")
 #results = ReadResultFile("Data/results_batch1", 0)
 #PlotFigure(results[int(2880):-int(2880)], int(960), 'Batch with OSR = 1, batch size = 600', 'batch_OSR1', 240e6)

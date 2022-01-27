@@ -85,7 +85,7 @@ else:
     print("Success! :)")
 
 if plotResults:
-    res = plot.ReadResultFile('Data/' + outfileName, 13)
+    res = plot.ReadResultFile('results/' + outfileName, 13)
     if topModule.find('BATCH') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} batch size, and OSR={OSR}"
     elif topModule.find('FIR') != -1:
