@@ -6,7 +6,7 @@
 `define STRINGIFY(x) $sformatf("%0s", `"x`")
 
 // Conversions between float format and the "real" datatype 
-virtual class convert_nonsynth #(parameter n_int = 8, n_mant = 23, f_exp = 8, f_mant = 23);
+virtual class convert_nonsynth #(parameter f_exp = 8, f_mant = 23);
     static function int signed flog2(real in);
         if(in <= 0) begin
             $error("Logarithm of 0 or less is not attainable");
