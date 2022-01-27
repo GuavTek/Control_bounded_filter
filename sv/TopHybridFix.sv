@@ -235,7 +235,7 @@ module Hybrid_Fixed_top #(
             assign RF_inI = validCompute ? CF_inI : 0;
             FixRecursionModule #(
                 .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkDS), .outR(CF_outR), .outI(CF_outI)
+                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkDS || !rst), .outR(CF_outR), .outI(CF_outI)
             );
 
             assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);

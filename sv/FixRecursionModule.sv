@@ -22,7 +22,7 @@ module FixRecursionModule #(
     CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) c1 (.AR(prevR), .AI(prevI), .BR(factorR), .BI(factorI), .clk(clk), .resultR(prodR), .resultI(prodI));
     CFixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) c2 (.AR(prodR), .AI(prodI), .BR(inR), .BI(inI), .clk(clk), .resultR(sumR), .resultI(sumI));
 
-    always_ff @(posedge clk) begin : recurse
+    always @(posedge clk) begin : recurse
         if (!rst) begin
             prevR = resetValR;
             prevI = resetValI;
