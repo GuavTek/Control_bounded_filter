@@ -14,8 +14,8 @@
     `define DEPTH 220
 `endif
 
-`ifndef OSR
-    `define OSR 1
+`ifndef DSR
+    `define DSR 1
 `endif
 
 `ifndef OUT_FILE
@@ -27,24 +27,24 @@ module TB_CUMUL_Fixed #() ();
     logic clk;
     import Coefficients_Fx::*;
 
-    localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `OSR));
-    localparam SampleWidth = N*`OSR; 
+    localparam DownSampleDepth = $rtoi($ceil(`DEPTH / `DSR));
+    localparam SampleWidth = N*`DSR; 
 
     // Instantiate common testbench objects
     logic[N-1:0] inSample;
     logic[`OUT_WIDTH-1:0] dutResult;
     logic isValid;
-    TB_COM #(.N(N), .TestLength(`TestLength), .OSR(`OSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
+    TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
 
     localparam out_w = 14;
 
     // Instantiate DUTs
-    Cumulative_Fixed_top #(.depth(`DEPTH), .OSR(`OSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Cumul ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
+    Cumulative_Fixed_top #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Cumul ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
     
     
     // Bind Modules to property checkers
     bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
-    //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .OSR(`OSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
+    //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .DSR(`DSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
 
 endmodule

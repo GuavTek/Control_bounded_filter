@@ -15,16 +15,16 @@
     `define DEPTH 220
 `endif
 
-`ifndef OSR1
-    `define OSR1 2
+`ifndef DSR1
+    `define DSR1 2
 `endif
 
-`ifndef OSR2
-    `define OSR2 6
+`ifndef DSR2
+    `define DSR2 6
 `endif
 
-`ifndef OSR
-    `define OSR (`OSR1 * `OSR2)
+`ifndef DSR
+    `define DSR (`DSR1 * `DSR2)
 `endif
 
 `ifndef OUT_FILE
@@ -36,15 +36,15 @@ module TB_BATCH_Fixed #() ();
     logic clk;
     import Coefficients_Fx::*;
     
-    localparam int DownResultDepth = $ceil(0.0 + `DEPTH / `OSR);
-    localparam int DownSampleDepth = DownResultDepth * `OSR2;
-    localparam SampleWidth = N*`OSR; 
+    localparam int DownResultDepth = $ceil(0.0 + `DEPTH / `DSR);
+    localparam int DownSampleDepth = DownResultDepth * `DSR2;
+    localparam SampleWidth = N*`DSR; 
 
     // Instantiate common testbench objects
     logic[N-1:0] inSample;
     logic[`OUT_WIDTH-1:0] dutResult;
     logic isValid;
-    TB_COM #(.N(N), .TestLength(`TestLength), .OSR(`OSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
+    TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
     
 
     localparam out_w = `OUT_WIDTH;
@@ -63,7 +63,7 @@ module TB_BATCH_Fixed #() ();
     RAM_single #(.depth(2*DownResultDepth + 2), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_Fixed_top #(.depth(`DEPTH), .OSR(`OSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Fixed_top #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -75,6 +75,6 @@ module TB_BATCH_Fixed #() ();
     // Bind Modules to property checkers
     bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
-    //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .OSR(`OSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
+    //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .DSR(`DSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
 
 endmodule

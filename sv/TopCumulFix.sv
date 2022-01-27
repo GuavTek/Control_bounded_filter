@@ -51,15 +51,15 @@ endclass
 
 module Cumulative_Fixed_top #(
     parameter depth = 180,
-    parameter OSR = 1,
+    parameter DSR = 1,
     parameter n_mant = 14,
     parameter n_int = 9
 ) (
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::*;
-    localparam int DownSampleDepth = $ceil(0.0 + depth / OSR);
-    localparam SampleWidth = N*OSR;
+    localparam int DownSampleDepth = $ceil(0.0 + depth / DSR);
+    localparam SampleWidth = N*DSR;
     localparam n_tot = n_int + n_mant;
     localparam LUT_Delay = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
 
@@ -69,21 +69,21 @@ module Cumulative_Fixed_top #(
     output logic valid;
 
     // Downsampled clock
-    logic[$clog2(OSR)-1:0] osrCount = 0;      // Prescale counter
+    logic[$clog2(DSR)-1:0] dsrCount = 0;      // Prescale counter
     logic clkDS, rstPrev;
     generate
-        if(OSR > 1) begin
+        if(DSR > 1) begin
             always @(posedge clk) begin
                 if(!rst && rstPrev) begin
-                    osrCount = 0;
-                end else if (osrCount == (OSR-1)) begin
-                    osrCount = 0;
+                    dsrCount = 0;
+                end else if (dsrCount == (DSR-1)) begin
+                    dsrCount = 0;
                     clkDS = 1;
                 end else
-                    osrCount++;
+                    dsrCount++;
                 rstPrev = rst;
                 
-                if (osrCount == OSR/2)
+                if (dsrCount == DSR/2)
                     clkDS = 0;
             end
         end else begin
@@ -98,9 +98,9 @@ module Cumulative_Fixed_top #(
         inShift = inShift << SampleWidth;
         inShift[0] = inShiftTemp;
     end
-    // Generates shift register if OSR > 1
+    // Generates shift register if DSR > 1
     generate
-        if (OSR > 1) begin
+        if (DSR > 1) begin
             always @(posedge clk) begin
                 inShiftTemp = inShiftTemp << N;
                 inShiftTemp[N-1:0] = in;
@@ -138,9 +138,9 @@ module Cumulative_Fixed_top #(
     wire[SampleWidth-1:0] LHA_Rev, LHS_Rev;
     generate
         genvar j;
-        for (j = 0; j < OSR; j++ ) begin
-            assign LHA_Rev[N*j +: N] = LHA_Sample[N*(OSR-j-1) +: N];
-            assign LHS_Rev[N*j +: N] = LHS_Sample[N*(OSR-j-1) +: N];
+        for (j = 0; j < DSR; j++ ) begin
+            assign LHA_Rev[N*j +: N] = LHA_Sample[N*(DSR-j-1) +: N];
+            assign LHS_Rev[N*j +: N] = LHS_Sample[N*(DSR-j-1) +: N];
         end
     endgenerate
     
@@ -151,14 +151,14 @@ module Cumulative_Fixed_top #(
 
         tempR = r;
         tempI = i;
-        for (int j = 1; j < int'(OSR * (DownSampleDepth-1)) ; j++ ) begin
+        for (int j = 1; j < int'(DSR * (DownSampleDepth-1)) ; j++ ) begin
             tempReal = (tempR * r) - (tempI * i);
             tempImag = (tempI * r) + (tempR * i);
             tempR = tempReal >>> COEFF_BIAS;
             tempI = tempImag >>> COEFF_BIAS;
         end
 
-        for (int i = 0; i < OSR ; i++) begin
+        for (int i = 0; i < DSR ; i++) begin
             for (int j = 0; j < N ; j++) begin
                 tempReal = (Fbr[row][j] * tempR) - (Fbi[row][j] * tempI);
                 tempImag = (Fbi[row][j] * tempR) + (Fbr[row][j] * tempI);
@@ -216,8 +216,8 @@ module Cumulative_Fixed_top #(
             // Prepare coefficients
             localparam logic signed[63:0] invahead_r = (128'(1) << 2*COEFF_BIAS)/Lbr[i];
             localparam logic signed[63:0] invahead_i = (128'(1) << 2*COEFF_BIAS)/Lbi[i];
-            localparam logic signed[1:0][n_tot:0] loopahead_factor = FixedPoint#(COEFF_BIAS, n_mant, n_tot)::cpow(invahead_r, invahead_i, OSR);
-            localparam logic signed[1:0][n_tot:0] loopback_factor = FixedPoint#(COEFF_BIAS, n_mant, n_tot)::cpow(Lfr[i], Lfi[i], OSR);
+            localparam logic signed[1:0][n_tot:0] loopahead_factor = FixedPoint#(COEFF_BIAS, n_mant, n_tot)::cpow(invahead_r, invahead_i, DSR);
+            localparam logic signed[1:0][n_tot:0] loopback_factor = FixedPoint#(COEFF_BIAS, n_mant, n_tot)::cpow(Lfr[i], Lfi[i], DSR);
 
             localparam logic signed[1:0][SampleWidth-1:0][n_tot:0] aheadadd_factor = GetLoopAdd (i, Lbr[i], Lbi[i]);
             localparam logic signed[SampleWidth-1:0][n_tot:0] aheadadd_fr = aheadadd_factor[0];

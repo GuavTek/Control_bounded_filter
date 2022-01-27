@@ -11,15 +11,21 @@ superarg = ''
 outfileName = 'results_batch_exp'
 topModule = 'Batch'
 topExp = 8
+dsr=12
 for arg in sys.argv:
     content = arg.split('=')
-    if content[0] == 'help':
+    if content[0] == '-help':
+        print("Simulation exponent script overrides following property:")
+        print("-exp=\t\t the highest number of exponent bits in the sweep\n")
         os.system('./simulate.py -help')
         sys.exit()
     elif content[0] == '-exp':
         topExp = int(content[1])
     elif content[0] == '-out':
         outfileName = content[1]
+    elif content[0] == '-dsr':
+        dsr = int(content[1])
+        superarg += ' ' + arg
     elif content[0] == '-top':
         if content[1] == 'TB_BATCH':
             topModule = 'Batch'
@@ -33,7 +39,9 @@ for arg in sys.argv:
     else:
         superarg = superarg + ' ' + arg
 print(superarg)
+
 for i in range(1, topExp+1):
     os.system('./simulate.py -noplot' + superarg + ' -out=' + outfileName + str(i) + ' -exp=' + str(i))
-plot.PlotSeries(outfileName, np.arange(1, topExp+1), topModule + ' with exponent bits = ', 12, 240e6, topModule + " SNR", "Exponent bits")
+
+plot.PlotSeries(outfileName, np.arange(1, topExp+1), topModule + ' with exponent bits = ', 12, 240e6/dsr, topModule + " SNR", "Exponent bits")
 

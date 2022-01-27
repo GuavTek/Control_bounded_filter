@@ -14,7 +14,7 @@
 module FIR_top #(
     parameter   Lookahead = 240,
                 Lookback = 240,
-                OSR = 12,
+                DSR = 12,
                 n_exp = 8,
                 n_mant = 23
 ) (
@@ -45,19 +45,19 @@ module FIR_top #(
     localparam AdderLayers = $clog2(AddersNum);
 
     // Downsampled clock
-    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
+    logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
     logic clkDS;
     generate
-        if(OSR > 1) begin
+        if(DSR > 1) begin
             always @(posedge clk) begin
-                if ((!rst) || (osrCount == (OSR-1)))
-                    osrCount[$clog2(OSR)-1:0] = 'b0;
+                if ((!rst) || (dsrCount == (DSR-1)))
+                    dsrCount[$clog2(DSR)-1:0] = 'b0;
                 else
-                    osrCount++;
+                    dsrCount++;
 
-                if (osrCount == 0)
+                if (dsrCount == 0)
                     clkDS = 1;
-                if (osrCount == OSR/2)
+                if (dsrCount == DSR/2)
                     clkDS = 0;
                 
             end
@@ -67,7 +67,7 @@ module FIR_top #(
     endgenerate 
 
     // Data valid counter
-    localparam int validTime = $ceil((0.0 + Looktotal)/OSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 1;
+    localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 3;
     logic[$clog2(validTime):0] validCount;
     logic validClk, validResult;
     always @(posedge validClk, negedge rst) begin
@@ -83,18 +83,18 @@ module FIR_top #(
 
     // Input shifting
     logic[N*Looktotal-1:0] inShift;
-    logic [N*OSR-1:0] inSample;
-    logic[$clog2(N*OSR)-1:0] inSel;
+    logic [N*DSR-1:0] inSample;
+    logic[$clog2(N*DSR)-1:0] inSel;
     always @(posedge clkDS) begin
-        inShift <<= N*OSR;
-        inShift[N*OSR-1:0] = inSample;
+        inShift <<= N*DSR;
+        inShift[N*DSR-1:0] = inSample;
     end
 
     // Reduce activity factor
     generate
-        if (OSR > 1) begin
+        if (DSR > 1) begin
             always @(posedge clk) begin
-                inSel = N*(OSR - osrCount)-1;
+                inSel = N*(DSR - dsrCount)-1;
                 inSample[inSel -: N] = in;
             end
         end else begin

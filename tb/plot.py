@@ -105,17 +105,17 @@ def ReadResultFile(fileName, exp):
 	return temp
 
 
-def PlotSeries(prefix, suffixes, label, osr, fs, tit, paramX):
+def PlotSeries(prefix, suffixes, label, dsr, fs, tit, paramX):
 	allSNR = []
 	legend = []
 	if type(prefix) != list:
 		prefix = [prefix]
-	if type(osr) != list:
-		osr = [osr]
+	if type(dsr) != list:
+		dsr = [dsr]
 	i = 0
 	for s in prefix:
 		SNRs = []
-		o = osr[i]
+		o = dsr[i]
 		legend.append('DSR=' + str(o))
 		ffff = open('results/' + s + '_SNR.csv', 'w', newline='')
 		w = csv.writer(ffff, delimiter=',')
@@ -129,12 +129,3 @@ def PlotSeries(prefix, suffixes, label, osr, fs, tit, paramX):
 		i += 1
 	PlotSNR(suffixes, allSNR, tit, paramX, prefix[0] + "_SNR", legend)
 	
-
-#PlotSeries("fir_fx0p18_dsr12_c", np.arange(40, 201, 4), '', 12, 240e6, "FIR fixedpoint - SNR vs Filter depth", "Depth")
-#PlotSeries("results_batch_mant", np.arange(7, 24), 'Batch with mantissa bits = ', 12, 240e6, "Batch SNR", "Mantissa bits")
-#results = ReadResultFile("Data/results_batch1", 0)
-#PlotFigure(results[int(2880):-int(2880)], int(960), 'Batch with OSR = 1, batch size = 600', 'batch_OSR1', 240e6)
-#results = ReadResultFile("Data/results_batch12", 0)
-#PlotFigure(results[int(2880/12):-int(2880/12)], int(960/12), 'Batch with OSR = 12, batch size = 636', 'batch_OSR12', 20e6)
-#results = ReadResultFile("Data/results_fir", 0)
-#PlotFigure(results[int(2880/12):-int(2880/12)], int(960/12), 'FIR with OSR = 12, length = 96', 'fir_OSR12', 20e6)

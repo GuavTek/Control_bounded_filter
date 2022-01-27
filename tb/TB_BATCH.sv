@@ -25,8 +25,8 @@
     `define DEPTH 220
 `endif
 
-`ifndef OSR
-    `define OSR 1
+`ifndef DSR
+    `define DSR 1
 `endif
 
 `ifndef OUT_FILE
@@ -40,14 +40,14 @@ module TB_BATCH #() ();
     logic clk;
     import Coefficients_Fx::*;
 
-    localparam int DownSampleDepth = ($ceil((0.0 + `DEPTH) / `OSR));
-    localparam SampleWidth = N*`OSR; 
+    localparam int DownSampleDepth = ($ceil((0.0 + `DEPTH) / `DSR));
+    localparam SampleWidth = N*`DSR; 
 
     // Instantiate common testbench objects
     logic[N-1:0] inSample;
     logic[`OUT_WIDTH-1:0] dutResult;
     logic isValid;
-    TB_COM #(.N(N), .TestLength(`TestLength), .OSR(`OSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
+    TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
 
     // Instantiate DUTs
     logic[SampleWidth-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3, sampleDataIn;
@@ -63,7 +63,7 @@ module TB_BATCH #() ();
     RAM_single #(.depth(2*DownSampleDepth), .d_width(`OUT_WIDTH)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_top #(.depth(`DEPTH), .OSR(`OSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_top #(.depth(`DEPTH), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -77,6 +77,6 @@ module TB_BATCH #() ();
     //bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
-    //bind Batch_top Batch_top_prop #(.depth(depth), .OSR(OSR)) batchprop_i (.*);
+    //bind Batch_top Batch_top_prop #(.depth(depth), .DSR(DSR)) batchprop_i (.*);
 
 endmodule

@@ -24,7 +24,7 @@
 
 module Batch_top #(
     parameter depth = 228,
-    parameter OSR = 12,
+    parameter DSR = 12,
                 n_exp = 8,
                 n_mant = 23
 ) (
@@ -42,8 +42,8 @@ module Batch_top #(
 );
     import Coefficients_Fx::*;
 
-    localparam int DownSampleDepth = $ceil((0.0 + depth) / OSR);
-    localparam SampleWidth = N*OSR;
+    localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
+    localparam SampleWidth = N*DSR;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
     localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
 
@@ -75,19 +75,19 @@ module Batch_top #(
 
 
     // Downsampled clock
-    logic[$clog2(OSR)-1:0] osrCount;      // Prescale counter
+    logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
     logic clkDS;
     generate
-        if(OSR > 1) begin
+        if(DSR > 1) begin
             always @(posedge clk) begin
-                if ((!rst) || (osrCount == (OSR-1)))
-                    osrCount[$clog2(OSR)-1:0] = 'b0;
+                if ((!rst) || (dsrCount == (DSR-1)))
+                    dsrCount[$clog2(DSR)-1:0] = 'b0;
                 else
-                    osrCount++;
+                    dsrCount++;
 
-                if (osrCount == 0)
+                if (dsrCount == 0)
                     clkDS = 1;
-                if (osrCount == OSR/2)
+                if (dsrCount == DSR/2)
                     clkDS = 0;
                 
             end
@@ -100,11 +100,11 @@ module Batch_top #(
     logic[SampleWidth-1:0] inShift, inSample;
     logic[$clog2(SampleWidth)-1:0] inSel;
 
-    // Generates register if OSR > 1
+    // Generates register if DSR > 1
     generate
-        if (OSR > 1) begin
+        if (DSR > 1) begin
             always @(posedge clk) begin
-                inSel = N*(OSR - osrCount)-1;
+                inSel = N*(DSR - dsrCount)-1;
                 inSample[inSel -: N] = in;
             end
 
@@ -255,9 +255,9 @@ module Batch_top #(
     logic[SampleWidth-1:0] slh_rev, scob_rev;
     generate
         genvar j;
-        for (j = 0; j < OSR; j++ ) begin
-            assign slh_rev[N*j +: N] = slh[N*(OSR-j-1) +: N];
-            assign scob_rev[N*j +: N] = scob[N*(OSR-j-1) +: N];
+        for (j = 0; j < DSR; j++ ) begin
+            assign slh_rev[N*j +: N] = slh[N*(DSR-j-1) +: N];
+            assign scob_rev[N*j +: N] = scob[N*(DSR-j-1) +: N];
         end
     endgenerate
 
@@ -353,8 +353,8 @@ module Batch_top #(
                 .sel(scob_rev), .clk(clkDS), .result(CB_in.i)
             );
 
-            localparam logic signed[1:0][63:0] tempLb = cpow_fixed(Lbr[i], Lbi[i], OSR);
-            localparam logic signed[1:0][63:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], OSR);
+            localparam logic signed[1:0][63:0] tempLb = cpow_fixed(Lbr[i], Lbi[i], DSR);
+            localparam logic signed[1:0][63:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], DSR);
             localparam float_t FloatZero = 0; // convert #(.n_int(8), .n_mant(24), .f_exp(n_exp), .f_mant(n_mant))::itof(0);
 
             complex_t LH_res, CF_out, CB_out, WF, WB;

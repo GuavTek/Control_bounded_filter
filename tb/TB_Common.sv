@@ -11,7 +11,7 @@
 
 module TB_COM #(
     parameter TestLength = 24000,
-    parameter OSR = 12,
+    parameter DSR = 12,
     parameter N = 4,
     parameter string OUT_FILE = "results"
 ) (
@@ -85,8 +85,8 @@ module TB_COM #(
 
         // Write data
         for (int i = 0; i < TestLength; i++) begin
-            // Write only one in OSR number of results
-            if (i % OSR) begin 
+            // Write only one in DSR number of results
+            if (i % DSR) begin 
                 @(posedge clk);
                 continue;
             end
@@ -120,13 +120,13 @@ module TB_COM #(
     // define reset cycle
     initial begin
         rst = 1;
-        repeat(OSR*2) @(posedge clk);
+        repeat(DSR*2) @(posedge clk);
         rst = 0;
-        repeat(OSR*2) @(posedge clk);
+        repeat(DSR*2) @(posedge clk);
         rst = 1;
-        repeat(OSR*2) @(posedge clk);
+        repeat(DSR*2) @(posedge clk);
         rst = 0;
-        repeat(OSR*2) @(posedge clk);
+        repeat(DSR*2) @(posedge clk);
         rst = 1;
     end
 

@@ -6,7 +6,7 @@
 module FIR_Fixed_prop #(
     parameter Lookahead = 240,
     parameter Lookback = 240,
-    parameter OSR = 1
+    parameter DSR = 1
 ) (
     in,
     rst, clk,

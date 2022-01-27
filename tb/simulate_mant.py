@@ -11,15 +11,21 @@ superarg = ''
 outfileName = 'results_batch_mant'
 topModule = 'Batch'
 topMant = 23
+dsr=12
 for arg in sys.argv:
     content = arg.split('=')
-    if content[0] == 'help':
+    if content[0] == '-help':
+        print("Simulation mantissa script overrides following property:")
+        print("-mant=\t\t the highest number of mantissa bits in the sweep\n")
         os.system('./simulate.py -help')
         sys.exit()
     elif content[0] == '-mant':
         topMant = int(content[1])
     elif content[0] == '-out':
         outfileName = content[1]
+    elif content[0] == '-dsr':
+        dsr = int(content[1])
+        superarg += ' ' + arg
     elif content[0] == '-top':
         if content[1] == 'TB_BATCH':
             topModule = 'Batch'
@@ -33,7 +39,9 @@ for arg in sys.argv:
     else:
         superarg = superarg + ' ' + arg
 print(superarg)
+
 for i in range(7, topMant+1):
     os.system('./simulate.py -noplot' + superarg + ' -out=' + outfileName + str(i) + ' -mant=' + str(i))
-plot.PlotSeries(outfileName, np.arange(7, topMant+1), topModule + ' with mantissa bits = ', 12, 240e6, topModule + " SNR", "Mantissa bits")
+
+plot.PlotSeries(outfileName, np.arange(7, topMant+1), topModule + ' with mantissa bits = ', dsr, 240e6/dsr, topModule + " SNR", "Mantissa bits")
 

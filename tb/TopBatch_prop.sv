@@ -6,21 +6,21 @@
 
 module Batch_top_prop #(
     parameter depth = 32,
-    parameter OSR = 1
+    parameter DSR = 1
 ) (
     input wire [Coefficients::N-1:0] in,
     input logic rst, clk, clkDS,
     input floatType out,
-    input logic[$clog2($rtoi($ceil(depth / OSR)))-1:0] dBatCount, dBatCountRev, delayBatCount[2:0], delayBatCountRev[2:0], 
+    input logic[$clog2($rtoi($ceil(depth / DSR)))-1:0] dBatCount, dBatCountRev, delayBatCount[2:0], delayBatCountRev[2:0], 
     input logic cyclePulse, regProp,
     input logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc, delayCycle[2:0],
-    input logic[Coefficients::N*OSR-1:0] inShift,
-    input logic[Coefficients::N*OSR-1:0] slh, scob, sf_delay, scof,
+    input logic[Coefficients::N*DSR-1:0] inShift,
+    input logic[Coefficients::N*DSR-1:0] slh, scob, sf_delay, scof,
     input floatType finF, finB, finResult, partMemF, partMemB,
     input floatType partResF[Coefficients::N], partResB[Coefficients::N]
 );
     import Coefficients::N;
-    localparam DownSampleDepth = $rtoi($ceil(depth / OSR));
+    localparam DownSampleDepth = $rtoi($ceil(depth / DSR));
 
     
 
@@ -28,40 +28,40 @@ module Batch_top_prop #(
         1 |=> absr(absr(ftor(finResult)) - absr(ftor($past(finResult)))) < 0.3;
     endproperty
 
-    task automatic lookahead_a(input logic[N*OSR-1:0] inSample);
+    task automatic lookahead_a(input logic[N*DSR-1:0] inSample);
         if(slh != inSample)
             $error("Lookahead sample was misplaced!! %h was sent in, but %h came out. Index %d", inSample, slh, dBatCountRev);
     endtask // lookahead_a
 
     property lookahead_p;
         int delay;
-        logic[N*OSR-1:0] inSample;
+        logic[N*DSR-1:0] inSample;
         1 |-> (1, delay=dBatCount) ##0 (1, inSample=inShift) ##[0:DownSampleDepth+1] !cyclePulse ##[1:DownSampleDepth+1] (delay==(dBatCountRev)) ##0 (1, lookahead_a(inSample));
     endproperty
 
-    task automatic meanB_a(input logic[N*OSR-1:0] inSample);
+    task automatic meanB_a(input logic[N*DSR-1:0] inSample);
         if(scob != inSample)
             $error("Backward mean sample was misplaced!! %h was sent in, but %h came out", inSample, scob);
     endtask // meanB_a
 
     property meanB_p;
         int delay;
-        logic[N*OSR-1:0] inSample;
+        logic[N*DSR-1:0] inSample;
         1 |-> (1, delay=dBatCount) ##0 (1, inSample=inShift) ##[2*DownSampleDepth:3*DownSampleDepth+1] !cyclePulse ##[1:DownSampleDepth+1] (delay==dBatCountRev) ##0 (1, meanB_a(inSample));
     endproperty
 
-    task automatic meanF_a(input logic[N*OSR-1:0] inSample);
+    task automatic meanF_a(input logic[N*DSR-1:0] inSample);
         if(sf_delay != inSample)
             $error("Forward mean sample was misplaced!! %h was sent in, but %h came out", inSample, sf_delay);
     endtask // meanF_a
 
     property meanF_p;
         int delay;
-        logic[N*OSR-1:0] inSample;
+        logic[N*DSR-1:0] inSample;
         1 |-> (1, delay=dBatCount) ##0 (1, inSample=inShift) ##[2*DownSampleDepth:3*DownSampleDepth+1] !cyclePulse ##[1:DownSampleDepth+1] (delay==dBatCount) ##0 (1, meanF_a(inSample));
     endproperty
 
-    task automatic calc_a(input logic[N*OSR-1:0] sampleB, sampleF);
+    task automatic calc_a(input logic[N*DSR-1:0] sampleB, sampleF);
         if(sf_delay != sampleB)
             $error("Forward sample %h does not match backward sample %h at position %d", sf_delay, sampleB, dBatCountRev);
         if(scob != sampleF)
@@ -70,7 +70,7 @@ module Batch_top_prop #(
 
     property calc_p;
         int delay;
-        logic[N*OSR-1:0] sampleB, sampleF;
+        logic[N*DSR-1:0] sampleB, sampleF;
         (dBatCountRev >= (DownSampleDepth/2)) |-> (1, delay=dBatCount) ##0 (1, sampleB=scob) ##0 (1, sampleF=sf_delay)  ##[0:DownSampleDepth+1] (delay==dBatCountRev) ##0 (1, calc_a(sampleB, sampleF));
     endproperty
 
