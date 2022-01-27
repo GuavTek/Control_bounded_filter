@@ -16,6 +16,8 @@ sources.txt
 *.log
 *.cmd
 spectre_tb/
+*results/
+*plots/
 
 *.err
 *.bpad
