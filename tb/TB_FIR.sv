@@ -13,7 +13,7 @@
 `include "../sv/FPU.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
-//`include "FPU_prop.sv"
+`include "FPU_prop.sv"
 //`include "LUT_prop.sv"
 //`include "TopFIR_prop.sv"
 
@@ -55,8 +55,13 @@ module TB_FIR #() ();
     FIR_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
+    // dummy type (so compiler knows there is a datatype with this name)
+    typedef struct packed { 
+        logic dum;
+    } float_t;
+
     // Bind Modules to property checkers
-    //bind FPU FPU_prop flprop_i (.*);
+    bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind FIR_top FIR_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
 
