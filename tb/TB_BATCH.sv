@@ -15,7 +15,7 @@
 `include "Util_TB.sv"
 `include "TB_Common.sv"
 `include "../sv/FPU.sv"
-//`include "FPU_prop.sv"
+`include "FPU_prop.sv"
 //`include "RAM_prop.sv"
 //`include "LUT_prop.sv"
 //`include "RecursionModule_prop.sv"
@@ -36,7 +36,7 @@
 `define TestLength 24000
 
 module TB_BATCH #() ();
-    logic rst = 1;
+    logic rst;
     logic clk;
     import Coefficients_Fx::*;
 
@@ -71,8 +71,14 @@ module TB_BATCH #() ();
 	.resClkF(resClkF), .resClkB(resClkB), .resWriteF(resWriteF), .resWriteB(resWriteB),
 	.resDataInF(resDataInF), .resDataInB(resDataInB), .resDataOutF(resDataOutF), .resDataOutB(resDataOutB));
     
+
+    // dummy type (so compiler knows there is a datatype with this name)
+    typedef struct packed { 
+        logic dum;
+    } float_t;
+
     // Bind Modules to property checkers
-    //bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);  
+    bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);  
     //bind RAM_single RAM_single_prop #(.depth(depth), .d_width(d_width)) ramsprop_i (.rst(rst), .*);
     //bind RAM_triple RAM_triple_prop #(.depth(depth), .d_width(d_width)) ramtprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
