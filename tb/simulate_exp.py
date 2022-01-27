@@ -36,8 +36,11 @@ for arg in sys.argv:
         elif content[1] == 'TB_BATCH_Fixed':
             topModule = 'Batch Fixedpoint'
         superarg = superarg + ' ' + arg
+    elif content[0].find('.py') != -1:
+        # Skip self-reference
+        continue
     else:
-        superarg = superarg + ' ' + arg
+        superarg += ' ' + arg
 print(superarg)
 
 for i in range(1, topExp+1):
