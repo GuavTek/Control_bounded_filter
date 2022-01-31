@@ -2,7 +2,6 @@
 `define LUT_SV_
 
 `include "Util.sv"
-//import Float_p::convert;
 
 module LUT #(
     parameter       size = 1, n_mant = 48, n_int = 15, f_exp = 8, f_mant = 23,
@@ -12,9 +11,6 @@ module LUT #(
     input logic[size-1:0] sel,
     output float_t result
 );
-    
-    localparam n_mant_out = f_mant;
-    localparam n_exp_out = f_exp;
     float_t mem[2**size-1:0];
 
     function automatic logic signed[n_mant+n_int:0] getVal(logic[size-1:0] in);
