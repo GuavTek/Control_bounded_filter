@@ -47,24 +47,8 @@ module FIR_top #(
     // Downsampled clock
     logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
     logic clkDS;
-    generate
-        if(DSR > 1) begin
-            always @(posedge clk) begin
-                if ((!rst) || (dsrCount == (DSR-1)))
-                    dsrCount[$clog2(DSR)-1:0] = 'b0;
-                else
-                    dsrCount++;
-
-                if (dsrCount == 0)
-                    clkDS = 1;
-                if (dsrCount == DSR/2)
-                    clkDS = 0;
-                
-            end
-        end else begin
-            assign clkDS = clk;
-        end
-    endgenerate 
+    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(dsrCount));
+    
 
     // Data valid counter
     localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 3;

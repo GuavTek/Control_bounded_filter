@@ -44,25 +44,8 @@ module Hybrid_Fixed_top #(
     // Downsampled clock
     logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
     logic clkDS;
-    generate
-        if(DSR > 1) begin
-            always @(posedge clk) begin
-                if (!rst)
-                    dsrCount = 0;
-                else if (dsrCount == (DSR-1)) begin
-                    dsrCount = 0;
-                    clkDS = 1;
-                end else
-                    dsrCount++;
-
-                if (dsrCount == DSR/2)
-                    clkDS = 0;
-
-            end
-        end else begin
-            assign clkDS = clk;
-        end
-    endgenerate 
+    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(dsrCount));
+    
 
     // Input shifting
     logic[N*DownSampleDepth*DSR-1:0] inShift;

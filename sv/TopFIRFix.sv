@@ -6,6 +6,7 @@
 `include "FixPU.sv"
 `include "FixLUT.sv"
 `include "FixToFix.sv"
+`include "ClkDiv.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 3
@@ -40,24 +41,7 @@ module FIR_Fixed_top #(
     // Downsampled clock
     logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
     logic clkDS;
-    generate
-        if(DSR > 1) begin
-            always @(posedge clk) begin
-                if (!rst || (dsrCount == (DSR-1)))
-                    dsrCount = 'b0;
-                else
-                    dsrCount++;
-
-                if (dsrCount == 0)
-                    clkDS = 1;
-                if (dsrCount == DSR/2)
-                    clkDS = 0;
-                
-            end
-        end else begin
-            assign clkDS = clk;
-        end
-    endgenerate 
+    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(dsrCount));
     
     // Data valid counter
     localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/(`COMB_ADDERS + 1)) + 3;

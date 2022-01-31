@@ -1,27 +1,28 @@
 `ifndef CLKDIV_SV_
 `define CLKDIV_SV_
 
+// clkOut is DSR times slower than clkIn
+// cntOut is the internal counter
+// Has asynchronous reset
 module ClkDiv #(
     parameter DSR = 1
 ) (
-    input wire clkIn, rst,
-    output wire clkOut,
-    output wire [$clog2(DSR)-1:0] cntOut
+    input logic clkIn, rst,
+    output logic clkOut,
+    output logic [$clog2(DSR)-1:0] cntOut
 );
     logic[$clog2(DSR)-1:0] cnt;      // Prescale counter
-    logic prevRst, clkO;
+    logic clkO;
     generate
         if(DSR > 1) begin
-            always @(posedge clkIn) begin
-                if (!rst && prevRst)
-                    cnt = 0;
-                else if (cnt == (DSR-1)) begin
-                    cnt = 0;
-                    clkO = 1;
-                end else
+            always @(posedge clkIn or negedge rst) begin
+                if ((!rst) || (cnt == (DSR-1)))
+                    cnt = 'b0;
+                else
                     cnt++;
-                prevRst = rst;
 
+                if (cnt == 0)
+                    clkO = 1;
                 if (cnt == DSR/2)
                     clkO = 0;
                 
@@ -30,6 +31,7 @@ module ClkDiv #(
             assign clkOut = clkO;
         end else begin
             assign clkOut = clkIn;
+            assign cntOut = 'b0;
         end
     endgenerate 
 endmodule
