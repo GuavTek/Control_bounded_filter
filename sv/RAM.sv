@@ -19,7 +19,7 @@ module RAM_single_bi #(
 
 	always @(posedge clk) begin
         if (write)
-            mem[addr] = data;
+            mem[addr] <= data;
    	end
 endmodule
 
@@ -42,7 +42,7 @@ module RAM_single #(
 
 	always @(posedge clk) begin
         if (write)
-            mem[addrIn] = dataIn;
+            mem[addrIn] <= dataIn;
    	end
 endmodule
 
@@ -67,7 +67,7 @@ module RAM_triple #(
 
 	always @(posedge clk) begin
         if (write)
-            mem[addrIn] = dataIn;
+            mem[addrIn] <= dataIn;
    	end
 endmodule
 
@@ -93,7 +93,7 @@ module RAM_dual_bi #(
 
 	always @(posedge clk) begin
     	if (write1) 
-			mem[addr1] = data1;
+			mem[addr1] <= data1;
   	end
 endmodule
 `endif

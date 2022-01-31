@@ -15,20 +15,20 @@ module ClkDiv #(
     logic clkO;
     generate
         if(DSR > 1) begin
-            always @(posedge clkIn or negedge rst) begin
+            always @(posedge clkIn) begin
                 if ((!rst) || (cnt == (DSR-1)))
-                    cnt = 'b0;
+                    cnt <= 'b0;
                 else
-                    cnt++;
+                    cnt <= cnt + 1;
 
+                if ((cnt == DSR/2) || !rst)
+                    clkOut <= 0;
                 if (cnt == 0)
-                    clkO = 1;
-                if (cnt == DSR/2)
-                    clkO = 0;
+                    clkOut <= 1;
                 
             end
             assign cntOut = cnt;
-            assign clkOut = clkO;
+            //assign clkOut = clkO;
         end else begin
             assign clkOut = clkIn;
             assign cntOut = 'b0;

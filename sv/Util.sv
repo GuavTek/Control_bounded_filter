@@ -9,6 +9,118 @@ package FPU_p;
     } opcode;
 endpackage
 
+virtual class GetConst #(parameter n_int = 8, n_mant = 23, size = 10);
+    
+    static function logic signed[size-1:0][n_int+n_mant:0] Hb ();
+        import Coefficients_Fx::COEFF_BIAS;
+        import Coefficients_Fx::hb;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+
+        for (int i = 0; i < size ; i++) begin
+            logic signed[n_int+n_mant:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i][n_int+n_mant:0] = temp;
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[size-1:0][n_int+n_mant:0] Hf ();
+        import Coefficients_Fx::COEFF_BIAS;
+        import Coefficients_Fx::hf;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+        
+        for (int i = 0; i < size ; i++) begin
+            logic signed[n_int+n_mant:0] temp = hf[i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i] = temp;
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[size-1:0][n_int+n_mant:0] Fbr (int row);
+        import Coefficients_Fx::COEFF_BIAS;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+
+        for (int i = 0; i < size ; i++) begin
+            tempArray[i] = Coefficients_Fx::Fbr[row][i] >>> (COEFF_BIAS - n_mant);
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[size-1:0][n_int+n_mant:0] Fbi (int row);
+        import Coefficients_Fx::COEFF_BIAS;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+
+        for (int i = 0; i < size ; i++) begin
+            tempArray[i] = Coefficients_Fx::Fbi[row][i] >>> (COEFF_BIAS - n_mant);
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[size-1:0][n_int+n_mant:0] Ffr (int row);
+        import Coefficients_Fx::COEFF_BIAS;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+
+        for (int i = 0; i < size ; i++) begin
+            tempArray[i] = Coefficients_Fx::Ffr[row][i] >>> (COEFF_BIAS - n_mant);
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[size-1:0][n_int+n_mant:0] Ffi (int row);
+        import Coefficients_Fx::COEFF_BIAS;
+        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+
+        for (int i = 0; i < size ; i++) begin
+            tempArray[i] = Coefficients_Fx::Ffi[row][i] >>> (COEFF_BIAS - n_mant);
+        end
+        return tempArray;
+    endfunction
+
+    static function logic signed[n_int+n_mant:0] Wfr(int row);
+        import Coefficients_Fx::COEFF_BIAS;
+
+        return Coefficients_Fx::Wfr[row] >>> (COEFF_BIAS - n_mant);
+    endfunction
+
+    static function logic signed[n_int+n_mant:0] Wfi(int row);
+        import Coefficients_Fx::COEFF_BIAS;
+
+        return Coefficients_Fx::Wfi[row] >>> (COEFF_BIAS - n_mant);
+    endfunction
+
+    static function logic signed[n_int+n_mant:0] Wbr(int row);
+        import Coefficients_Fx::COEFF_BIAS;
+
+        return Coefficients_Fx::Wbr[row] >>> (COEFF_BIAS - n_mant);
+    endfunction
+
+    static function logic signed[n_int+n_mant:0] Wbi(int row);
+        import Coefficients_Fx::COEFF_BIAS;
+
+        return Coefficients_Fx::Wbi[row] >>> (COEFF_BIAS - n_mant);
+    endfunction
+
+    static function logic signed[1:0][n_int+n_mant:0] cpow(logic signed[63:0] r, logic signed[63:0] i, int exp);
+        import Coefficients_Fx::COEFF_BIAS;
+        logic signed[1:0][n_int+n_mant:0] result;
+        logic signed[63:0] tempR, tempI;
+        tempR = r;
+        tempI = i;
+
+        for (int j = 1; j < exp ; j++ ) begin
+            //cmulcc.r = (a.r * b.r) - (a.i * b.i);
+            //cmulcc.i = (a.i * b.r) + (a.r * b.i);
+            logic signed[127:0] tempReal, tempImag;
+            tempReal = (tempR * r) - (tempI * i);
+            tempImag = (tempI * r) + (tempR * i);
+            tempR = tempReal >>> COEFF_BIAS;
+            tempI = tempImag >>> COEFF_BIAS;
+        end
+        result[0][n_int+n_mant:0] = tempR >>> (COEFF_BIAS - n_mant);
+        result[1][n_int+n_mant:0] = tempI >>> (COEFF_BIAS - n_mant);
+        return result;
+    endfunction
+endclass //GetConst
+
 //package Float_p;
 virtual class convert #(parameter n_int = 8, n_mant = 23, f_exp = 8, f_mant = 23);
     static function logic[f_mant+f_exp:0] itof(logic signed[n_int+n_mant:0] in);

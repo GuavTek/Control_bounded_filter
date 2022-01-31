@@ -24,11 +24,11 @@ module FixRecursionModule #(
 
     always @(posedge clk) begin : recurse
         if (!rst) begin
-            prevR = resetValR;
-            prevI = resetValI;
+            prevR <= resetValR;
+            prevI <= resetValI;
         end else begin
-            prevR = sumR;
-            prevI = sumI;
+            prevR <= sumR;
+            prevI <= sumI;
         end
     end
 
