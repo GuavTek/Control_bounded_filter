@@ -60,9 +60,6 @@ def PlotPSD(arr, freq, sig_leak=1):
 		Ps = Ps + arr_f[i]
 		arr_f[i] = 0
 
-	arr_f[0] = 0
-	arr_f[1] = 0
-
 	#Calculate noise power
 	Pn = sum(arr_f)
 

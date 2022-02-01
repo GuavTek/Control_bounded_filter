@@ -13,6 +13,7 @@ module FloatToFix #(
     localparam n_tot_out = n_int_out + n_mant_out;
     input float_t in;
     output logic signed[n_tot_out:0] out;
+    logic[n_tot_out+1:0] temp;
 
     localparam n_tot_in = n_exp_in + n_mant_in;
     localparam expBias = GetFloatExpBias(n_exp_in);
@@ -27,9 +28,11 @@ module FloatToFix #(
     assign exponent = in.exp - expBias;
 
     logic signed[n_exp_in+1:0] shift;
-    assign shift = n_mant_in - n_mant_out - exponent;
+    assign shift = n_mant_in - n_mant_out - exponent -1;
 
-    assign out = (shift < 0) ? num_signed <<< -shift : num_signed >>> shift;
+    assign temp = ((shift < 0) ? num_signed <<< -shift : num_signed >>> shift) + 1;
+
+    assign out = temp[n_tot_out+1:1];
 
 endmodule
 

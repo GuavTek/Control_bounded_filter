@@ -11,14 +11,17 @@ module FixToFix #(
     localparam n_tot_out = n_int_out + n_mant_out;
     input logic signed[n_tot_in:0] in;
     output logic signed[n_tot_out:0] out;
+    logic[n_tot_out+1:0] temp;
 
     generate
         if (n_mant_out > n_mant_in)
-            assign out = in <<< n_mant_out - n_mant_in;
+            assign temp = (in <<< n_mant_out - n_mant_in -1) + 1;
         else
-            assign out = in >>> n_mant_in - n_mant_out;
+            assign temp = (in >>> n_mant_in - n_mant_out -1) + 1;
     endgenerate
     
+    assign out = temp[n_tot_out+1:1];
+
 endmodule
 
 `endif
