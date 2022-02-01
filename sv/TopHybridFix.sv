@@ -37,7 +37,7 @@ module Hybrid_Fixed_top #(
     localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE)));
     localparam int LUTahead_Delay = $ceil((0.0 + LUTahead_Layers)/`COMB_ADDERS);
     localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUTback_Delay = $ceil((0.0 + LUTback_Layers)/`COMB_ADDERS);
+    localparam int LUTback_Delay = $ceil((0.0 + LUTback_Layers)/`COMB_ADDERS) + 1;
 
     input wire [N-1:0] in;
     input logic rst, clk;

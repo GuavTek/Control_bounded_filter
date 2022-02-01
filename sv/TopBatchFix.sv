@@ -39,7 +39,7 @@ module Batch_Fixed_top #(
     localparam SampleWidth = N*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
+    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
 
     input wire [N-1:0] in;
     input logic rst, clk;
@@ -63,7 +63,6 @@ module Batch_Fixed_top #(
     
     // Shifted input
     logic[SampleWidth-1:0] inShift, inSample;
-    logic[$clog2(SampleWidth)-1:0] inSel;
     always @(posedge clkDS) begin
         inShift <= inSample;
     end
@@ -74,6 +73,11 @@ module Batch_Fixed_top #(
     // Counters for batch cycle
     logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // counters for input samples
     logic[$clog2(DownSampleDepth)-1:0] delayBatCount[LUT_Delay + 2:0], delayBatCountRev[LUT_Delay + 2:0];
+    
+    // Is low when the cycle is ending
+    logic cyclePulse;
+    assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
+
     generate
         for (genvar i = (LUT_Delay + 2); i > 0 ; i-- ) begin
             always @(posedge clkDS) begin
@@ -82,11 +86,11 @@ module Batch_Fixed_top #(
             end
         end
     endgenerate
-    
+
     always @(posedge clkDS, negedge rst) begin
         delayBatCount[0] <= dBatCount;
         delayBatCountRev[0] <= dBatCountRev;
-        if(!rst || (dBatCount == (DownSampleDepth-1))) begin
+        if(!rst || !cyclePulse) begin
             dBatCount <= 'b0;
             dBatCountRev <= DownSampleDepth-1;
         end else begin
@@ -101,9 +105,6 @@ module Batch_Fixed_top #(
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
 
-    // Is low when the cycle is ending
-    logic cyclePulse;
-    assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
 
     // Recursion register propagation is delayed one half cycle
     logic[LUT_Delay+2:0] regProp;
@@ -189,8 +190,8 @@ module Batch_Fixed_top #(
         addrBR <= {dBatCountRev, cycleCalc};
         addrFR <= {dBatCount, cycleCalc};
         addrResIn <= {delayBatCount[2 + LUT_Delay], delayCycle[2 + LUT_Delay][0]};
-        addrResOutB <= {delayBatCountRev[1 + LUT_Delay], !delayCycle[1 + LUT_Delay][0]};
-        addrResOutF <= {delayBatCount[1 + LUT_Delay], !delayCycle[1 + LUT_Delay][0]};
+        addrResOutB <= {delayBatCountRev[2 + LUT_Delay], !delayCycle[2 + LUT_Delay][0]};
+        addrResOutF <= {delayBatCount[2 + LUT_Delay], !delayCycle[2 + LUT_Delay][0]};
     end
 
     // Must reverse sample order for backward recursion LUTs

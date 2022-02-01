@@ -36,8 +36,8 @@ module TB_BATCH_Fixed #() ();
     logic clk;
     import Coefficients_Fx::*;
     
-    localparam int DownResultDepth = $ceil(0.0 + `DEPTH / `DSR);
-    localparam int DownSampleDepth = DownResultDepth * `DSR2;
+    localparam int DownResultDepth = $ceil((0.0 + `DEPTH) / `DSR);
+    localparam int DownSampleDepth = DownResultDepth; // DownResultDepth * `DSR2;
     localparam SampleWidth = N*`DSR; 
 
     // Instantiate common testbench objects
@@ -55,12 +55,12 @@ module TB_BATCH_Fixed #() ();
     logic[out_w-1:0] resDataInB, resDataInF, resDataOutB, resDataOutF;
     logic[$clog2(2*DownResultDepth)-1:0] resAddrInB, resAddrInF, resAddrOutB, resAddrOutF;
     logic sampleClk, resClkF, resClkB, sampleWrite, resWriteB, resWriteF;
-    RAM_triple #(.depth(4*DownSampleDepth + 4), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
+    RAM_triple #(.depth(4*DownSampleDepth), .d_width(SampleWidth)) sample (.clk(sampleClk), .rst(rst), .write(sampleWrite), .dataIn(sampleDataIn), .addrIn(sampleAddrIn), 
             .dataOut1(sampleDataOut1), .dataOut2(sampleDataOut2), .dataOut3(sampleDataOut3), .addrOut1(sampleAddrOut1), .addrOut2(sampleAddrOut2), .addrOut3(sampleAddrOut3));
 
-    RAM_single #(.depth(2*DownResultDepth + 2), .d_width(out_w)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
+    RAM_single #(.depth(2*DownResultDepth), .d_width(out_w)) calcB (.clk(resClkB), .rst(rst), .write(resWriteB), .dataIn(resDataInB), .addrIn(resAddrInB),
             .dataOut(resDataOutB), .addrOut(resAddrOutB));
-    RAM_single #(.depth(2*DownResultDepth + 2), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
+    RAM_single #(.depth(2*DownResultDepth), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
     Batch_Fixed_top #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
