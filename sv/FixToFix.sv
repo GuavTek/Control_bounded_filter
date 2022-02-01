@@ -15,7 +15,7 @@ module FixToFix #(
 
     generate
         if (n_mant_out > n_mant_in)
-            assign temp = (in <<< n_mant_out - n_mant_in -1) + 1;
+            assign temp = (in <<< n_mant_out - n_mant_in +1);
         else
             assign temp = (in >>> n_mant_in - n_mant_out -1) + 1;
     endgenerate
