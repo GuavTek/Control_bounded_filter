@@ -35,9 +35,7 @@ module LUT #(
         end
     endgenerate
 
-    always_comb begin : select
-        result = mem[sel];
-    end
+    assign result = mem[sel];
 endmodule
 
 module LUT_Unit #(
@@ -132,7 +130,7 @@ module LUT_Unit #(
                 assign lutResults[i] = tempResult;
             end else begin : FF_Gen
                 always @(posedge clk) begin
-                    lutResults[i] = tempResult;
+                    lutResults[i] <= tempResult;
                 end
             end
         end
@@ -177,7 +175,7 @@ module LUT_Unit #(
                     assign    adderResults[nextRes + ii] = tempResult;
                 end else begin : FF_Gen
                     always @(posedge clk) begin
-                        adderResults[nextRes + ii] = tempResult;
+                        adderResults[nextRes + ii] <= tempResult;
                     end
                 end
                 

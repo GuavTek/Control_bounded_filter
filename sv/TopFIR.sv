@@ -1,11 +1,14 @@
 `ifndef TOPFIR_SV_
 `define TOPFIR_SV_
 
-`include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
+`include "Util.sv"
 `include "FPU.sv"
 `include "LUT.sv"
 `include "FloatToFix.sv"
+`include "ClkDiv.sv"
+`include "ValidCount.sv"
+`include "InputReg.sv"
 
 `define MAX_LUT_SIZE 7
 `define COMB_ADDERS 3
@@ -20,7 +23,7 @@ module FIR_top #(
 ) (
     in, rst, clk, out, valid
 );
-    import Coefficients_Fx::*;
+    import Coefficients_Fx::N;
 
     typedef struct packed { 
         logic sign; 
@@ -52,39 +55,16 @@ module FIR_top #(
 
     // Data valid counter
     localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 3;
-    logic[$clog2(validTime):0] validCount;
-    logic validClk, validResult;
-    always @(posedge validClk, negedge rst) begin
-        if(!rst)
-            validCount = 0;
-        else
-            validCount++;
-    end
-
-    assign validResult = validCount == validTime;
-    assign validClk = clkDS && !validResult;
-    assign valid = validResult;
+    ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid));
 
     // Input shifting
     logic[N*Looktotal-1:0] inShift;
     logic [N*DSR-1:0] inSample;
-    logic[$clog2(N*DSR)-1:0] inSel;
     always @(posedge clkDS) begin
-        inShift <<= N*DSR;
-        inShift[N*DSR-1:0] = inSample;
+        inShift <= {inShift[N*Looktotal-1-N*DSR:0], inSample};
     end
 
-    // Reduce activity factor
-    generate
-        if (DSR > 1) begin
-            always @(posedge clk) begin
-                inSel = N*(DSR - dsrCount)-1;
-                inSample[inSel -: N] = in;
-            end
-        end else begin
-            assign inSample = in;
-        end
-    endgenerate
+    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(dsrCount), .in(in), .out(inSample));
     
 
     logic[N*Lookahead-1:0] sampleahead;
@@ -99,25 +79,10 @@ module FIR_top #(
         end
     endgenerate
 
-    function automatic logic signed[N*Lookahead-1:0][63:0] GetHb ();
-        logic signed[N*Lookahead-1:0][63:0] tempArray;
-        for (int i = 0; i < N*Lookahead ; i++) begin
-            tempArray[i] = hb[i];
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[N*Lookback-1:0][63:0] GetHf ();
-        logic signed[N*Lookback-1:0][63:0] tempArray;
-        for (int i = 0; i < N*Lookback ; i++) begin
-            tempArray[i] = hf[i];
-        end
-        return tempArray;
-    endfunction
-
+    localparam coeff_mant = Coefficients_Fx::COEFF_BIAS;
     float_t lookbackResult, lookaheadResult, totResult;
-    localparam logic signed[N*Lookback-1:0][63:0] hf_slice = GetHf();
-    localparam logic signed[N*Lookahead-1:0][63:0] hb_slice = GetHb();
+    localparam logic signed[N*Lookback-1:0][63:0] hf_slice = GetConst #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(N*Lookback))::Hf();
+    localparam logic signed[N*Lookahead-1:0][63:0] hb_slice = GetConst #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(N*Lookahead))::Hb();
     
     LUT_Unit #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookahead_LUT (
@@ -141,7 +106,7 @@ module FIR_top #(
 
     // Final final result
     always @(posedge clkDS) begin
-        out = rectifiedResult;
+        out <= rectifiedResult;
     end
 endmodule
 

@@ -19,19 +19,19 @@ module RecursionModule #(
     input logic rst, clk,
     output complex_t out
 );
-    complex_t prod, sum, prev, factor;
+    complex_t prod, sum, prev, factor, prevSum;
+    logic resetting;
     assign factor.r = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorR);
     assign factor.i = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorI);
-    assign out = sum;
+    assign out = prevSum;
+    assign prev = resetting ? prevSum : resetVal;
 
     CFPU #(.op(FPU_p::MULT), .n_exp(f_exp), .n_mant(f_mant), .float_t(float_t), .complex_t(complex_t)) c1 (.A(prev), .B(factor), .clk(clk), .result(prod));
     CFPU #(.op(FPU_p::ADD), .n_exp(f_exp), .n_mant(f_mant), .float_t(float_t), .complex_t(complex_t)) c2 (.A(prod), .B(in), .clk(clk), .result(sum));
 
     always_ff @(posedge clk) begin : recurse
-        if (!rst)
-            prev = resetVal;
-        else
-            prev = sum;
+        resetting <= rst;
+        prevSum <= sum;
     end
 
 endmodule
