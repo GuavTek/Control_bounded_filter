@@ -8,12 +8,14 @@ module Delay #(
     input logic clk,
     output logic[size-1:0] out
 );
+    // Make sure we don't get negative variable sizes
+    localparam tempDelay = (delay < 0) ? 0 : delay;
     generate
         if(delay > 0) begin
-            logic[size-1:0] inDelay[delay+1];
+            logic[size-1:0] inDelay[tempDelay+1];
             for (genvar i = 1; i <= delay; i++) begin
                 always @(posedge clk) begin
-                    inDelay[i] = inDelay[i-1];
+                    inDelay[i] <= inDelay[i-1];
                 end
             end
 
