@@ -1,6 +1,7 @@
 `ifndef DELAY_SV_
 `define DELAY_SV_
 
+// Delay data a set number of cycles
 module Delay #(
     parameter size = 1, delay = 0
 ) (

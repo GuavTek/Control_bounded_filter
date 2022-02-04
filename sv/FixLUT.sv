@@ -4,6 +4,7 @@
 `include "Util.sv"
 `include "FixPU.sv"
 
+// Basic LUT
 module FixLUT #(
     parameter   size = 1,
                 n_int = 8,
@@ -18,6 +19,7 @@ module FixLUT #(
     output logic signed[n_tot:0] result;
     logic signed[n_tot:0] mem[2**size-1:0];
 
+    // Generates a sum of factors
     function automatic logic signed[n_tot:0] getVal(logic[size-1:0] in);
         logic signed[n_tot:0] temp = 0;
         int j;
@@ -42,6 +44,7 @@ module FixLUT #(
     assign result = mem[sel];
 endmodule
 
+// A large LUT which gets broken down to smaller LUTs and summed
 module FixLUT_Unit #(
     parameter   size = 1,
                 lut_size = 6,
@@ -50,11 +53,11 @@ module FixLUT_Unit #(
                 adders_comb = 0,
                 lut_comb = 0,
     parameter logic signed[size-1:0][n_int+n_mant:0] fact = 0
-    ) (
+) (
     sel,
     clk,
     result
-    );
+);
     localparam n_tot = n_int + n_mant;
     input logic[size-1:0] sel;
     input logic clk;
@@ -82,9 +85,9 @@ module FixLUT_Unit #(
     endfunction
 
     logic signed[n_tot:0] lutResults[LUTsNum-1:0];
-    // Generate LUTs
+    
     generate
-
+        // Generate LUTs
         for (genvar i = 0; i < LUTsNum ; i++ ) begin : LUT_Gen
             logic signed[n_tot:0] tempResult;
             localparam offset = i*lut_size;
@@ -98,6 +101,7 @@ module FixLUT_Unit #(
                 FixLUT #(.size(LUTRest), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_r (.sel(sel[offset +: LUTRest]), .result(tempResult));
             end
 
+            // Decide if LUT results should be combinatorial or registers
             if (lut_comb > 0) begin : Comb_Gen
                 assign lutResults[i] = tempResult;
             end else begin : FF_Gen
@@ -108,9 +112,11 @@ module FixLUT_Unit #(
         end
     endgenerate
 
+    // Sum the contribution of all LUTs
     FixSum #(.size(LUTsNum), .n_int(n_int), .n_mant(n_mant), .adders_comb(adders_comb)) sum1 (.in(lutResults), .clk(clk), .out(result));
 endmodule
 
+// A LUT where contributions are summed over several cycles
 module FixLUT_Cumulative #(
     parameter   size = 1,
                 lut_size = 6,

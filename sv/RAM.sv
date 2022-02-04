@@ -1,6 +1,7 @@
 `ifndef RAM_SV_
 `define RAM_SV_
 
+// Models for RAM behaviour
 
 module RAM_single_bi #(
 	parameter 	depth = 32,

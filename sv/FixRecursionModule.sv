@@ -4,6 +4,8 @@
 `include "CFixPU.sv"
 `include "Util.sv"
 
+// A general recursive calculation
+// Performs out = in[k] + factor*in[k-1]
 module FixRecursionModule #(
     parameter   factorR = 0,
                 factorI = 0,
@@ -33,6 +35,7 @@ module FixRecursionModule #(
 
 endmodule
 
+// A module for recursive lookback calculation
 module LookbackRecursion #(
     parameter   N = 4,
                 M = N,
@@ -112,7 +115,7 @@ module LookbackRecursion #(
 
 endmodule
 
-
+// A module for recursive lookahead calculation
 module LookaheadRecursion #(
     parameter   N = 4,
                 M = N,

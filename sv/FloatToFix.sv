@@ -3,13 +3,13 @@
 
 `include "Util.sv"
 
+// A synthesizable module which converts from floating point to fixed point
 module FloatToFix #(
     parameter   n_int_out = 8, n_mant_out = 23, n_exp_in = 8, n_mant_in = 23,
     type float_t = struct {logic sign; logic[7:0] exp; logic[23:0] mant;}
 ) (
     in, out
 );
-    //import Float_p::GetFloatExpBias;
     localparam n_tot_out = n_int_out + n_mant_out;
     input float_t in;
     output logic signed[n_tot_out:0] out;

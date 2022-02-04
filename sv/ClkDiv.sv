@@ -12,7 +12,6 @@ module ClkDiv #(
     output logic [$clog2(DSR)-1:0] cntOut
 );
     logic[$clog2(DSR)-1:0] cnt;      // Prescale counter
-    logic clkO;
     generate
         if(DSR > 1) begin
             always @(posedge clkIn) begin
@@ -28,7 +27,6 @@ module ClkDiv #(
                 
             end
             assign cntOut = cnt;
-            //assign clkOut = clkO;
         end else begin
             assign clkOut = clkIn;
             assign cntOut = 'b0;

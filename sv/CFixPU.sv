@@ -4,11 +4,12 @@
 `include "Util.sv"
 `include "FixPU.sv"
 
+// Fixed-point adder or multiplier for complex numbers
 module CFixPU #(
     parameter   FPU_p::opcode op = FPU_p::ADD,
     parameter   n_int = 8,
                 n_mant = 23
-    ) (
+) (
     AR, AI, BR, BI, clk, resultR, resultI
 );
 
