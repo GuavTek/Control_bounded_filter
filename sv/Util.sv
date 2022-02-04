@@ -9,6 +9,7 @@ package FPU_p;
     } opcode;
 endpackage
 
+// Functions to slice and resize ADC constants
 virtual class GetConst #(parameter n_int = 8, n_mant = 23, size = 10);
     
     static function logic signed[size-1:0][n_int+n_mant:0] Hb ();
@@ -121,7 +122,7 @@ virtual class GetConst #(parameter n_int = 8, n_mant = 23, size = 10);
     endfunction
 endclass //GetConst
 
-//package Float_p;
+// Functions to convert between fixed-point and floating-point
 virtual class convert #(parameter n_int = 8, n_mant = 23, f_exp = 8, f_mant = 23);
     static function logic[f_mant+f_exp:0] itof(logic signed[n_int+n_mant:0] in);
         logic[f_mant+f_exp:0] temp;
@@ -185,12 +186,11 @@ virtual class convert #(parameter n_int = 8, n_mant = 23, f_exp = 8, f_mant = 23
     
 endclass //convert
 
+// Returns the exponent bias given the number of bits
 function automatic int GetFloatExpBias(int exp_bits);
     int floatBias;
     floatBias = 2 ** (exp_bits - 1) - 1;
     return floatBias;
 endfunction
-//endpackage
-
 
 `endif  // _UTIL_SV_
