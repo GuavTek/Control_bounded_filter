@@ -48,11 +48,11 @@ module FIR_Fixed_top #(
     ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(dummyValid));
 
     // Input register
+    logic [N*DSR-1:0] inSample;
     InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
 
     // Sample shift-register
     logic[N*Looktotal-1:0] inShift;
-    logic [N*DSR-1:0] inSample;
     always @(posedge clkDS) begin
         inShift <= {inShift[N*Looktotal-1-N*DSR:0], inSample};
     end
