@@ -80,9 +80,9 @@ module Hybrid_Fixed_top #(
 
     // Generate FIR lookahead
     logic signed[n_mant:0] lookaheadResult;
-    localparam logic signed[N*Lookahead-1:0][n_mant:0] hb_slice = GetConst #(.n_int(0), .n_mant(n_mant), .size(N*Lookahead))::Hb();
+    GetHb #(.n_int(0), .n_mant(n_mant), .size(N*Lookahead)) hb_slice ();
     FixLUT_Unit #(
-        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
+        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
 

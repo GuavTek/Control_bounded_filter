@@ -80,7 +80,10 @@ module Batch_Fixed_top #(
     logic[$clog2(DownSampleDepth)-1:0] batCnt, batCntRev;
     logic cyclePulse;
     always @(posedge clkDS, negedge rst) begin
-        if(!rst || !cyclePulse) begin
+        if(!rst) begin
+            batCnt <= 'b0;
+            batCntRev <= DownSampleDepth-1;
+        end else if(!cyclePulse) begin
             batCnt <= 'b0;
             batCntRev <= DownSampleDepth-1;
         end else begin

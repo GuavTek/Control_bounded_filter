@@ -70,21 +70,24 @@ module FIR_Fixed_top #(
         end
     endgenerate
 
+    logic signed[n_tot:0] lookaheadResult;
+    logic signed[n_tot:0] lookbackResult;
+
     // Load constants
-    localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = GetConst #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookback))::Hf();
-    localparam logic signed[N*Lookahead-1:0][n_tot:0] hb_slice = GetConst #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookahead))::Hb();
+    //localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = coeff_load.Hf();
+    //localparam logic signed[N*Lookahead-1:0][n_tot:0] hb_slice = coeff_load.Hb();
+    GetHb #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookahead)) hb_slice ();
+    GetHf #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookback)) hf_slice ();
     
     // Calculate lookahead
-    logic signed[n_tot:0] lookaheadResult;
     FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact( hb_slice.Hb ), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
                 .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
             );
 
     // Calculate lookback
-    logic signed[n_tot:0] lookbackResult;
     FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookback), .lut_size(`MAX_LUT_SIZE), .fact(hf_slice), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookback), .lut_size(`MAX_LUT_SIZE), .fact( hf_slice.Hf ), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
 
