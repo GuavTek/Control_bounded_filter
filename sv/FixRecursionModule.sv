@@ -137,8 +137,8 @@ module LookaheadRecursion #(
     generate
         genvar j;
         for (j = 0; j < DSR; j++ ) begin
-            assign lookaheadSample_rev[N*j +: N] = lookaheadSample[N*(DSR-j-1) +: N];
-            assign inSample_rev[N*j +: N] = inSample[N*(DSR-j-1) +: N];
+            assign lookaheadSample_rev[M*j +: M] = lookaheadSample[M*(DSR-j-1) +: M];
+            assign inSample_rev[M*j +: M] = inSample[M*(DSR-j-1) +: M];
         end
     endgenerate
     

@@ -30,16 +30,19 @@ module Hybrid_Fixed_top #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
+
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
-    localparam SampleWidth = N*DSR; 
+    localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam Lookahead = depth;
-    localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE)));
+    localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE)));
     localparam int LUTahead_Delay = $floor((0.0 + LUTahead_Layers)/`COMB_ADDERS);
     localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
     localparam int LUTback_Delay = $floor((0.0 + LUTback_Layers)/`COMB_ADDERS) + 1;
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
@@ -51,24 +54,24 @@ module Hybrid_Fixed_top #(
     
     // Input register
     logic [SampleWidth-1:0] inSample;
-    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
 
     // Input shift register
-    logic[N*DownSampleDepth*DSR-1:0] inShift;
+    logic[M*DownSampleDepth*DSR-1:0] inShift;
     always @(posedge clkDS) begin
-        inShift <= {inShift[N*DownSampleDepth*DSR-1-N*DSR:0], inSample};
+        inShift <= {inShift[M*DownSampleDepth*DSR-1-M*DSR:0], inSample};
     end
 
     // Prepare sample for the lookback
     logic[SampleWidth-1:0] sampleback;
-    assign sampleback = inShift[N*DownSampleDepth*DSR-1 -: SampleWidth];
+    assign sampleback = inShift[M*DownSampleDepth*DSR-1 -: SampleWidth];
 
     // Prepare samples for lookahead
-    logic[N*Lookahead-1:0] sampleahead;
+    logic[M*Lookahead-1:0] sampleahead;
     generate
         // Invert sample order
         for(genvar i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(DownSampleDepth*DSR-i-1) +: N];
+            assign sampleahead[M*i +: M] = inShift[M*(DownSampleDepth*DSR-i-1) +: M];
         end
     endgenerate
 
@@ -80,16 +83,16 @@ module Hybrid_Fixed_top #(
 
     // Generate FIR lookahead
     logic signed[n_mant:0] lookaheadResult;
-    GetHb #(.n_int(0), .n_mant(n_mant), .size(N*Lookahead)) hb_slice ();
+    GetHb #(.n_int(0), .n_mant(n_mant), .size(M*Lookahead)) hb_slice ();
     FixLUT_Unit #(
-        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
+        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
 
     // Generate lookback recursion
     logic signed[n_tot:0] lookbackResult;
     LookbackRecursion #(
-        .N(N), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
+        .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
         .inSample(sampleback), .clk(clkDS), .rst(rst), .validIn(validCompute), .result(lookbackResult) 
     );
 

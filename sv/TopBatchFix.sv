@@ -35,21 +35,24 @@ module Batch_Fixed_top #(
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
+
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
-    localparam SampleWidth = N*DSR; 
+    localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
     localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
     // Sample memory
     output logic[$clog2(4*DownSampleDepth)-1:0]  sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3;
 	output logic sampleClk, sampleWrite;
-	output logic[N*DSR-1:0] sampleDataIn;
-	input logic[N*DSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3;
+	output logic[M*DSR-1:0] sampleDataIn;
+	input logic[M*DSR-1:0] sampleDataOut1, sampleDataOut2, sampleDataOut3;
     // Part result memory
     output logic[$clog2(2*DownSampleDepth)-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB;
 	output logic resClkF, resClkB, resWriteF, resWriteB;
@@ -69,7 +72,7 @@ module Batch_Fixed_top #(
 
     // Input register
     logic[SampleWidth-1:0] inShift;
-    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inShift));
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inShift));
 
     logic[SampleWidth-1:0] inSample;
     always @(posedge clkDS) begin
@@ -184,13 +187,13 @@ module Batch_Fixed_top #(
 
     // Generate backward recursion
     LookaheadRecursion #(
-        .N(N), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) AheadRec (
+        .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) AheadRec (
         .inSample(scob), .lookaheadSample(slh), .clk(clkDS), .rst(rst), .validIn(validCompute), .propagate(regProp), .result(backwardResult) 
     );
     
     // Generate forward recursion
     LookbackRecursion #(
-        .N(N), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
+        .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
         .inSample(scof), .clk(clkDS), .rst(rst), .validIn(validCompute), .result(forwardResult) 
     );
 

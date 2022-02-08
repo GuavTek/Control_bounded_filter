@@ -24,15 +24,17 @@ module FIR_Fixed_top #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
 
     localparam Looktotal = Lookahead + Lookback;
-    localparam int LookaheadLUTs = $ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE);
-    localparam int LookbackLUTs = $ceil((0.0 + N*Lookback)/`MAX_LUT_SIZE);
+    localparam int LookaheadLUTs = $ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE);
+    localparam int LookbackLUTs = $ceil((0.0 + M*Lookback)/`MAX_LUT_SIZE);
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
     localparam n_tot = n_int + n_mant;
@@ -48,25 +50,25 @@ module FIR_Fixed_top #(
     ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(dummyValid));
 
     // Input register
-    logic [N*DSR-1:0] inSample;
-    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+    logic [M*DSR-1:0] inSample;
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
 
     // Sample shift-register
-    logic[N*Looktotal-1:0] inShift;
+    logic[M*Looktotal-1:0] inShift;
     always @(posedge clkDS) begin
-        inShift <= {inShift[N*Looktotal-1-N*DSR:0], inSample};
+        inShift <= {inShift[M*Looktotal-1-M*DSR:0], inSample};
     end
 
     // Prepare lookback samples
-    logic[N*Lookback-1:0] sampleback;
-    assign sampleback = inShift[N*Looktotal-1:N*Lookahead];
+    logic[M*Lookback-1:0] sampleback;
+    assign sampleback = inShift[M*Looktotal-1:M*Lookahead];
 
     // Prepare lookahead samples
-    logic[N*Lookahead-1:0] sampleahead;
+    logic[M*Lookahead-1:0] sampleahead;
     generate
         // Invert sample-order
         for(genvar i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
+            assign sampleahead[M*i +: M] = inShift[M*(Lookahead-i-1) +: M];
         end
     endgenerate
 
@@ -74,20 +76,18 @@ module FIR_Fixed_top #(
     logic signed[n_tot:0] lookbackResult;
 
     // Load constants
-    //localparam logic signed[N*Lookback-1:0][n_tot:0] hf_slice = coeff_load.Hf();
-    //localparam logic signed[N*Lookahead-1:0][n_tot:0] hb_slice = coeff_load.Hb();
-    GetHb #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookahead)) hb_slice ();
-    GetHf #(.n_int(n_int), .n_mant(n_mant), .size(N*Lookback)) hf_slice ();
+    GetHb #(.n_int(n_int), .n_mant(n_mant), .size(M*Lookahead)) hb_slice ();
+    GetHf #(.n_int(n_int), .n_mant(n_mant), .size(M*Lookback)) hf_slice ();
     
     // Calculate lookahead
     FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact( hb_slice.Hb ), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact( hb_slice.Hb ), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
                 .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
             );
 
     // Calculate lookback
     FixLUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookback), .lut_size(`MAX_LUT_SIZE), .fact( hf_slice.Hf ), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookback), .lut_size(`MAX_LUT_SIZE), .fact( hf_slice.Hf ), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
 
