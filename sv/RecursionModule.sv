@@ -20,8 +20,12 @@ module RecursionModule #(
 );
     complex_t prod, sum, prev, factor, prevSum;
     logic resetting;
-    assign factor.r = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorR);
-    assign factor.i = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(factorI);
+
+    // Convert loopfactor
+    ConvertITOF #(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .in(factorR)) itofR ();
+    ConvertITOF #(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .in(factorI)) itofI ();
+    assign factor.r = itofR.result;
+    assign factor.i = itofI.result;
     assign out = prevSum;
     assign prev = resetting ? prevSum : resetVal;
 

@@ -29,9 +29,10 @@ module LUT #(
     // Generate LUT values
     generate
         for(genvar i = 0; i < 2**size; i++) begin
-            localparam float_t temp = convert#(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant))::itof(getVal(i));
+            localparam logic signed[n_mant+n_int:0] temp = getVal(i);
+            ConvertITOF #(.n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .in(temp)) itof ();
             //$info("%f was converted to %h", ($itor(getVal(i))) / n_mant, temp);
-            assign mem[i] = temp;
+            assign mem[i] = itof.result;
         end
     endgenerate
 
@@ -59,37 +60,7 @@ module LUT_Unit #(
     input logic clk;
     output float_t result;
 
-    localparam int AddersNum = $ceil((0.0 + size)/lut_size);
-    localparam AdderLayers = $clog2(AddersNum);
-
-    function automatic int GetAdderNum(int n);
-        int temp = AddersNum;
-        for(int i = 0; i < n; i++) begin
-            //temp = $ceil(temp/2);
-            temp += 1;
-            temp >>= 1;
-        end
-        //temp = $floor(temp/2);
-        temp >>= 1;
-        GetAdderNum = temp;
-    endfunction
-
-    function automatic int GetRegsNum(int n);
-        int temp = AddersNum;
-        for (int i = 0; i <= n; i++) begin
-            //temp = $ceil(temp/2);
-            temp += 1;
-            temp >>= 1;
-        end
-        GetRegsNum = temp;
-    endfunction
-
-    function automatic int GetFirstReg(int n);
-        int temp = 0;
-        for (int i = 1; i < n; i++)
-            temp += GetRegsNum(i-1);
-        GetFirstReg = temp;
-    endfunction
+    localparam int LUTsNum = $ceil((0.0 + size)/lut_size);
 
     localparam LUTRest = size % lut_size;
     function logic signed[lut_size-1:0][n_tot:0] GetFact (int startIndex);
@@ -110,11 +81,11 @@ module LUT_Unit #(
         return tempArray;
     endfunction
 
-    float_t lutResults[AddersNum-1:0];
-    float_t adderResults[GetFirstReg(AdderLayers):0];
-    // Generate LUTs
+    float_t lutResults[LUTsNum-1:0];
+
     generate
-        for (genvar i = 0; i < AddersNum ; i++ ) begin : LUT_Gen
+        // Generate LUTs
+        for (genvar i = 0; i < LUTsNum ; i++ ) begin : LUT_Gen
             float_t tempResult;
             localparam offset = i*lut_size;
             localparam lut_rem = size - offset;
@@ -126,6 +97,7 @@ module LUT_Unit #(
                 LUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .fact(fact_slice), .float_t(float_t)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
             end
 
+            // Decide if LUT results should be combinatorial or registers
             if (lut_comb > 0) begin : Comb_Gen
                 assign lutResults[i] = tempResult;
             end else begin : FF_Gen
@@ -136,55 +108,8 @@ module LUT_Unit #(
         end
     endgenerate
 
-    // Generate adders
-    generate
-        genvar layer, ii;
-        if (AdderLayers == 0) begin : No_Adders
-            assign adderResults[0] = lutResults[0];
-        end
-        
-        for (layer = AdderLayers; layer > 0 ; layer-- ) begin : ADDER_Gen
-            localparam i = layer - 1;
-            localparam addfloor = GetAdderNum(i);
-            localparam addceil = GetRegsNum(i);
-            localparam firstRes = GetFirstReg(i);
-            localparam nextRes = GetFirstReg(i+1);
-
-            `ifdef VERBOSE_LVL
-                if(`VERBOSE_LVL > 2)
-                    $info("layer: %3d, addfloor: %4d, addceil: %4d, firstres: %4d, nextres: %4d", i, addfloor, addceil, firstRes, nextRes);
-            `endif 
-            
-            for ( ii = 0; ii < addceil; ii++) begin : Layer_Instance_Gen
-                float_t tempResult;
-                if ( i == 0 ) begin : Core_Gen
-                    if ( ii < addfloor ) begin : ADD_Gen
-                        FPU #(.op(FPU_p::ADD), .float_t(float_t), .n_exp(f_exp), .n_mant(f_mant)) adder_ (.A(lutResults[2*ii]), .B(lutResults[2*ii + 1]), .clk(clk), .result(tempResult));
-                    end else begin : Reg_Gen
-                        assign tempResult = lutResults[2*ii];
-                    end
-                end else begin : Layer_Gen
-                    if ( ii < addfloor) begin : ADD_Gen
-                        FPU #(.op(FPU_p::ADD), .float_t(float_t), .n_exp(f_exp), .n_mant(f_mant)) adder_ (.A(adderResults[firstRes + 2*ii]), .B(adderResults[firstRes + 2*ii + 1]), .clk(clk), .result(tempResult));
-                    end else begin : Reg_Gen
-                        assign tempResult = adderResults[firstRes + 2*ii];
-                    end
-                end
-
-                if ((i % adders_comb) > 0) begin : Comb_Gen
-                    assign    adderResults[nextRes + ii] = tempResult;
-                end else begin : FF_Gen
-                    always @(posedge clk) begin
-                        adderResults[nextRes + ii] <= tempResult;
-                    end
-                end
-                
-            end
-            
-        end
-    endgenerate
-
-    assign result = adderResults[GetFirstReg(AdderLayers)];
+    // Sum the contribution of all LUTs
+    FloatSum #(.size(LUTsNum), .f_exp(f_exp), .f_mant(f_mant), .adders_comb(adders_comb), .float_t(float_t)) sum1 (.in(lutResults), .clk(clk), .out(result));
 endmodule
 
 `endif

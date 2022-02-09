@@ -24,6 +24,8 @@ module FIR_top #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
 
     typedef struct packed { 
         logic sign; 
@@ -36,14 +38,14 @@ module FIR_top #(
         float_t i;
     } complex_t;
 
-    input wire[N-1:0] in;
+    input wire[M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
 
     localparam Looktotal = Lookahead + Lookback;
-    localparam int LookaheadLUTs = $ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE);
-    localparam int LookbackLUTs = $ceil((0.0 + N*Lookback)/`MAX_LUT_SIZE);
+    localparam int LookaheadLUTs = $ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE);
+    localparam int LookbackLUTs = $ceil((0.0 + M*Lookback)/`MAX_LUT_SIZE);
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
 
@@ -57,46 +59,52 @@ module FIR_top #(
     localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 3;
     ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid));
 
-    // Input shifting
-    logic[N*Looktotal-1:0] inShift;
-    logic [N*DSR-1:0] inSample;
+    // Input register
+    logic [M*DSR-1:0] inSample;
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(dsrCount), .in(in), .out(inSample));
+
+    // Input shift-register
+    logic[M*Looktotal-1:0] inShift;
     always @(posedge clkDS) begin
-        inShift <= {inShift[N*Looktotal-1-N*DSR:0], inSample};
+        inShift <= {inShift[M*Looktotal-1-M*DSR:0], inSample};
     end
 
-    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(dsrCount), .in(in), .out(inSample));
-    
+    // Prepare lookback sample
+    logic[M*Lookback-1:0] sampleback;
+    assign sampleback = inShift[M*Looktotal-1:M*Lookahead];
 
-    logic[N*Lookahead-1:0] sampleahead;
-    logic[N*Lookback-1:0] sampleback;
-
-    assign sampleback = inShift[N*Looktotal-1:N*Lookahead];
-
-    // Invert sample-order
+    // Prepare lookahead samples
+    logic[M*Lookahead-1:0] sampleahead;
     generate
+        // Invert sample order
         for(genvar i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(Lookahead-i-1) +: N];
+            assign sampleahead[M*i +: M] = inShift[M*(Lookahead-i-1) +: M];
         end
     endgenerate
 
     localparam coeff_mant = Coefficients_Fx::COEFF_BIAS;
-    float_t lookbackResult, lookaheadResult, totResult;
-    localparam logic signed[N*Lookback-1:0][63:0] hf_slice = GetConst #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(N*Lookback))::Hf();
-    localparam logic signed[N*Lookahead-1:0][63:0] hb_slice = GetConst #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(N*Lookahead))::Hb();
+    GetHb #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(M*Lookahead)) hb_slice ();
+    GetHf #(.n_int(63-coeff_mant), .n_mant(coeff_mant), .size(M*Lookback)) hf_slice ();
     
+    // Calculate lookahead
+    float_t lookaheadResult;
     LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookahead_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookahead_LUT (
                 .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
             );
 
+    // Calculate lookback
+    float_t lookbackResult;
     LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookback), .lut_size(`MAX_LUT_SIZE), .fact(hf_slice), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookback_LUT (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookback), .lut_size(`MAX_LUT_SIZE), .fact(hf_slice.Hf), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookback_LUT (
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
 
+    // Calculate final result
+    float_t totResult;
     FPU #(.op(FPU_p::ADD), .float_t(float_t), .n_exp(n_exp), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
 
-
+    // Reformat and scale result
     logic [`OUT_WIDTH-1:0] rectifiedResult;
     logic signed[`OUT_WIDTH-1:0] scaledResult;
     FloatToFix #(.n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .n_exp_in(n_exp), .n_mant_in(n_mant), .float_t(float_t)) FinalScaler (.in( totResult ), .out( scaledResult ) );

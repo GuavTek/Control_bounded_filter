@@ -19,6 +19,7 @@
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
 `include "InputReg.sv"
+`include "Delay.sv"
 
 `define MAX_LUT_SIZE 7
 `define COMB_ADDERS 1
@@ -43,13 +44,16 @@ module Batch_top #(
 	resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
+    
     import Coefficients_Fx::COEFF_BIAS;
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
-    localparam SampleWidth = N*DSR;
+    localparam SampleWidth = M*DSR;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
+    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
@@ -76,47 +80,9 @@ module Batch_top #(
     } complex_t;
 
     // Downsampled clock
-    logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
+    logic[$clog2(DSR)-1:0] divCnt;
     logic clkDS;
-    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(dsrCount));
-
-    // Shifted input
-    logic[SampleWidth-1:0] inShift, inSample;
-    always @(posedge clkDS) begin
-        inShift <= inSample;
-    end
-
-    InputReg #(.M(N), .DSR(DSR)) inReg (.clk(clk), .pos(dsrCount), .in(in), .out(inSample));
-
-
-    // Counters for batch cycle
-    logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // counters for input samples
-    logic[$clog2(DownSampleDepth)-1:0] delayBatCount[LUT_Delay + 2:0], delayBatCountRev[LUT_Delay + 2:0];
-
-    // Is low when the cycle is ending
-    logic cyclePulse;
-    assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
-
-    generate
-        for (genvar i = (LUT_Delay + 2); i > 0 ; i-- ) begin
-            always @(posedge clkDS) begin
-                delayBatCount[i] <= delayBatCount[i - 1];
-                delayBatCountRev[i] <= delayBatCountRev[i - 1];
-            end
-        end
-    endgenerate
-    
-    always @(posedge clkDS, negedge rst) begin
-        delayBatCount[0] <= dBatCount;
-        delayBatCountRev[0] <= dBatCountRev;
-        if(!rst || !cyclePulse) begin
-            dBatCount <= 'b0;
-            dBatCountRev <= DownSampleDepth-1;
-        end else begin
-            dBatCount <= dBatCount + 1;
-            dBatCountRev <= dBatCountRev - 1;
-        end
-    end
+    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCnt));
 
     // Count valid samples
     localparam validTime = 5*DownSampleDepth;
@@ -124,21 +90,37 @@ module Batch_top #(
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
 
+    // Input register
+    logic[SampleWidth-1:0] inShift;
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inShift));
+
+    logic[SampleWidth-1:0] inSample;
+    always @(posedge clkDS) begin
+        inSample <= inShift;
+    end
+
+    // Counters for batch cycle
+    logic[$clog2(DownSampleDepth)-1:0] batCnt, batCntRev;
+    logic cyclePulse;
+    always @(posedge clkDS, negedge rst) begin
+        if(!rst) begin
+            batCnt <= 'b0;
+            batCntRev <= DownSampleDepth-1;
+        end else if(!cyclePulse) begin
+            batCnt <= 'b0;
+            batCntRev <= DownSampleDepth-1;
+        end else begin
+            batCnt <= batCnt + 1;
+            batCntRev <= batCntRev - 1;
+        end
+    end
+
+    // Is low when the cycle is ending
+    assign cyclePulse = !(batCnt == (DownSampleDepth-1));
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    logic[1:0] delayCycle[LUT_Delay + 2:0];
-    
-    generate
-        for (genvar i = (LUT_Delay + 2); i > 0 ; i-- ) begin
-            always @(posedge clkDS) begin
-                delayCycle[i] <= delayCycle[i - 1];
-            end
-        end
-    endgenerate
-
     always @(posedge clkDS, negedge rst) begin
-        delayCycle[0] <= cycle;
         if(!rst) begin
             cycle <= 2'b00;
             cycleLH <= 2'b11;
@@ -152,39 +134,35 @@ module Batch_top #(
         end   
     end
 
-    // Recursion register propagation is delayed one half cycle
-    logic[LUT_Delay+2:0] regProp;
-    always @(negedge clkDS) begin
-        regProp <= regProp << 1;
-        regProp[0] <= cyclePulse;
-    end
-
     // Sample storage
     logic[SampleWidth-1:0] slh, scob, sf_delay, scof;
     logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
     assign sampleClk = clkDS;
+    // Write sample to memory
     assign sampleWrite = 1'b1;
-    assign sampleDataIn = inShift;
+    assign sampleDataIn = inSample;
     assign sampleAddrIn = addrIn;
+    // Read lookahead sample
     assign slh = sampleDataOut1;
-    assign sf_delay = sampleDataOut2;
-    assign scob = sampleDataOut3;
     assign sampleAddrOut1 = addrLH;
+    // Read forward recursion sample
+    assign sf_delay = sampleDataOut2;
     assign sampleAddrOut2 = addrFR;
+    // Read backward recursion sample
+    assign scob = sampleDataOut3;
     assign sampleAddrOut3 = addrBR;
-
-    // Outputs from generate blocks
-    float_t partResF[N], partResB[N];
 
     // Partial result storage
     logic signed [`OUT_WIDTH-1:0] finF, finB, finResult, finF_delay, finB_delay, partMemB, partMemF;
     logic[$clog2(2*DownSampleDepth)-1:0] addrResIn, addrResOutB, addrResOutF;
+    // Backward result
     assign resClkB = clkDS;
     assign resWriteB = 1'b1;
     assign resDataInB = partMemB;
     assign resAddrInB = addrResIn;
     assign finB_delay = resDataOutB;
     assign resAddrOutB = addrResOutB;
+    // Forward result
     assign resClkF = clkDS;
     assign resWriteF = 1'b1;
     assign resDataInF = partMemF;
@@ -192,105 +170,114 @@ module Batch_top #(
     assign finF_delay = resDataOutF;
     assign resAddrOutF = addrResOutF;
 
+    // Outputs from generate blocks
+    float_t forwardResult, backwardResult;
+
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF;
-    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerB (.in( partResB[N-1] ), .out( scaledResB ) );
-    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerF (.in( partResF[N-1] ), .out( scaledResF ) );
+    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
+    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
 
+    // Addresses for result memory must be delayed
+    logic[$clog2(DownSampleDepth)-1:0] resBatCnt, resBatCntRev;
+    logic[1:0] resCycle;
+    Delay #(.size($clog2(DownSampleDepth)), .delay(LUT_Delay+3)) BatchCnt_Delay (.in(batCnt), .clk(clkDS), .out(resBatCnt));
+    Delay #(.size($clog2(DownSampleDepth)), .delay(LUT_Delay+3)) BatchCntRev_Delay (.in(batCntRev), .clk(clkDS), .out(resBatCntRev)); 
+    Delay #(.size(2), .delay(LUT_Delay+3)) Cycle_Delay (.in(cycle), .clk(clkDS), .out(resCycle)); 
+
+    // Synchronize to clock
     always @(posedge clkDS) begin
         scof <= sf_delay;
         finF <= finF_delay;
         finB <= finB_delay;
         partMemB <= scaledResB;
         partMemF <= scaledResF;
-        addrIn <= {dBatCount, cycle};
-        addrLH <= {dBatCountRev, cycleLH};
-        addrBR <= {dBatCountRev, cycleCalc};
-        addrFR <= {dBatCount, cycleCalc};
-        addrResIn <= {delayBatCount[2 + LUT_Delay], delayCycle[2 + LUT_Delay][0]};
-        addrResOutB <= {delayBatCountRev[2 + LUT_Delay], !delayCycle[2 + LUT_Delay][0]};
-        addrResOutF <= {delayBatCount[2 + LUT_Delay], !delayCycle[2 + LUT_Delay][0]};
+        addrIn <= {batCnt, cycle};
+        addrLH <= {batCntRev, cycleLH};
+        addrBR <= {batCntRev, cycleCalc};
+        addrFR <= {batCnt, cycleCalc};
+        addrResIn <= {resBatCnt, resCycle[0]};
+        addrResOutB <= {resBatCntRev, !resCycle[0]};
+        addrResOutF <= {resBatCnt, !resCycle[0]};
     end
+
+    // Register propagation for lookahead recursion is delayed
+    logic regProp;
+    Delay #(.size(1), .delay(LUT_Delay)) RegPropagate_Delay (.in(cyclePulse), .clk(clkDS), .out(regProp)); 
 
     // Must reverse sample order for backward recursion LUTs
     logic[SampleWidth-1:0] slh_rev, scob_rev;
     generate
         genvar j;
         for (j = 0; j < DSR; j++ ) begin
-            assign slh_rev[N*j +: N] = slh[N*(DSR-j-1) +: N];
-            assign scob_rev[N*j +: N] = scob[N*(DSR-j-1) +: N];
+            assign slh_rev[M*j +: M] = slh[M*(DSR-j-1) +: M];
+            assign scob_rev[M*j +: M] = scob[M*(DSR-j-1) +: M];
         end
     endgenerate
 
+    // Generate recursions
+    float_t partResB[N], partResF[N];
     generate 
         genvar i;
         for (i = 0; i < N ; i++ ) begin
             
-            complex_t CF_in, CB_in, LH_in;
-            localparam logic signed[SampleWidth-1:0][63:0] tempFfr = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .size(SampleWidth))::Ffr(i);
-            localparam logic signed[SampleWidth-1:0][63:0] tempFbr = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .size(SampleWidth))::Fbr(i);
-            localparam logic signed[SampleWidth-1:0][63:0] tempFfi = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .size(SampleWidth))::Ffi(i);
-            localparam logic signed[SampleWidth-1:0][63:0] tempFbi = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .size(SampleWidth))::Fbi(i);
+            // Import constants
+            GetRecConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .size(SampleWidth), .row(i), .dsr(DSR)) loop_const ();
+            localparam float_t FloatZero = 0;
             
+            // Use LUTs to turn sample into a complex number
+            complex_t CF_in, CB_in, LH_in;
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTr (
                 .sel(slh_rev), .clk(clkDS), .result(LH_in.r)
                 );
 
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Ffr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTr (
                 .sel(scof), .clk(clkDS), .result(CF_in.r)
                 );
 
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTr (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTr (
                 .sel(scob_rev), .clk(clkDS), .result(CB_in.r)
             );
 
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTi (
                 .sel(slh_rev), .clk(clkDS), .result(LH_in.i)
                 );
 
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Ffi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTi (
                 .sel(scof), .clk(clkDS), .result(CF_in.i)
                 );
 
             LUT_Unit #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTi (
+                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTi (
                 .sel(scob_rev), .clk(clkDS), .result(CB_in.i)
             );
-            
-            localparam tempLbr = Coefficients_Fx::Lbr[i];
-            localparam tempLbi = Coefficients_Fx::Lbi[i];
-            localparam tempLfr = Coefficients_Fx::Lfr[i];
-            localparam tempLfi = Coefficients_Fx::Lfi[i];
-            localparam logic signed[1:0][63:0] tempLb = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS))::cpow(tempLbr, tempLbi, DSR);
-            localparam logic signed[1:0][63:0] tempLf = GetConst #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS))::cpow(tempLfr, tempLfi, DSR);
-            localparam float_t FloatZero = 0; // convert #(.n_int(8), .n_mant(24), .f_exp(n_exp), .f_mant(n_mant))::itof(0);
 
-            complex_t LH_res, CF_out, CB_out, WF, WB;
-            // Lookahead 
+
+            // Calculate Lookahead
+            complex_t LH_res;
             RecursionModule #(
-                .factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
-                .in(LH_in), .rst(regProp[LUT_Delay] & rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(LH_res));
-            // Compute
-            complex_t RF_in, RB_in;
+                .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
+                .in(LH_in), .rst(regProp & rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(LH_res));
+            
+            // Calculate forward result
+            complex_t CF_out, RF_in;
             assign RF_in = validCompute ? CF_in : {FloatZero, FloatZero};
+            RecursionModule #(
+                .factorR(loop_const.Lf[0]), .factorI(loop_const.Lf[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CFR_ (
+                .in(RF_in), .rst(rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(CF_out));
+            
+            // Calculate backward result
+            complex_t CB_out, RB_in;
             assign RB_in = validCompute ? CB_in : {FloatZero, FloatZero};
             RecursionModule #(
-                .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CFR_ (
-                .in(RF_in), .rst(rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(CF_out));
-            RecursionModule #(
-                .factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
-                .in(RB_in), .rst(regProp[LUT_Delay] & rst), .resetVal(LH_res), .clk(clkDS || !rst), .out(CB_out));
-
-            assign WF.r = convert#(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant))::itof(Coefficients_Fx::Wfr[i]);
-            assign WF.i = convert#(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant))::itof(Coefficients_Fx::Wfi[i]);
-            assign WB.r = convert#(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant))::itof(Coefficients_Fx::Wbr[i]);
-            assign WB.i = convert#(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant))::itof(Coefficients_Fx::Wbi[i]);
-
+                .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
+                .in(RB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS || !rst), .out(CB_out));
+            
             // Save in registers to reduce timing requirements
             complex_t F_out, B_out;
             always @(posedge clkDS) begin
@@ -298,26 +285,35 @@ module Batch_top #(
                 B_out <= CB_out;
             end
 
+            // Prepare factors W
+            complex_t WF, WB;
+            ConvertITOF #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .in(Coefficients_Fx::Wfr[i])) itofWFR ();
+            ConvertITOF #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .in(Coefficients_Fx::Wfi[i])) itofWFI ();
+            ConvertITOF #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .in(Coefficients_Fx::Wbr[i])) itofWBR ();
+            ConvertITOF #(.n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .in(Coefficients_Fx::Wbi[i])) itofWBI ();
+            assign WF.r = itofWFR.result;
+            assign WF.i = itofWFI.result;
+            assign WB.r = itofWBR.result;
+            assign WB.i = itofWBI.result;
+
+            // Multiply by W
             complex_t resF, resB;
             CFPU #(.op(FPU_p::MULT), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) WFR_ (.A(F_out), .B(WF), .clk(clkDS), .result(resF));
             CFPU #(.op(FPU_p::MULT), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) WBR_ (.A(B_out), .B(WB), .clk(clkDS), .result(resB));
 
-            // Final add
-            float_t forward, backward;
+            // Assign to array
             always @(posedge clkDS) begin
-                forward <= resF.r;
-                backward <= resB.r;
-            end
-
-            if(i == 0) begin
-                assign partResF[0] = forward;
-                assign partResB[0] = backward;
-            end else begin
-                FPU #(.op(FPU_p::ADD), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
-                FPU #(.op(FPU_p::ADD), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
+                partResF[i] <= resF.r;
+                partResB[i] <= resB.r;
             end
         end
     endgenerate
+
+    // Sum forward partial results
+    FloatSum #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumF (.in(partResF), .clk(clkDS), .out(forwardResult));
+
+    // Sum backward partial results
+    FloatSum #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumB (.in(partResB), .clk(clkDS), .out(backwardResult));
 
     // Final final result
     assign finResult = finF + finB; // FPU #(.op(FPU_p::ADD), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
