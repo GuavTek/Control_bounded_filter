@@ -83,8 +83,8 @@ module FixSum #(
 
     // Generate adders
     generate
-        // Failsafe in case the number of adders = 0
-        if (AdderLayers == 0) begin : No_Adders
+        // Failsafe in case the number of adders is 0 or less
+        if (AdderLayers <= 0) begin : No_Adders
             assign adderResults[0] = in[0];
         end
         
