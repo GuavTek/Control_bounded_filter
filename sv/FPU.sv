@@ -40,7 +40,7 @@ endmodule
 
 // An adder where number of inputs is decided by the size parameter
 // Generates adders so it has the shortest delay possible
-module FloatSum #(
+module Sum_Flp #(
     parameter   size = 2,
                 f_exp = 8,
                 f_mant = 23,

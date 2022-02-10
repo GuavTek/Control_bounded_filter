@@ -1,10 +1,10 @@
-`ifndef FLOATTOFIX_SV_
-`define FLOATTOFIX_SV_
+`ifndef FLPTOFXP_SV_
+`define FLPTOFXP_SV_
 
 `include "Util.sv"
 
 // A synthesizable module which converts from floating point to fixed point
-module FloatToFix #(
+module Flp_To_Fxp #(
     parameter   n_int_out = 8, n_mant_out = 23, n_exp_in = 8, n_mant_in = 23,
     type float_t = struct {logic sign; logic[7:0] exp; logic[23:0] mant;}
 ) (

@@ -1,5 +1,5 @@
-`ifndef TOPHYBRIDFIX_SV_
-`define TOPHYBRIDFIX_SV_
+`ifndef HYBRID_TWOSTAGE_FXP_SV_
+`define HYBRID_TWOSTAGE_FXP_SV_
 
 // n_int 9
 // 60dB n_mant 15   depth 72
@@ -7,19 +7,21 @@
 
 `include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
-//`include "Data/Coefficients_FixedpointPre.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 `include "Delay.sv"
+`include "ClkDiv.sv"
+`include "ValidCount.sv"
+`include "InputReg.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 1
 `define OUT_WIDTH 14
 
-module Hybrid_Fixed_top #(
+module Hybrid_Twostage_Fxp #(
     parameter   depth = 72,
                 DSR1 = 2,
                 DSR2 = 6,
@@ -28,20 +30,23 @@ module Hybrid_Fixed_top #(
 ) (
     in, rst, clk, out, valid
 );
-    import Coefficients_Fx::*;
+    import Coefficients_Fx::N;
+    //import Coefficients_Fx::M;
+    localparam M = N;
+
     localparam DSR = DSR1 * DSR2;
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
-    localparam SampleWidth = N*DSR; 
+    localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam Lookahead = depth;
     localparam ShiftDepth = DownSampleDepth * DSR;
-    localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + N*Lookahead)/`MAX_LUT_SIZE)));
+    localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE)));
     localparam int LUTahead_Delay = $ceil((0.0 + LUTahead_Layers)/`COMB_ADDERS);
-    localparam int LUTback_Width = N*DSR1;
+    localparam int LUTback_Width = M*DSR1;
     localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + LUTback_Width)/`MAX_LUT_SIZE)));
     localparam int LUTback_Delay = $ceil((0.0 + LUTback_Layers)/`COMB_ADDERS);
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
@@ -97,7 +102,7 @@ module Hybrid_Fixed_top #(
     endgenerate 
 
     // Input shifting
-    logic[N*ShiftDepth-1:0] inShift;
+    logic[M*ShiftDepth-1:0] inShift;
     logic [SampleWidth-1:0] inSample;
     logic[$clog2(SampleWidth)-1:0] inSel;
     always @(posedge clkDS) begin
@@ -109,20 +114,20 @@ module Hybrid_Fixed_top #(
     generate
         if (DSR > 1) begin
             always @(posedge clk) begin
-                inSel = N*(DSR - dsrCount)-1;
-                inSample[inSel -: N] = in;
+                inSel = M*(DSR - dsrCount)-1;
+                inSample[inSel -: M] = in;
             end
         end else begin
             assign inSample = in;
         end
     endgenerate
 
-    logic[N*Lookahead-1:0] sampleahead;
+    logic[M*Lookahead-1:0] sampleahead;
     logic[LUTback_Width-1:0] sampleback, slicedSampleBack[DSR2];
 
     generate
         for (genvar i = 0; i < DSR2 ; i++ ) begin
-            assign slicedSampleBack[i] = inShift[N*ShiftDepth-1-N*DSR1*(i + LUTback_Delay) -: LUTback_Width];
+            assign slicedSampleBack[i] = inShift[M*ShiftDepth-1-M*DSR1*(i + LUTback_Delay) -: LUTback_Width];
         end
     endgenerate
 
@@ -131,7 +136,7 @@ module Hybrid_Fixed_top #(
     // Invert sample-order
     generate
         for(genvar i = 0; i < Lookahead; i++) begin
-            assign sampleahead[N*i +: N] = inShift[N*(ShiftDepth-i-1) +: N];
+            assign sampleahead[M*i +: M] = inShift[M*(ShiftDepth-i-1) +: M];
         end
     endgenerate
 
@@ -160,8 +165,8 @@ module Hybrid_Fixed_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResAhead, scaledResBack, finResult, delayedBack, delayedAhead;
-    FixToFix #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
+    Fxp_To_Fxp #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
 
     localparam backResDelay = LUTahead_Delay - 1;
     localparam aheadResDelay = 1 - LUTahead_Delay;
@@ -183,15 +188,15 @@ module Hybrid_Fixed_top #(
     endgenerate
 
     // Final final result
-    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end
     
-    function automatic logic signed[N*Lookahead-1:0][n_mant:0] GetHb ();
-        logic signed[N*Lookahead-1:0][n_mant:0] tempArray;
+    function automatic logic signed[M*Lookahead-1:0][n_mant:0] GetHb ();
+        logic signed[M*Lookahead-1:0][n_mant:0] tempArray;
 
-        for (int i = 0; i < N*Lookahead ; i++) begin
+        for (int i = 0; i < M*Lookahead ; i++) begin
             logic signed[n_mant:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
             tempArray[i][n_mant:0] = temp;
         end
@@ -235,8 +240,8 @@ module Hybrid_Fixed_top #(
 
 
     // Generate FIR lookahead
-    localparam logic signed[N*Lookahead-1:0][n_mant:0] hb_slice = GetHb();
-    FixLUT_Unit #(
+    localparam logic signed[M*Lookahead-1:0][n_mant:0] hb_slice = GetHb();
+    LUT_Unit_Fxp #(
         .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
@@ -250,12 +255,12 @@ module Hybrid_Fixed_top #(
             localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfr = GetFfr(i);
             localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfi = GetFfi(i);
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
                 .sel(sampleback), .clk(clkRecurse), .result(CF_inR)
             );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
                 .sel(sampleback), .clk(clkRecurse), .result(CF_inI)
             );
@@ -269,7 +274,7 @@ module Hybrid_Fixed_top #(
             logic signed[n_tot:0] RF_inR, RF_inI, RB_inR, RB_inI;
             assign RF_inR = validCompute ? CF_inR : 0;
             assign RF_inI = validCompute ? CF_inI : 0;
-            FixRecursionModule #(
+            Recursion_Fxp #(
                 .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
                 .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkRecurse || !rst), .outR(CF_outR), .outI(CF_outI)
             );
@@ -285,7 +290,7 @@ module Hybrid_Fixed_top #(
             end
 
             logic signed[n_tot:0] resFR, resFI;
-            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
+            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
 
             // Final add
             logic signed[n_tot:0] tempRes;
@@ -296,7 +301,7 @@ module Hybrid_Fixed_top #(
             if(i == 0) begin
                 assign partResBack[0] = tempRes;
             end else begin
-                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
+                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
             end
         end
     endgenerate

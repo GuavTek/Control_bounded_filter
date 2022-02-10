@@ -1,19 +1,19 @@
-`ifndef FIXLUT_SV_
-`define FIXLUT_SV_
+`ifndef LUT_FXP_SV_
+`define LUT_FXP_SV_
 
 `include "Util.sv"
-`include "FixPU.sv"
+`include "FxpPU.sv"
 
 // Basic LUT
-module FixLUT #(
+module LUT_Fxp #(
     parameter   size = 1,
                 n_int = 8,
                 n_mant = 23,
     parameter logic signed[size-1:0][n_int+n_mant:0] fact = 'b0
-    ) (
+) (
     sel,
     result
-    );
+);
     localparam n_tot = n_int + n_mant;
     input logic[size-1:0] sel;
     output logic signed[n_tot:0] result;
@@ -45,7 +45,7 @@ module FixLUT #(
 endmodule
 
 // A large LUT which gets broken down to smaller LUTs and summed
-module FixLUT_Unit #(
+module LUT_Unit_Fxp #(
     parameter   size = 1,
                 lut_size = 6,
                 n_int = 8,
@@ -94,11 +94,11 @@ module FixLUT_Unit #(
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
                 localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact(offset);
-                FixLUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_f (.sel(sel[offset +: lut_size]), .result(tempResult));
+                LUT_Fxp #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_f (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else begin
                 // Causes internal assertion error in synthesis tool?
                 localparam logic signed[LUTRest-1:0][n_tot:0] fact_slice = GetFactRest(offset);
-                FixLUT #(.size(LUTRest), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_r (.sel(sel[offset +: LUTRest]), .result(tempResult));
+                LUT_Fxp #(.size(LUTRest), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_r (.sel(sel[offset +: LUTRest]), .result(tempResult));
             end
 
             // Decide if LUT results should be combinatorial or registers
@@ -113,11 +113,11 @@ module FixLUT_Unit #(
     endgenerate
 
     // Sum the contribution of all LUTs
-    FixSum #(.size(LUTsNum), .n_int(n_int), .n_mant(n_mant), .adders_comb(adders_comb)) sum1 (.in(lutResults), .clk(clk), .out(result));
+    Sum_Fxp #(.size(LUTsNum), .n_int(n_int), .n_mant(n_mant), .adders_comb(adders_comb)) sum1 (.in(lutResults), .clk(clk), .out(result));
 endmodule
 
 // A LUT where contributions are summed over several cycles
-module FixLUT_Cumulative #(
+module LUT_Cumulative_Fxp #(
     parameter   size = 1,
                 lut_size = 6,
                 n_int = 8,
@@ -201,10 +201,10 @@ module FixLUT_Cumulative #(
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
                 localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact(offset);
-                FixLUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
+                LUT_Fxp #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else if (lut_rem > 0) begin
                 localparam logic signed[lut_rem-1:0][n_tot:0] fact_slice = GetFactRest(offset);
-                FixLUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
+                LUT_Fxp #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
             end
 
             if (lut_comb > 0) begin : Comb_Gen

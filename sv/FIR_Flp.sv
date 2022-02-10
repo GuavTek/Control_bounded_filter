@@ -1,11 +1,11 @@
-`ifndef TOPFIR_SV_
-`define TOPFIR_SV_
+`ifndef FIR_FLP_SV_
+`define FIR_FLP_SV_
 
 `include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FPU.sv"
-`include "LUT.sv"
-`include "FloatToFix.sv"
+`include "LUT_Flp.sv"
+`include "Flp_To_Fxp.sv"
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
 `include "InputReg.sv"
@@ -14,7 +14,7 @@
 `define COMB_ADDERS 3
 `define OUT_WIDTH 14
 
-module FIR_top #(
+module FIR_Flp #(
     parameter   Lookahead = 240,
                 Lookback = 240,
                 DSR = 12,
@@ -88,14 +88,14 @@ module FIR_top #(
     
     // Calculate lookahead
     float_t lookaheadResult;
-    LUT_Unit #(
+    LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookahead_LUT (
                 .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
             );
 
     // Calculate lookback
     float_t lookbackResult;
-    LUT_Unit #(
+    LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookback), .lut_size(`MAX_LUT_SIZE), .fact(hf_slice.Hf), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) Lookback_LUT (
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
@@ -107,7 +107,7 @@ module FIR_top #(
     // Reformat and scale result
     logic [`OUT_WIDTH-1:0] rectifiedResult;
     logic signed[`OUT_WIDTH-1:0] scaledResult;
-    FloatToFix #(.n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .n_exp_in(n_exp), .n_mant_in(n_mant), .float_t(float_t)) FinalScaler (.in( totResult ), .out( scaledResult ) );
+    Flp_To_Fxp #(.n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .n_exp_in(n_exp), .n_mant_in(n_mant), .float_t(float_t)) FinalScaler (.in( totResult ), .out( scaledResult ) );
 
     assign rectifiedResult[`OUT_WIDTH-1] = !scaledResult[`OUT_WIDTH-1];
     assign rectifiedResult[`OUT_WIDTH-2:0] = scaledResult[`OUT_WIDTH-2:0];

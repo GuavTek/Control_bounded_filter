@@ -27,14 +27,16 @@ for arg in sys.argv:
         dsr = int(content[1])
         superarg += ' ' + arg
     elif content[0] == '-top':
-        if content[1] == 'TB_BATCH':
-            topModule = 'Batch'
-        elif content[1] == 'TB_FIR':
-            topModule = 'FIR'
-        elif content[1] == 'TB_FIR_Fixed':
-            topModule = 'FIR Fixedpoint'
-        elif content[1] == 'TB_BATCH_Fixed':
-            topModule = 'Batch Fixedpoint'
+        if content[1] == 'TB_Batch_Flp':
+            topModule = 'Batch Floating-point'
+        elif content[1] == 'TB_FIR_Flp':
+            topModule = 'FIR Floating-point'
+        elif content[1] == 'TB_FIR_Fxp':
+            topModule = 'FIR Fixed-point'
+        elif content[1] == 'TB_Batch_Fxp':
+            topModule = 'Batch Fixed-point'
+        elif content[1] == 'TB_Hybrid_Fxp':
+            topModule = 'Hybrid Fixed-point'
         superarg = superarg + ' ' + arg
     elif content[0].find('.py') != -1:
         # Skip self-reference

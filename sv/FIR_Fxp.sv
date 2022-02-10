@@ -1,11 +1,11 @@
-`ifndef TOPFIRFIX_SV_
-`define TOPFIRFIX_SV_
+`ifndef FIR_FXP_SV_
+`define FIR_FXP_SV_
 
 `include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
-`include "FixPU.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
 `include "InputReg.sv"
@@ -14,7 +14,7 @@
 `define COMB_ADDERS 3
 `define OUT_WIDTH 14
 
-module FIR_Fixed_top #(
+module FIR_Fxp #(
     parameter Lookahead = 96,
     parameter Lookback = 96,
     parameter DSR = 12,
@@ -80,25 +80,25 @@ module FIR_Fixed_top #(
     GetHf #(.n_int(n_int), .n_mant(n_mant), .size(M*Lookback)) hf_slice ();
     
     // Calculate lookahead
-    FixLUT_Unit #(
+    LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact( hb_slice.Hb ), .n_int(n_int), .n_mant(n_mant)) Lookahead_LUT (
                 .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
             );
 
     // Calculate lookback
-    FixLUT_Unit #(
+    LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookback), .lut_size(`MAX_LUT_SIZE), .fact( hf_slice.Hf ), .n_int(n_int), .n_mant(n_mant)) Lookback_LUT (
                 .sel(sampleback), .clk(clkDS), .result(lookbackResult)
             );
 
     // Calculate final result
     logic signed[n_tot:0] totResult;
-    FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
+    FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
 
     // Format the result
     logic [`OUT_WIDTH-1:0] rectifiedResult;
     logic signed[`OUT_WIDTH-1:0] scaledResult;
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) FinalScaler (.in( totResult ), .out( scaledResult ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) FinalScaler (.in( totResult ), .out( scaledResult ) );
 
     assign rectifiedResult[`OUT_WIDTH-1] = !scaledResult[`OUT_WIDTH-1];
     assign rectifiedResult[`OUT_WIDTH-2:0] = scaledResult[`OUT_WIDTH-2:0];

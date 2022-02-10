@@ -1,9 +1,9 @@
-`ifndef TOPFIR_PROP_SV_
-`define TOPFIR_PROP_SV_
+`ifndef FIR_FLP_PROP_SV_
+`define FIR_FLP_PROP_SV_
 
-`include "../sv/TopFIR.sv"
+`include "../sv/FIR_Flp.sv"
 
-module FIR_prop #(
+module FIR_Flp_prop #(
     parameter Lookahead = 240,
     parameter Lookback = 240,
     parameter DSR = 1

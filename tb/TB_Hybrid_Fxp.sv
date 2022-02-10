@@ -1,36 +1,35 @@
-`include "../sv/TopFIRFix.sv"
+`include "../sv/Hybrid_Fxp.sv"
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
-`include "FixPU_prop.sv"
-//`include "FPU_prop.sv"
-//`include "LUT_prop.sv"
+`include "FxpPU_prop.sv"
+//`include "LUT_Fxp_prop.sv"
 //`include "TopFIRFix_prop.sv"
 
 `include "../sv/Data/Coefficients_Fixedpoint.sv"
 `define TestLength 24000
 
 `ifndef DEPTH
-    `define DEPTH 220
+    `define DEPTH 150
 `endif
 
-`ifndef LOOKAHEAD
-    `define LOOKAHEAD `DEPTH
+`ifndef DSR1
+    `define DSR1 2
 `endif
 
-`ifndef LOOKBACK
-    `define LOOKBACK `DEPTH
+`ifndef DSR2
+    `define DSR2 6
 `endif
 
 `ifndef DSR
-    `define DSR 1
+    `define DSR (`DSR1 * `DSR2)
 `endif
 
 `ifndef OUT_FILE
-    `define OUT_FILE results_fir_fix
+    `define OUT_FILE hybrid_fix
 `endif
 
-module TB_FIR_Fixed #() ();
+module TB_Hybrid_Fxp #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
@@ -40,15 +39,13 @@ module TB_FIR_Fixed #() ();
     logic[`OUT_WIDTH-1:0] dutResult;
     logic isValid;
     TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
-    
 
-    // Instantiate DUTs
-    FIR_Fixed_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
+    // Instantiate DUT
+    Hybrid_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_HYBRID (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
-    
     // Bind Modules to property checkers
-    bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
+    bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind FIR_Fixed_top FIR_Fixed_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
 

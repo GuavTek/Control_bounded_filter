@@ -10,7 +10,7 @@
 
 `include "../sv/Data/Coefficients_Fixedpoint.sv"
 `include "../sv/RAM.sv"
-`include "../sv/TopBatch.sv"
+`include "../sv/Batch_Flp.sv"
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
@@ -35,7 +35,7 @@
 
 `define TestLength 24000
 
-module TB_BATCH #() ();
+module TB_Batch_Flp #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
@@ -63,7 +63,7 @@ module TB_BATCH #() ();
     RAM_single #(.depth(2*DownSampleDepth), .d_width(`OUT_WIDTH)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_top #(.depth(`DEPTH), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Flp #(.depth(`DEPTH), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),

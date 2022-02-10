@@ -1,5 +1,5 @@
-`ifndef TOPBATCH_SV_
-`define TOPBATCH_SV_
+`ifndef BATCH_FLP_SV_
+`define BATCH_FLP_SV_
 
 /*
 `ifndef EXP_W
@@ -13,9 +13,9 @@
 `include "Util.sv"
 `include "FPU.sv"
 `include "CFPU.sv"
-`include "RecursionModule.sv"
-`include "LUT.sv"
-`include "FloatToFix.sv"
+`include "Recursion_Flp.sv"
+`include "LUT_Flp.sv"
+`include "Flp_To_Fxp.sv"
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
 `include "InputReg.sv"
@@ -25,7 +25,7 @@
 `define COMB_ADDERS 1
 `define OUT_WIDTH 14
 
-module Batch_top #(
+module Batch_Flp #(
     parameter depth = 228,
     parameter DSR = 12,
                 n_exp = 8,
@@ -175,8 +175,8 @@ module Batch_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF;
-    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
-    FloatToFix #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
+    Flp_To_Fxp #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
+    Flp_To_Fxp #(.n_exp_in(n_exp), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1), .float_t(float_t)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
 
     // Addresses for result memory must be delayed
     logic[$clog2(DownSampleDepth)-1:0] resBatCnt, resBatCntRev;
@@ -227,32 +227,32 @@ module Batch_top #(
             
             // Use LUTs to turn sample into a complex number
             complex_t CF_in, CB_in, LH_in;
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTr (
                 .sel(slh_rev), .clk(clkDS), .result(LH_in.r)
                 );
 
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Ffr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTr (
                 .sel(scof), .clk(clkDS), .result(CF_in.r)
                 );
 
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbr), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTr (
                 .sel(scob_rev), .clk(clkDS), .result(CB_in.r)
             );
 
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) LH_LUTi (
                 .sel(slh_rev), .clk(clkDS), .result(LH_in.i)
                 );
 
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Ffi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CF_LUTi (
                 .sel(scof), .clk(clkDS), .result(CF_in.i)
                 );
 
-            LUT_Unit #(
+            LUT_Unit_Flp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(loop_const.Fbi), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t)) CB_LUTi (
                 .sel(scob_rev), .clk(clkDS), .result(CB_in.i)
             );
@@ -260,21 +260,21 @@ module Batch_top #(
 
             // Calculate Lookahead
             complex_t LH_res;
-            RecursionModule #(
+            Recursion_Flp #(
                 .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
                 .in(LH_in), .rst(regProp & rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(LH_res));
             
             // Calculate forward result
             complex_t CF_out, RF_in;
             assign RF_in = validCompute ? CF_in : {FloatZero, FloatZero};
-            RecursionModule #(
+            Recursion_Flp #(
                 .factorR(loop_const.Lf[0]), .factorI(loop_const.Lf[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CFR_ (
                 .in(RF_in), .rst(rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(CF_out));
             
             // Calculate backward result
             complex_t CB_out, RB_in;
             assign RB_in = validCompute ? CB_in : {FloatZero, FloatZero};
-            RecursionModule #(
+            Recursion_Flp #(
                 .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
                 .in(RB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS || !rst), .out(CB_out));
             
@@ -310,10 +310,10 @@ module Batch_top #(
     endgenerate
 
     // Sum forward partial results
-    FloatSum #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumF (.in(partResF), .clk(clkDS), .out(forwardResult));
+    Sum_Flp #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumF (.in(partResF), .clk(clkDS), .out(forwardResult));
 
     // Sum backward partial results
-    FloatSum #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumB (.in(partResB), .clk(clkDS), .out(backwardResult));
+    Sum_Flp #(.size(N), .f_exp(n_exp), .f_mant(n_mant), .adders_comb(N), .float_t(float_t)) sumB (.in(partResB), .clk(clkDS), .out(backwardResult));
 
     // Final final result
     assign finResult = finF + finB; // FPU #(.op(FPU_p::ADD), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));

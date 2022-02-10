@@ -1,9 +1,9 @@
-`ifndef LUT_SV_
-`define LUT_SV_
+`ifndef LUT_FLP_SV_
+`define LUT_FLP_SV_
 
 `include "Util.sv"
 
-module LUT #(
+module LUT_Flp #(
     parameter       size = 1, n_mant = 48, n_int = 15, f_exp = 8, f_mant = 23,
     parameter logic signed[size-1:0][n_mant+n_int:0] fact = '{default: 0},
     type float_t = struct {logic sign; logic[7:0] exp; logic[23:0] mant;}
@@ -39,7 +39,7 @@ module LUT #(
     assign result = mem[sel];
 endmodule
 
-module LUT_Unit #(
+module LUT_Unit_Flp #(
     parameter   size = 1,
                 lut_size = 6,
                 n_int = 15,
@@ -91,10 +91,10 @@ module LUT_Unit #(
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
                 localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact(offset);
-                LUT #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .fact(fact_slice), .float_t(float_t)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
+                LUT_Flp #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .fact(fact_slice), .float_t(float_t)) lut_ (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else if (lut_rem > 0) begin
                 localparam logic signed[lut_rem-1:0][n_tot:0] fact_slice = GetFactRest(offset);
-                LUT #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .fact(fact_slice), .float_t(float_t)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
+                LUT_Flp #(.size(lut_rem), .n_int(n_int), .n_mant(n_mant), .f_exp(f_exp), .f_mant(f_mant), .fact(fact_slice), .float_t(float_t)) lut_ (.sel(sel[offset +: lut_rem]), .result(tempResult));
             end
 
             // Decide if LUT results should be combinatorial or registers
@@ -109,7 +109,7 @@ module LUT_Unit #(
     endgenerate
 
     // Sum the contribution of all LUTs
-    FloatSum #(.size(LUTsNum), .f_exp(f_exp), .f_mant(f_mant), .adders_comb(adders_comb), .float_t(float_t)) sum1 (.in(lutResults), .clk(clk), .out(result));
+    Sum_Flp #(.size(LUTsNum), .f_exp(f_exp), .f_mant(f_mant), .adders_comb(adders_comb), .float_t(float_t)) sum1 (.in(lutResults), .clk(clk), .out(result));
 endmodule
 
 `endif

@@ -1,12 +1,12 @@
-`include "../sv/TopBatchFix.sv"
+`include "../sv/Batch_Fxp.sv"
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
-`include "../sv/FixPU.sv"
+`include "../sv/FxpPU.sv"
 `include "../sv/RAM.sv"
-`include "FixPU_prop.sv"
+`include "FxpPU_prop.sv"
 //`include "FixLUT_prop.sv"
-`include "TopBatchFix_prop.sv"
+`include "Batch_Fxp_prop.sv"
 
 `include "../sv/Data/Coefficients_Fixedpoint.sv"
 `define TestLength 24000
@@ -31,7 +31,7 @@
     `define OUT_FILE results_batch_fix
 `endif
 
-module TB_BATCH_Fixed #() ();
+module TB_Batch_Fxp #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
@@ -63,7 +63,7 @@ module TB_BATCH_Fixed #() ();
     RAM_single #(.depth(2*DownResultDepth), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_Fixed_top #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -73,7 +73,7 @@ module TB_BATCH_Fixed #() ();
     
     
     // Bind Modules to property checkers
-    bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
+    bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .DSR(`DSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
 

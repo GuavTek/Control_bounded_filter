@@ -1,5 +1,5 @@
-`ifndef TOPBATCHFIX_SV_
-`define TOPBATCHFIX_SV_
+`ifndef BATCH_FXP_SV_
+`define BATCH_FXP_SV_
 
 // n_int 9
 // 60dB n_mant 14
@@ -7,11 +7,11 @@
 
 `include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
 `include "InputReg.sv"
@@ -20,7 +20,7 @@
 `define COMB_ADDERS 1
 `define OUT_WIDTH 14
 
-module Batch_Fixed_top #(
+module Batch_Fxp #(
     parameter depth = 180,
     parameter DSR = 12,
     parameter n_mant = 14,
@@ -155,8 +155,8 @@ module Batch_Fixed_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF;
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
 
     // Addresses for result memory must be delayed
     logic[$clog2(DownSampleDepth)-1:0] resBatCnt, resBatCntRev;
@@ -198,7 +198,7 @@ module Batch_Fixed_top #(
     );
 
     // Final final result
-    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out <= {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end

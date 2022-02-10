@@ -1,9 +1,9 @@
-`ifndef TOPFIRFIX_PROP_SV_
-`define TOPFIRFIX_PROP_SV_
+`ifndef FIR_FXP_PROP_SV_
+`define FIR_FXP_PROP_SV_
 
-`include "../sv/TopFIRFix.sv"
+`include "../sv/FIR_Fxp.sv"
 
-module FIR_Fixed_prop #(
+module FIR_Fxp_prop #(
     parameter Lookahead = 240,
     parameter Lookback = 240,
     parameter DSR = 1
@@ -13,7 +13,7 @@ module FIR_Fixed_prop #(
     out,
     lutResults, adderResults
 );
-    import Coefficients_FIR1::*;
+    import Coefficients_Fx::*;
     localparam Looktotal = Lookahead + Lookback;
     localparam int LookaheadLUTs = $ceil(N*Lookahead/`MAX_LUT_SIZE);
     localparam int LookbackLUTs = $ceil(N*Lookback/`MAX_LUT_SIZE);

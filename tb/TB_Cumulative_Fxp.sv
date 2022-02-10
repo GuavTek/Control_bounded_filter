@@ -1,9 +1,9 @@
-`include "../sv/TopCumulFix.sv"
+`include "../sv/Cumulative_Fxp.sv"
 `include "../sv/Util.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
 //`include "../sv/FixPU.sv"
-`include "FixPU_prop.sv"
+`include "FxpPU_prop.sv"
 //`include "FixLUT_prop.sv"
 //`include "TopBatchFix_prop.sv"
 
@@ -22,7 +22,7 @@
     `define OUT_FILE results_cumul_fix
 `endif
 
-module TB_CUMUL_Fixed #() ();
+module TB_Cumulative_Fxp #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
@@ -39,11 +39,11 @@ module TB_CUMUL_Fixed #() ();
     localparam out_w = 14;
 
     // Instantiate DUTs
-    Cumulative_Fixed_top #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Cumul ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
+    Cumulative_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Cumul ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
     
     
     // Bind Modules to property checkers
-    bind FixPU FixPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
+    bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .DSR(`DSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
 

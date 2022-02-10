@@ -1,5 +1,5 @@
-`ifndef TOPHYBRIDFIX_SV_
-`define TOPHYBRIDFIX_SV_
+`ifndef HYBRID_CUMULATIVE_FXP_SV_
+`define HYBRID_CUMULATIVE_FXP_SV_
 
 // n_int 9
 // 60dB n_mant 15   depth 72
@@ -7,18 +7,18 @@
 
 `include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 `include "Delay.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 3
 `define OUT_WIDTH 14
 
-module Hybrid_Fixed_top #(
+module Hybrid_Cumulative_Fxp #(
     parameter   depth = 150,
                 DSR1 = 2,
                 DSR2 = 6,
@@ -153,8 +153,8 @@ module Hybrid_Fixed_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResAhead, scaledResBack, finResult, delayedBack, delayedAhead;
-    FixToFix #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
+    Fxp_To_Fxp #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
 
     localparam backResDelay = LUTahead_Delay - 2;
     localparam aheadResDelay = 2 - LUTahead_Delay;
@@ -172,7 +172,7 @@ module Hybrid_Fixed_top #(
     
 
     // Final final result
-    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end
@@ -225,7 +225,7 @@ module Hybrid_Fixed_top #(
 
     // Generate FIR lookahead
     localparam logic signed[N*Lookahead-1:0][n_mant:0] hb_slice = GetHb();
-    FixLUT_Unit #(
+    LUT_Unit_Fxp #(
         .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
@@ -239,12 +239,12 @@ module Hybrid_Fixed_top #(
             localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfr = GetFfr(i);
             localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfi = GetFfi(i);
 
-            FixLUT_Cumulative #(
+            LUT_Cumulative_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
                 .sel(sampleback), .clk(clkRecurse), .sample(clkDS), .result(CF_inR)
             );
 
-            FixLUT_Cumulative #(
+            LUT_Cumulative_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
                 .sel(sampleback), .clk(clkRecurse), .sample(clkDS), .result(CF_inI)
             );
@@ -258,7 +258,7 @@ module Hybrid_Fixed_top #(
             logic signed[n_tot:0] RF_inR, RF_inI, RB_inR, RB_inI;
             assign RF_inR = validCompute ? CF_inR : 0;
             assign RF_inI = validCompute ? CF_inI : 0;
-            FixRecursionModule #(
+            Recursion_Fxp #(
                 .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
                 .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkDS || !rst), .outR(CF_outR), .outI(CF_outI)
             );
@@ -274,7 +274,7 @@ module Hybrid_Fixed_top #(
             end
 
             logic signed[n_tot:0] resFR, resFI;
-            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
+            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
 
             // Final add
             logic signed[n_tot:0] tempRes;
@@ -285,7 +285,7 @@ module Hybrid_Fixed_top #(
             if(i == 0) begin
                 assign partResBack[0] = tempRes;
             end else begin
-                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
+                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
             end
         end
     endgenerate

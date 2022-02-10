@@ -1,10 +1,10 @@
-`ifndef TOPBATCHFIX_PROP_SV_
-`define TOPBATCHFIX_PROP_SV_
+`ifndef BATCH_FXP_PROP_SV_
+`define BATCH_FXP_PROP_SV_
 
-`include "../sv/TopBatchFix.sv"
+`include "../sv/Batch_Fxp.sv"
 `include "../sv/Data/Coefficients_Fixedpoint.sv"
 
-module Batch_Fixed_prop #(
+module Batch_Fxp_prop #(
     parameter depth = 32,
     parameter DSR = 1,
     parameter n_mant = 8,

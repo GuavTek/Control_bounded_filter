@@ -1,10 +1,10 @@
-`ifndef TOPBATCH_PROP_SV_
-`define TOPBATCH_PROP_SV_
+`ifndef BATCH_FLP_PROP_SV_
+`define BATCH_FLP_PROP_SV_
 
-`include "../sv/TopBatch.sv"
+`include "../sv/Batch_Flp.sv"
 `include "../sv/Data/Coefficients.sv"
 
-module Batch_top_prop #(
+module Batch_Flp_prop #(
     parameter depth = 32,
     parameter DSR = 1
 ) (

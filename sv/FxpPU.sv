@@ -1,10 +1,10 @@
-`ifndef FIXPU_SV_
-`define FIXPU_SV_
+`ifndef FXPPU_SV_
+`define FXPPU_SV_
 
 `include "Util.sv"
 
 // An adder or multiplier with 2 inputs
-module FixPU #(
+module FxpPU #(
     parameter   FPU_p::opcode op = FPU_p::ADD,
     parameter   n_int = 8,
                 n_mant = 23
@@ -35,7 +35,7 @@ endmodule
 
 // An adder where number of inputs is decided by the size parameter
 // Generates adders so it has the shortest delay possible
-module FixSum #(
+module Sum_Fxp #(
     parameter   size = 2,
                 n_int = 8,
                 n_mant = 23,
@@ -106,14 +106,14 @@ module FixSum #(
                 if ( i == 0 ) begin : Core_Gen
                     // Generate first layer
                     if ( ii < addNum ) begin : ADD_Gen
-                        FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(in[2*ii]), .B(in[2*ii + 1]), .clk(clk), .result(tempResult));
+                        FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(in[2*ii]), .B(in[2*ii + 1]), .clk(clk), .result(tempResult));
                     end else begin : Reg_Gen
                         assign tempResult = in[2*ii];
                     end
                 end else begin : Layer_Gen
                     // Generate the rest of the layers
                     if ( ii < addNum) begin : ADD_Gen
-                        FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstReg + 2*ii]), .B(adderResults[firstReg + 2*ii + 1]), .clk(clk), .result(tempResult));
+                        FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) adder_ (.A(adderResults[firstReg + 2*ii]), .B(adderResults[firstReg + 2*ii + 1]), .clk(clk), .result(tempResult));
                     end else begin : Reg_Gen
                         assign tempResult = adderResults[firstReg + 2*ii];
                     end

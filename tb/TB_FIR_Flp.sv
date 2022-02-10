@@ -8,13 +8,13 @@
 `include "HardFloat-1/source/addRecFN.v"
 `include "HardFloat-1/source/mulRecFN.v"
 
-`include "../sv/TopFIR.sv"
+`include "../sv/FIR_Flp.sv"
 `include "../sv/Util.sv"
 `include "../sv/FPU.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
 `include "FPU_prop.sv"
-`include "LUT_prop.sv"
+`include "LUT_Flp_prop.sv"
 //`include "TopFIR_prop.sv"
 
 `include "../sv/Data/Coefficients_Fixedpoint.sv"
@@ -40,7 +40,7 @@
     `define OUT_FILE results_fir
 `endif
 
-module TB_FIR #() ();
+module TB_FIR_Flp #() ();
     logic rst;
     logic clk;
     import Coefficients_Fx::*;
@@ -52,7 +52,7 @@ module TB_FIR #() ();
     TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
 
     // Instantiate DUTs
-    FIR_top #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
+    FIR_Flp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     // dummy type (so compiler knows there is a datatype with this name)
@@ -62,7 +62,7 @@ module TB_FIR #() ();
 
     // Bind Modules to property checkers
     bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);
-    bind LUT LUT_prop #(.size(size), .fact(fact), .n_mant(n_mant), .n_int(n_int), .f_exp(f_exp), .f_mant(f_mant), .float_t(float_t)) lutprop_i (.*);
+    bind LUT_Flp LUT_Flp_prop #(.size(size), .fact(fact), .n_mant(n_mant), .n_int(n_int), .f_exp(f_exp), .f_mant(f_mant), .float_t(float_t)) lutprop_i (.*);
     //bind FIR_top FIR_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
 
 endmodule

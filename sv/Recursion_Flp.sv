@@ -1,9 +1,9 @@
-`ifndef RECURSIONMODULE_SV_
-`define RECURSIONMODULE_SV_
+`ifndef RECURSION_FLP_SV_
+`define RECURSION_FLP_SV_
 
 `include "Util.sv"
 
-module RecursionModule #(
+module Recursion_Flp #(
     parameter logic signed[63:0] factorR = 0,
                         factorI = 0,
     parameter           n_int = 15,

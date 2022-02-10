@@ -1,5 +1,5 @@
-`ifndef TOPCUMULFIX_SV_
-`define TOPCUMULFIX_SV_
+`ifndef CUMULATIVE_FXP_SV_
+`define CUMULATIVE_FXP_SV_
 
 // WARNING, IS NOT FEASIBLE!
 // n_int 121516561948752151651967876561
@@ -8,11 +8,11 @@
 
 `include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 1
@@ -49,7 +49,7 @@ virtual class FixedPoint#(parameter mant_in = 1, mant_out = 1, tot_out = 1);
     endfunction
 endclass
 
-module Cumulative_Fixed_top #(
+module Cumulative_Fxp #(
     parameter depth = 180,
     parameter DSR = 1,
     parameter n_mant = 14,
@@ -229,32 +229,32 @@ module Cumulative_Fixed_top #(
             localparam logic signed[SampleWidth-1:0][n_tot:0] back_factorI = GetFfi(i);
 
             logic signed[n_tot:0] LHA_inR, LHA_inI, LHS_inR, LHS_inI, LB_inR, LB_inI;
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(aheadadd_fr), .n_int(n_int), .n_mant(n_mant)) LookaheadAdd_LUTr (
                 .sel(LHA_Rev), .clk(clkDS), .result(LHA_inR)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(aheadsub_fr), .n_int(n_int), .n_mant(n_mant)) LookaheadSub_LUTr (
                 .sel(LHS_Rev), .clk(clkDS), .result(LHS_inR)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(back_factorR), .n_int(n_int), .n_mant(n_mant)) Lookback_LUTr (
                 .sel(LB_Sample), .clk(clkDS), .result(LB_inR)
             );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(aheadadd_fi), .n_int(n_int), .n_mant(n_mant)) LookaheadAdd_LUTi (
                 .sel(LHA_Rev), .clk(clkDS), .result(LHA_inI)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(aheadsub_fi), .n_int(n_int), .n_mant(n_mant)) LookaheadSub_LUTi (
                 .sel(LHS_Rev), .clk(clkDS), .result(LHS_inI)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(back_factorI), .n_int(n_int), .n_mant(n_mant)) Lookback_LUTi (
                 .sel(LB_Sample), .clk(clkDS), .result(LB_inI)
             );

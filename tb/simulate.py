@@ -74,27 +74,27 @@ else:
 
 if plotResults:
     # Set name for label
-    if topModule == 'TB_BATCH':
+    if topModule == 'TB_Batch_Flp':
         topName = 'Batch Floating-point'
-    elif topModule == 'TB_FIR':
+    elif topModule == 'TB_FIR_Flp':
         topName = 'FIR Floating-point'
-    elif topModule == 'TB_FIR_Fixed':
+    elif topModule == 'TB_FIR_Fxp':
         topName = 'FIR Fixed-point'
-    elif topModule == 'TB_BATCH_Fixed':
+    elif topModule == 'TB_Batch_Fxp':
         topName = 'Batch Fixed-point'
-    elif topModule == 'TB_CUMUL_Fixed':
+    elif topModule == 'TB_Cumulative_Fxp':
         topName = 'Cumulative'
-    elif topModule == 'TB_HYBRID_Fixed':
+    elif topModule == 'TB_Hybrid_Fxp':
         topName = 'Hybrid Fixed-point'
     # Read results
     res = plot.ReadResultFile('results/' + outfileName, 13)
-    if topModule.find('BATCH') != -1:
+    if topModule.find('Batch') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} batch size, and DSR={DSR}"
     elif topModule.find('FIR') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} coefficients, and DSR={DSR}"
-    elif topModule.find('CUMUL') != -1:
+    elif topModule.find('TB_Cumulative') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
-    elif topModule.find('HYBRID') != -1:
+    elif topModule.find('Hybrid') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
     plot.PlotFigure(res[int(math.ceil(1920/DSR)):int(-1920/DSR)], int(960/DSR), label, outfileName, 240e6/DSR)
 

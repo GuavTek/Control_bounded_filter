@@ -1,10 +1,10 @@
-`ifndef LUT_PROP_SV_
-`define LUT_PROP_SV_
+`ifndef LUT_FLP_PROP_SV_
+`define LUT_FLP_PROP_SV_
 
-`include "../sv/LUT.sv"
+`include "../sv/LUT_Flp.sv"
 `include "Util_TB.sv"
 
-module LUT_prop #(
+module LUT_Flp_prop #(
     parameter       size = 1, n_mant = 48, n_int = 15, f_exp = 8, f_mant = 23,
     parameter logic signed[size-1:0][n_mant+n_int:0] fact = '{default: 0},
     type float_t = struct {logic sign; logic[7:0] exp; logic[23:0] mant;}

@@ -1,13 +1,13 @@
-`ifndef RECURSIONMODULE_PROP_SV_
-`define RECURSIONMODULE_PROP_SV_
+`ifndef RECURSION_FLP_PROP_SV_
+`define RECURSION_FLP_PROP_SV_
 
-`include "../sv/RecursionModule.sv"
+`include "../sv/Recursion_Flp.sv"
 `include "../sv/Util.sv"
 
 // How much results can vary due to precision differences
 `define F_SLACK 0.001
 
-module RecursionModule_prop #(
+module Recursion_Flp_prop #(
     parameter floatType factorR = rtof(0.0),
                 factorI = rtof(0.0)
 ) (

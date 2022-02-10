@@ -1,10 +1,10 @@
-`ifndef FIXPU_PROP_SV_
-`define FIXPU_PROP_SV_
+`ifndef FXPPU_PROP_SV_
+`define FXPPU_PROP_SV_
 
 `include "../sv/Util.sv"
-`include "../sv/FixPU.sv"
+`include "../sv/FxpPU.sv"
 
-module FixPU_prop #(
+module FxpPU_prop #(
     parameter   FPU_p::opcode op = FPU_p::ADD,
     parameter   n_int = 8,
                 n_mant = 23

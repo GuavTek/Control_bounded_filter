@@ -1,5 +1,5 @@
-`ifndef TOPBATCHFIX_SV_
-`define TOPBATCHFIX_SV_
+`ifndef BATCH_TWOSTAGE_FXP_SV_
+`define BATCH_TWOSTAGE_FXP_SV_
 
 // n_int 9
 // 60dB n_mant 14
@@ -7,17 +7,17 @@
 
 `include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 1
 `define OUT_WIDTH 14
 
-module Batch_Fixed_top #(
+module Batch_Twostage_Fxp #(
     parameter depth = 180,
     parameter DSR1 = 2,
     parameter DSR2 = 6,
@@ -246,8 +246,8 @@ module Batch_Fixed_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF[6];
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( partResB[N-1] ), .out( scaledResB ) );
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResF[N-1] ), .out( scaledResF[0] ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( partResB[N-1] ), .out( scaledResB ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResF[N-1] ), .out( scaledResF[0] ) );
 
     always @(negedge clkDS) begin
         addrResIn_temp = {delayBatCount[2 + Recursion_Delay], delayCycle[2 + Recursion_Delay][0]};
@@ -363,32 +363,32 @@ module Batch_Fixed_top #(
             localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfi = GetFfi(i);
             localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbi = GetFbi(i);
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) LH_LUTr (
                 .sel(slh_rev), .clk(clkRecurse), .result(LH_inR)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
                 .sel(scof), .clk(clkRecurse), .result(CF_inR)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) CB_LUTr (
                 .sel(scob_rev), .clk(clkRecurse), .result(CB_inR)
             );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) LH_LUTi (
                 .sel(slh_rev), .clk(clkRecurse), .result(LH_inI)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
                 .sel(scof), .clk(clkRecurse), .result(CF_inI)
                 );
 
-            FixLUT_Unit #(
+            LUT_Unit_Fxp #(
                 .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) CB_LUTi (
                 .sel(scob_rev), .clk(clkRecurse), .result(CB_inI)
             );
@@ -398,7 +398,7 @@ module Batch_Fixed_top #(
 
             logic signed[n_tot:0] LH_resR, LH_resI, CF_outR, CF_outI, CB_outR, CB_outI, WFR, WFI, WBR, WBI;
             // Lookahead 
-            FixRecursionModule #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) LHR_ (
+            Recursion_Fxp #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) LHR_ (
                 .inR(LH_inR), .inI(LH_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(0), .resetValI(0), .clk(clkRecurse), .outR(LH_resR), .outI(LH_resI)
                 );
             // Compute
@@ -407,10 +407,10 @@ module Batch_Fixed_top #(
             assign RB_inR = validCompute ? CB_inR : 0;
             assign RF_inI = validCompute ? CF_inI : 0;
             assign RB_inI = validCompute ? CB_inI : 0;
-            FixRecursionModule #(.factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
+            Recursion_Fxp #(.factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
                 .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkRecurse), .outR(CF_outR), .outI(CF_outI)
                 );
-            FixRecursionModule #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
+            Recursion_Fxp #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
                 .inR(RB_inR), .inI(RB_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkRecurse), .outR(CB_outR), .outI(CB_outI)
                 );
             
@@ -438,8 +438,8 @@ module Batch_Fixed_top #(
             end
 
             logic signed[n_tot:0] resFR, resFI, resBR, resBI;
-            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
-            CFixPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WBR_ (.AR(B_outR), .AI(B_outI), .BR(WBR), .BI(WBI), .clk(clkDS), .resultR(resBR), .resultI(resBI));
+            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
+            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WBR_ (.AR(B_outR), .AI(B_outI), .BR(WBR), .BI(WBI), .clk(clkDS), .resultR(resBR), .resultI(resBI));
 
 
 
@@ -454,14 +454,14 @@ module Batch_Fixed_top #(
                 assign partResF[0] = forward;
                 assign partResB[0] = backward;
             end else begin
-                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
-                FixPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
+                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
+                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
             end
         end
     endgenerate
 
     // Final final result
-    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end

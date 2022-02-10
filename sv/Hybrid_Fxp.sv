@@ -1,5 +1,5 @@
-`ifndef TOPHYBRIDFIX_SV_
-`define TOPHYBRIDFIX_SV_
+`ifndef HYBRIDFXP_SV_
+`define HYBRIDFXP_SV_
 
 // n_int 9
 // 60dB n_mant 15   depth 72
@@ -7,11 +7,11 @@
 
 `include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
-`include "FixPU.sv"
-`include "CFixPU.sv"
-`include "FixRecursionModule.sv"
-`include "FixLUT.sv"
-`include "FixToFix.sv"
+`include "FxpPU.sv"
+`include "CFxpPU.sv"
+`include "Recursion_Fxp.sv"
+`include "LUT_Fxp.sv"
+`include "Fxp_To_Fxp.sv"
 `include "Delay.sv"
 `include "ClkDiv.sv"
 `include "ValidCount.sv"
@@ -21,7 +21,7 @@
 `define COMB_ADDERS 3
 `define OUT_WIDTH 14
 
-module Hybrid_Fixed_top #(
+module Hybrid_Fxp #(
     parameter   depth = 72,
                 DSR = 12,
                 n_mant = 15,
@@ -84,7 +84,7 @@ module Hybrid_Fixed_top #(
     // Generate FIR lookahead
     logic signed[n_mant:0] lookaheadResult;
     GetHb #(.n_int(0), .n_mant(n_mant), .size(M*Lookahead)) hb_slice ();
-    FixLUT_Unit #(
+    LUT_Unit_Fxp #(
         .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
@@ -98,8 +98,8 @@ module Hybrid_Fixed_top #(
 
     // Scale results
     logic signed[`OUT_WIDTH-1:0] scaledResAhead, scaledResBack, finResult, delayedBack, delayedAhead;
-    FixToFix #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
-    FixToFix #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( lookbackResult ), .out( scaledResBack ) );
+    Fxp_To_Fxp #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( lookbackResult ), .out( scaledResBack ) );
 
     // Equalize lookahead and lookback delays
     localparam aheadDelay = LUTback_Delay - LUTahead_Delay + 1;
@@ -108,7 +108,7 @@ module Hybrid_Fixed_top #(
     Delay #(.size(`OUT_WIDTH), .delay(aheadDelay)) AheadDelay (.in(scaledResAhead), .clk(clkDS), .out(delayedAhead));
         
     // Final final result
-    FixPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
         out <= {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end

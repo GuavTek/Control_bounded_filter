@@ -2,7 +2,7 @@
 `define FIXTOFIX_SV_
 
 // A module to convert between fixed-point formats
-module FixToFix #(
+module Fxp_To_Fxp #(
     parameter   n_int_in = 8, n_mant_in = 23,
                 n_int_out = 8, n_mant_out = 23
 ) (
