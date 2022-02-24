@@ -93,7 +93,7 @@ module Hybrid_Fxp #(
     logic signed[n_tot:0] lookbackResult;
     LookbackRecursion #(
         .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
-        .inSample(sampleback), .clk(clkDS), .rst(rst), .validIn(validCompute), .result(lookbackResult) 
+        .inSample(sampleback), .clkSample(clkDS), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .result(lookbackResult) 
     );
 
     // Scale results

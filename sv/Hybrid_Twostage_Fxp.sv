@@ -5,8 +5,8 @@
 // 60dB n_mant 15   depth 72
 // 70dB n_mant 18   depth 180
 
-`include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
+`include "Util.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
 `include "Recursion_Fxp.sv"
@@ -41,10 +41,11 @@ module Hybrid_Twostage_Fxp #(
     localparam Lookahead = depth;
     localparam ShiftDepth = DownSampleDepth * DSR;
     localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE)));
-    localparam int LUTahead_Delay = $ceil((0.0 + LUTahead_Layers)/`COMB_ADDERS);
+    localparam int LUTahead_Delay = $floor((0.0 + LUTahead_Layers)/`COMB_ADDERS);
     localparam int LUTback_Width = M*DSR1;
     localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + LUTback_Width)/`MAX_LUT_SIZE)));
-    localparam int LUTback_Delay = $ceil((0.0 + LUTback_Layers)/`COMB_ADDERS);
+    localparam int LUTback_Delay = $floor((0.0 + LUTback_Layers)/`COMB_ADDERS) + 2;
+    localparam int LUTback_Delay_Norm = $ceil((0.0 + LUTback_Delay)/DSR2);
 
     input wire [M-1:0] in;
     input logic rst, clk;
@@ -52,259 +53,85 @@ module Hybrid_Twostage_Fxp #(
     output logic valid;
 
     // Downsampled clocks
-    logic[$clog2(DSR)-1:0] dsrCount;
-    logic[$clog2(DSR1):0] dsrCount1;
-    logic[$clog2(DSR2):0] dsrCount2;      // Prescale counter
-    logic clkDS, clkRecurse, prevRst1, prevRst2;
-    assign dsrCount = dsrCount1 + dsrCount2 * DSR1;
-    generate
-        if(DSR2 > 1) begin
-            always @(posedge clkRecurse) begin
-                if ((!rst && prevRst2) || (dsrCount2 == (DSR2-1)))
-                    dsrCount2 = 'b0;
-                else
-                    dsrCount2++;
-
-                if (1)
-                    prevRst2 = rst;
-
-                if (dsrCount2 == 0)
-                    clkDS = 1;
-                if (dsrCount2 == DSR2/2)
-                    clkDS = 0;
-                
-            end
-        end else begin
-            assign clkDS = clkRecurse;
-            assign dsrCount2 = 0;
-        end
-
-        if(DSR1 > 1) begin
-            always @(posedge clk) begin
-                if ((!rst && prevRst1) || (dsrCount1 == (DSR1-1)))
-                    dsrCount1 = 'b0;
-                else
-                    dsrCount1++;
-
-                if (1)
-                    prevRst1 = rst;
-
-                if (dsrCount1 == 0)
-                    clkRecurse = 1;
-                if (dsrCount1 == DSR1/2)
-                    clkRecurse = 0;
-                
-            end
-        end else begin
-            assign dsrCount1 = 0;
-            assign clkRecurse = clk;
-        end
-    endgenerate 
-
-    // Input shifting
-    logic[M*ShiftDepth-1:0] inShift;
+    logic[$clog2(DSR)-1:0] divCnt;
+    logic[$clog2(DSR1)-1:0] divCnt1;
+    logic[$clog2(DSR2)-1:0] divCnt2, delayedCnt2, prevCnt2;
+    logic clkDS, clkRecurse;
+    assign divCnt = divCnt1 + delayedCnt2 * DSR1;
+    Delay #(.size($clog2(DSR2)), .delay(DSR1-1)) DivDelay (.in(divCnt2), .clk(clk), .out(delayedCnt2));
+    ClkDiv #(.DSR(DSR1)) ClkDivider1 (.clkIn(clk), .rst(rst), .clkOut(clkRecurse), .cntOut(divCnt1));
+    ClkDiv #(.DSR(DSR2)) ClkDivider2 (.clkIn(clkRecurse), .rst(rst), .clkOut(clkDS), .cntOut(divCnt2));
+     
+    // Input register
     logic [SampleWidth-1:0] inSample;
-    logic[$clog2(SampleWidth)-1:0] inSel;
+    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+
+    // Input shift register
+    logic[M*ShiftDepth-1:0] inShift;
     always @(posedge clkDS) begin
-        inShift <<= SampleWidth;
-        inShift[SampleWidth-1:0] = inSample;
+        inShift <= {inShift[M*ShiftDepth-1-M*DSR:0], inSample};
     end
 
-    // Reduce activity factor
-    generate
-        if (DSR > 1) begin
-            always @(posedge clk) begin
-                inSel = M*(DSR - dsrCount)-1;
-                inSample[inSel -: M] = in;
-            end
-        end else begin
-            assign inSample = in;
-        end
-    endgenerate
-
-    logic[M*Lookahead-1:0] sampleahead;
+    // Prepare sample slices for lookback
     logic[LUTback_Width-1:0] sampleback, slicedSampleBack[DSR2];
-
     generate
         for (genvar i = 0; i < DSR2 ; i++ ) begin
-            assign slicedSampleBack[i] = inShift[M*ShiftDepth-1-M*DSR1*(i + LUTback_Delay) -: LUTback_Width];
+            assign slicedSampleBack[i] = inShift[M*ShiftDepth-1-M*(DSR1*(i + LUTback_Delay)) -: LUTback_Width];
         end
     endgenerate
 
-    assign    sampleback = slicedSampleBack[dsrCount2];
+    // Multiplex sample
+    always @(posedge clkRecurse) begin
+        prevCnt2 <= divCnt2;
+        sampleback <= slicedSampleBack[prevCnt2];
+    end 
 
-    // Invert sample-order
+    // Prepare lookahead sample
+    logic[M*Lookahead-1:0] sampleahead;
     generate
+        // Invert sample-order
         for(genvar i = 0; i < Lookahead; i++) begin
             assign sampleahead[M*i +: M] = inShift[M*(ShiftDepth-i-1) +: M];
         end
     endgenerate
 
     // Count valid samples
-    localparam int ValidDelay = DownSampleDepth + 2 + ((LUTahead_Delay > LUTback_Delay) ? LUTahead_Delay : 0);
-    logic[$clog2(ValidDelay):0] validCount;
-    logic validClk, validResult, validCompute;
-    always @(posedge validClk, negedge rst) begin
-        if(!rst) begin
-            validCount = 'b0;
-            validCompute = 'b0;
-        end else begin
-            validCount++;
-            validCompute = validCompute | (validCount == (DownSampleDepth));
-        end        
-        
-    end
-
-    assign validResult = validCount == ValidDelay;
-    assign validClk = clkDS && !validResult;
-    assign valid = validResult;
-
-    // Outputs from generate blocks
-    logic signed[n_tot:0] partResBack[N];
-    logic signed[n_mant:0] lookaheadResult;
-
-    // Scale results
-    logic signed[`OUT_WIDTH-1:0] scaledResAhead, scaledResBack, finResult, delayedBack, delayedAhead;
-    Fxp_To_Fxp #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
-    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResBack[N-1] ), .out( scaledResBack ) );
-
-    localparam backResDelay = LUTahead_Delay - 1;
-    localparam aheadResDelay = 1 - LUTahead_Delay;
-    generate
-        if (backResDelay > 0)
-            Delay #(.size(`OUT_WIDTH), .delay(backResDelay)) backDelay (.in(scaledResBack), .clk(clkDS), .out(delayedBack));
-        else begin
-            always @(posedge clkDS) begin
-                delayedBack = scaledResBack;
-            end
-        end
-        if (aheadResDelay > 0)
-            Delay #(.size(`OUT_WIDTH), .delay(aheadResDelay)) aheadDelay (.in(scaledResAhead), .clk(clkDS), .out(delayedAhead));
-        else begin
-            always @(posedge clkDS) begin
-                delayedAhead = scaledResAhead;
-            end
-        end
-    endgenerate
-
-    // Final final result
-    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
-    always @(posedge clkDS) begin
-        out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
-    end
-    
-    function automatic logic signed[M*Lookahead-1:0][n_mant:0] GetHb ();
-        logic signed[M*Lookahead-1:0][n_mant:0] tempArray;
-
-        for (int i = 0; i < M*Lookahead ; i++) begin
-            logic signed[n_mant:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
-            tempArray[i][n_mant:0] = temp;
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[LUTback_Width-1:0][n_tot:0] GetFfr (int row);
-        logic signed[LUTback_Width-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < LUTback_Width ; i++) begin
-            tempArray[i][n_tot:0] = Ffr[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[LUTback_Width-1:0][n_tot:0] GetFfi (int row);
-        logic signed[LUTback_Width-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < LUTback_Width ; i++) begin
-            tempArray[i][n_tot:0] = Ffi[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function logic signed[1:0][n_tot:0] cpow_fixed(logic signed[63:0] r, logic signed[63:0] i, int exp);
-        logic signed[1:0][n_tot:0] result;
-        logic signed[63:0] tempR, tempI;
-        tempR = r;
-        tempI = i;
-        for (int j = 1; j < exp ; j++ ) begin
-            //cmulcc.r = (a.r * b.r) - (a.i * b.i);
-            //cmulcc.i = (a.i * b.r) + (a.r * b.i);
-            logic signed[127:0] tempReal, tempImag;
-            tempReal = (tempR * r) - (tempI * i);
-            tempImag = (tempI * r) + (tempR * i);
-            tempR = tempReal >>> COEFF_BIAS;
-            tempI = tempImag >>> COEFF_BIAS;
-        end
-        result[0][n_tot:0] = tempR >>> (COEFF_BIAS - n_mant);
-        result[1][n_tot:0] = tempI >>> (COEFF_BIAS - n_mant);
-        return result;
-    endfunction
-
+    localparam int validTime = DownSampleDepth + 1 + LUTahead_Delay;// ((LUTahead_Delay > LUTback_Delay_Norm) ? LUTahead_Delay : LUTback_Delay_Norm);
+    localparam int validComp = DownSampleDepth; // + LUTback_Delay_Norm;
+    logic validCompute;
+    ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
 
     // Generate FIR lookahead
-    localparam logic signed[M*Lookahead-1:0][n_mant:0] hb_slice = GetHb();
+    logic signed[n_mant:0] lookaheadResult;
+    GetHb #(.n_int(0), .n_mant(n_mant), .size(M*Lookahead)) hb_slice ();
     LUT_Unit_Fxp #(
-        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(N*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
+        .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(M*Lookahead), .lut_size(`MAX_LUT_SIZE), .fact(hb_slice.Hb), .n_int(0), .n_mant(n_mant)) Lookahead_LUT (
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
 
     // Generate lookback recursion
-    generate 
-        genvar i;
-        for (i = 0; i < N ; i++ ) begin
-            logic signed[n_tot:0] CF_inR, CF_inI;
-            
-            localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfr = GetFfr(i);
-            localparam logic signed[LUTback_Width-1:0][n_tot:0] tempFfi = GetFfi(i);
+    logic signed[n_tot:0] lookbackResult;
+    LookbackRecursion #(
+        .N(N), .M(M), .DSR(DSR1), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
+        .inSample(sampleback), .clkSample(clkRecurse), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .result(lookbackResult) 
+    );
 
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
-                .sel(sampleback), .clk(clkRecurse), .result(CF_inR)
-            );
+    // Scale results
+    logic signed[`OUT_WIDTH-1:0] scaledResAhead, scaledResBack, finResult, delayedBack, delayedAhead;
+    Fxp_To_Fxp #(.n_int_in(0), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( lookaheadResult ), .out( scaledResAhead ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( lookbackResult ), .out( scaledResBack ) );
 
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(LUTback_Width), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
-                .sel(sampleback), .clk(clkRecurse), .result(CF_inI)
-            );
-
-            localparam logic signed[1:0][n_tot:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], DSR1);
-            localparam logic signed[n_tot:0] resetZero = 'b0;
-
-            logic signed[n_tot:0] CF_outR, CF_outI, WFR, WFI;
-
-            // Compute
-            logic signed[n_tot:0] RF_inR, RF_inI, RB_inR, RB_inI;
-            assign RF_inR = validCompute ? CF_inR : 0;
-            assign RF_inI = validCompute ? CF_inI : 0;
-            Recursion_Fxp #(
-                .factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkRecurse || !rst), .outR(CF_outR), .outI(CF_outI)
-            );
-            
-            assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);
-            assign WFI = Wfi[i] >>> (COEFF_BIAS - n_mant);
-
-            // Save in registers to relax timing requirements
-            logic signed[n_tot:0] F_outR, F_outI;
-            always @(posedge clkDS) begin
-                F_outR = CF_outR;
-                F_outI = CF_outI;
-            end
-
-            logic signed[n_tot:0] resFR, resFI;
-            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
-
-            // Final add
-            logic signed[n_tot:0] tempRes;
-            always @(posedge clkDS) begin
-                tempRes = resFR;
-            end
-
-            if(i == 0) begin
-                assign partResBack[0] = tempRes;
-            end else begin
-                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResBack[i-1]), .B(tempRes), .clk(clkDS), .result(partResBack[i]));
-            end
-        end
-    endgenerate
+    // Equalize lookahead and lookback delays
+    localparam int aheadDelay = 1 - LUTahead_Delay;
+    localparam int backDelay = LUTahead_Delay - 1;
+    Delay #(.size(`OUT_WIDTH), .delay(backDelay)) BackDelay (.in(scaledResBack), .clk(clkDS), .out(delayedBack));
+    Delay #(.size(`OUT_WIDTH), .delay(aheadDelay)) AheadDelay (.in(scaledResAhead), .clk(clkDS), .out(delayedAhead));
+    
+    // Final final result
+    FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(delayedAhead), .B(delayedBack), .clk(clkDS), .result(finResult));
+    always @(posedge clkDS) begin
+        out <= {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
+    end
 
 endmodule
 

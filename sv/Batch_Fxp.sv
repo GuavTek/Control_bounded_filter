@@ -188,13 +188,13 @@ module Batch_Fxp #(
     // Generate backward recursion
     LookaheadRecursion #(
         .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) AheadRec (
-        .inSample(scob), .lookaheadSample(slh), .clk(clkDS), .rst(rst), .validIn(validCompute), .propagate(regProp), .result(backwardResult) 
+        .inSample(scob), .lookaheadSample(slh), .clkSample(clkDS), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .propagate(regProp), .result(backwardResult) 
     );
     
     // Generate forward recursion
     LookbackRecursion #(
         .N(N), .M(M), .DSR(DSR), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
-        .inSample(scof), .clk(clkDS), .rst(rst), .validIn(validCompute), .result(forwardResult) 
+        .inSample(scof), .clkSample(clkDS), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .result(forwardResult) 
     );
 
     // Final final result

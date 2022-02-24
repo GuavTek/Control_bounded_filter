@@ -5,13 +5,16 @@
 // 60dB n_mant 14
 // 70dB n_mant 16
 
-`include "Util.sv"
 `include "Data/Coefficients_Fixedpoint.sv"
+`include "Util.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
 `include "Recursion_Fxp.sv"
 `include "LUT_Fxp.sv"
 `include "Fxp_To_Fxp.sv"
+`include "ClkDiv.sv"
+`include "ValidCount.sv"
+`include "InputReg.sv"
 
 `define MAX_LUT_SIZE 6
 `define COMB_ADDERS 1
@@ -33,16 +36,19 @@ module Batch_Twostage_Fxp #(
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::*;
+    //import Coefficients_Fx::M;
+    localparam M = N;
+
     localparam DSR = DSR1 * DSR2;
     localparam int DownResultDepth = $ceil((0.0 + depth) / DSR);
     localparam int DownSampleDepth = DownResultDepth * DSR2;
-    localparam SampleWidth = N*DSR1; 
+    localparam SampleWidth = M*DSR1; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
     localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
-    localparam int Recursion_Delay = $ceil((0.0 + LUT_Delay)/DSR2);
+    localparam int Recursion_Delay = $floor((0.0 + LUT_Delay + 1)/DSR2);
 
-    input wire [N-1:0] in;
+    input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
@@ -54,189 +60,102 @@ module Batch_Twostage_Fxp #(
     // Part result memory
     output logic[$clog2(2*DownResultDepth)-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB;
 	output logic resClkF, resClkB, resWriteF, resWriteB;
-	output logic[`OUT_WIDTH-1:0] resDataInF, resDataInB;
-	input logic[`OUT_WIDTH-1:0] resDataOutF, resDataOutB;
+	output logic signed[`OUT_WIDTH-1:0] resDataInF, resDataInB;
+	input logic signed[`OUT_WIDTH-1:0] resDataOutF, resDataOutB;
 
     // Downsampled clocks
-    logic[$clog2(DSR1)-1:0] dsrCount1;
-    logic[$clog2(DSR2)-1:0] dsrCount2;      // Prescale counter
-    logic clkDS, clkRecurse, prevRst1, prevRst2;
-    generate
-        if(DSR2 > 1) begin
-            always @(posedge clkRecurse) begin
-                if ((!rst && prevRst2) || (dsrCount2 == (DSR2-1)))
-                    dsrCount2 = 'b0;
-                else
-                    dsrCount2++;
-
-                if (1)
-                    prevRst2 = rst;
-
-                if (dsrCount2 == 0)
-                    clkDS = 1;
-                if (dsrCount2 == DSR2/2)
-                    clkDS = 0;
-                
-            end
-        end else begin
-            assign clkDS = clkRecurse;
-            assign dsrCount2 = 0;
-        end
-
-        if(DSR1 > 1) begin
-            always @(posedge clk) begin
-                if ((!rst && prevRst1) || (dsrCount1 == (DSR1-1)))
-                    dsrCount1 = 'b0;
-                else
-                    dsrCount1++;
-
-                if (1)
-                    prevRst1 = rst;
-
-                if (dsrCount1 == 0)
-                    clkRecurse = 1;
-                if (dsrCount1 == DSR1/2)
-                    clkRecurse = 0;
-                
-            end
-        end else begin
-            assign clkRecurse = clk;
-        end
-    endgenerate 
-
-    // Shifted input
-    logic[SampleWidth-1:0] inShift, inSample;
-    logic[$clog2(SampleWidth)-1:0] inSel;
-
-    // Generates register if DSR > 1
-    generate
-        if (DSR1 > 1) begin
-            always @(posedge clk) begin
-                inSel = N*(DSR1 - dsrCount1)-1;
-                inSample[inSel -: N] = in;
-            end
-
-            always @(posedge clkRecurse) begin
-                inShift = inSample;
-            end
-        end else begin
-            always @(posedge clk) begin
-                inShift = in;
-            end
-        end
-    endgenerate
-
-    // Counters for batch cycle
-    logic[$clog2(DownSampleDepth)-1:0] dBatCount, dBatCountRev;     // counters for input samples
-    logic[$clog2(DownResultDepth)-1:0] delayBatCount[Recursion_Delay + 4:0], delayBatCountRev[Recursion_Delay + 4:0], batCount, batCountRev;
-    generate
-        for (genvar i = (Recursion_Delay + 4); i > 0 ; i-- ) begin
-            always @(posedge clkDS) begin
-                delayBatCount[i] = delayBatCount[i - 1];
-                delayBatCountRev[i] = delayBatCountRev[i - 1];
-            end
-        end
-    endgenerate
-    
-    always @(posedge clkDS) begin
-        delayBatCount[0] = batCount;
-        delayBatCountRev[0] = batCountRev;
-        if(!rst || (batCount == (DownResultDepth-1))) begin
-            batCount = 'b0;
-            batCountRev = DownResultDepth-1;
-        end else begin
-            batCount++;
-            batCountRev--;
-        end
-    end
-
-    always @(negedge clkRecurse) begin
-        dBatCount = batCount * DSR2 + dsrCount2;
-        dBatCountRev = batCountRev * DSR2 - dsrCount2 + DSR2-1; 
-    end
+    logic[$clog2(DSR1)-1:0] divCnt1;
+    logic[$clog2(DSR2)-1:0] divCnt2;
+    logic clkDS, clkRecurse;
+    ClkDiv #(.DSR(DSR1)) ClkDivider1 (.clkIn(clk), .rst(rst), .clkOut(clkRecurse), .cntOut(divCnt1));
+    ClkDiv #(.DSR(DSR2)) ClkDivider2 (.clkIn(clkRecurse), .rst(rst), .clkOut(clkDS), .cntOut(divCnt2));
 
     // Count valid samples
-    localparam validTime = 4*DownResultDepth + Recursion_Delay + 5;
-    logic[$clog2(validTime):0] validCount;
-    logic validClk, validResult, validCompute;
-    always @(posedge validClk, negedge rst) begin
-        if(!rst) begin
-            validCount = 'b0;
-            validCompute = 'b0;
-        end else begin
-            validCount++;
-            validCompute = validCompute | (validCount == (3*DownResultDepth + Recursion_Delay + 2));
-        end        
+    localparam validTime = 5*DownResultDepth;
+    localparam validComp = 3*DownResultDepth + Recursion_Delay;
+    logic validCompute;
+    ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
+
+    // Input register
+    logic[SampleWidth-1:0] inShift;
+    InputReg #(.M(M), .DSR(DSR1)) inReg (.clk(clk), .pos(divCnt1), .in(in), .out(inShift));
+
+    logic[SampleWidth-1:0] inSample;
+    always @(posedge clkRecurse) begin
+        inSample <= inShift;
     end
 
-    assign validResult = validCount == validTime;
-    assign validClk = clkDS && !validResult;
-    assign valid = validResult;
+    // Counters for batch cycle
+    logic[$clog2(DownSampleDepth)-1:0] batCnt, batCntRev;
+    logic[$clog2(DownResultDepth)-1:0] tempBatCnt, tempBatCntRev;
+    logic cyclePulse;
+    always @(posedge clkDS, negedge rst) begin
+        if(!rst) begin
+            tempBatCnt <= 'b0;
+            tempBatCntRev <= DownResultDepth-1;
+        end else if(!cyclePulse) begin
+            tempBatCnt <= 'b0;
+            tempBatCntRev <= DownResultDepth-1;
+        end else begin
+            tempBatCnt <= tempBatCnt + 1;
+            tempBatCntRev <= tempBatCntRev - 1;
+        end
+    end
+
+    logic[$clog2(DSR2)-1:0] delayDivCnt2;
+    Delay #(.size($clog2(DSR2)), .delay(1)) DivCnt_Delay (.in(divCnt2), .clk(clkRecurse), .out(delayDivCnt2)); 
+    
+    assign batCnt = DSR2 * tempBatCnt + delayDivCnt2;
+    assign batCntRev = DSR2 * tempBatCntRev + (DSR2 - 1) - delayDivCnt2;
 
     // Is low when the cycle is ending
-    logic cyclePulse;
-    assign cyclePulse = !(dBatCount == (DownSampleDepth-1));
-
-    // Recursion register propagation is delayed one half cycle
-    logic[LUT_Delay+2:0] regProp;
-    always @(negedge clkRecurse) begin
-        regProp = regProp << 1;
-        regProp[0] = cyclePulse;
-    end
+    assign cyclePulse = !(tempBatCnt == (DownResultDepth-1));
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    logic[1:0] delayCycle[Recursion_Delay + 4:0];
-    
-    generate
-        for (genvar i = (Recursion_Delay + 4); i > 0 ; i-- ) begin
-            always @(posedge clkDS) begin
-                delayCycle[i] = delayCycle[i - 1];
-            end
-        end
-    endgenerate
-
-    always @(posedge clkDS) begin
-        delayCycle[0] = cycle;
+    always @(posedge clkDS, negedge rst) begin
         if(!rst) begin
-            cycle = 2'b00;
-            cycleLH = 2'b11;
-            cycleIdle = 2'b10;
-            cycleCalc = 2'b01;
+            cycle <= 2'b00;
+            cycleLH <= 2'b11;
+            cycleIdle <= 2'b10;
+            cycleCalc <= 2'b01;
         end else if(!cyclePulse) begin
-            cycleCalc = cycleIdle;
-            cycleIdle = cycleLH;
-            cycleLH = cycle;
-            cycle++;
+            cycleCalc <= cycleCalc + 1;
+            cycleIdle <= cycleIdle + 1;
+            cycleLH <= cycleLH + 1;
+            cycle <= cycle + 1;
         end   
     end
 
     // Sample storage
-    logic[SampleWidth-1:0] slh, scob, sf_delay, scof;
-    logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR, addrIn_t[3], addrLH_t[3], addrBR_t[3], addrFR_t[3];
+    logic[SampleWidth-1:0] slh, scob, scof;
+    logic[$clog2(4*DownSampleDepth)-1:0] addrIn, addrLH, addrBR, addrFR;
     assign sampleClk = clkRecurse;
+    // Write sample to memory
     assign sampleWrite = 1'b1;
-    assign sampleDataIn = inShift;
+    assign sampleDataIn = inSample;
     assign sampleAddrIn = addrIn;
+    // Read lookahead sample
     assign slh = sampleDataOut1;
-    assign scof = sampleDataOut2;
-    assign scob = sampleDataOut3;
     assign sampleAddrOut1 = addrLH;
+    // Read forward recursion sample
+    assign scof = sampleDataOut2;
     assign sampleAddrOut2 = addrFR;
+    // Read backward recursion sample
+    assign scob = sampleDataOut3;
     assign sampleAddrOut3 = addrBR;
-
-    // Outputs from generate blocks
-    logic signed[n_tot:0] partResF[N], partResB[N];
 
     // Partial result storage
     logic signed [`OUT_WIDTH-1:0] finF, finB, finResult, finF_delay, finB_delay, partMemB, partMemF;
-    logic[$clog2(2*DownResultDepth)-1:0] addrResIn, addrResOutB, addrResOutF, addrResIn_temp, addrResOutB_temp, addrResOutF_temp;
+    logic[$clog2(2*DownResultDepth)-1:0] addrResIn, addrResOutB, addrResOutF, addrResOutF_Temp;
+    // Backward result
     assign resClkB = clkDS;
     assign resWriteB = 1'b1;
     assign resDataInB = partMemB;
     assign resAddrInB = addrResIn;
     assign finB_delay = resDataOutB;
     assign resAddrOutB = addrResOutB;
+    // Forward result
     assign resClkF = clkDS;
     assign resWriteF = 1'b1;
     assign resDataInF = partMemF;
@@ -244,226 +163,77 @@ module Batch_Twostage_Fxp #(
     assign finF_delay = resDataOutF;
     assign resAddrOutF = addrResOutF;
 
-    // Scale results
-    logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF[6];
-    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( partResB[N-1] ), .out( scaledResB ) );
-    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( partResF[N-1] ), .out( scaledResF[0] ) );
+    // Outputs from generate blocks
+    logic signed[n_tot:0] forwardResult, backwardResult;
 
-    always @(negedge clkDS) begin
-        addrResIn_temp = {delayBatCount[2 + Recursion_Delay], delayCycle[2 + Recursion_Delay][0]};
-        addrResOutB_temp = {delayBatCountRev[2 + Recursion_Delay], !delayCycle[2 + Recursion_Delay][0]};
-        addrResOutF_temp = {delayBatCount[3 + Recursion_Delay], !delayCycle[3 + Recursion_Delay][0]};
-    end
+    // Scale results
+    logic signed[`OUT_WIDTH-1:0] scaledResB, scaledResF;
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerB (.in( backwardResult ), .out( scaledResB ) );
+    Fxp_To_Fxp #(.n_int_in(n_int), .n_mant_in(n_mant), .n_int_out(0), .n_mant_out(`OUT_WIDTH-1)) ResultScalerF (.in( forwardResult ), .out( scaledResF ) );
+
+    // Addresses for result memory must be delayed
+    logic[$clog2(DownResultDepth)-1:0] resBatCnt, resBatCntRev;
+    logic[1:0] resCycle;
+    localparam resDelay = Recursion_Delay + 3;
+    localparam int AAresDelay = resDelay;
+    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCnt_Delay (.in(tempBatCnt), .clk(clkDS), .out(resBatCnt));
+    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCntRev_Delay (.in(tempBatCntRev), .clk(clkDS), .out(resBatCntRev)); 
+    Delay #(.size(2), .delay(resDelay)) Cycle_Delay (.in(cycle), .clk(clkDS), .out(resCycle)); 
 
     always @(posedge clkDS) begin
-        partMemB = scaledResB;
-        partMemF = scaledResF[0];
-        scaledResF[5] = scaledResF[4];
-        scaledResF[4] = scaledResF[3];
-        scaledResF[3] = scaledResF[2];
-        scaledResF[2] = scaledResF[1];
-        scaledResF[1] = scaledResF[0];
-        addrResIn = addrResIn_temp;
-        addrResOutB = addrResOutB_temp;
-        addrResOutF = addrResOutF_temp;
-        finF = finF_delay;
-        finB = finB_delay;
+        partMemB <= scaledResB;
+        partMemF <= scaledResF;
+        addrResIn <= {resBatCnt, resCycle[0]};
+        addrResOutB <= {resBatCntRev, !resCycle[0]};
+        addrResOutF_Temp <= {resBatCnt, !resCycle[0]};
+        finF <= finF_delay;
+        finB <= finB_delay;
     end
 
-    always @(negedge clkRecurse) begin
-        addrIn_t[2] = addrIn_t[1];
-        addrLH_t[2] = addrLH_t[1];
-        addrBR_t[2] = addrBR_t[1];
-        addrFR_t[2] = addrFR_t[1];
-        addrIn_t[1] = addrIn_t[0];
-        addrLH_t[1] = addrLH_t[0];
-        addrBR_t[1] = addrBR_t[0];
-        addrFR_t[1] = addrFR_t[0];
-        addrIn_t[0] = {dBatCount, cycle};
-        addrLH_t[0] = {dBatCountRev, cycleLH};
-        addrBR_t[0] = {dBatCountRev, cycleCalc};
-        addrFR_t[0] = {dBatCount, cycleCalc};
-    end
+    Delay #(.size($clog2(2*DownResultDepth)), .delay(1)) test_Delay (.in(addrResOutF_Temp), .clk(clkDS), .out(addrResOutF)); 
 
     always @(posedge clkRecurse) begin
-        //scof = sf_delay;
-        addrIn = addrIn_t[0];
-        addrLH = addrLH_t[0];
-        addrBR = addrBR_t[0];
-        addrFR = addrFR_t[0];
+        addrIn <= {batCnt, cycle};
+        addrLH <= {batCntRev, cycleLH};
+        addrBR <= {batCntRev, cycleCalc};
+        addrFR <= {batCnt, cycleCalc};
     end
 
-    // Must reverse sample order for backward recursion LUTs
-    wire[SampleWidth-1:0] slh_rev, scob_rev;
-    generate
-        for (genvar j = 0; j < DSR1; j++ ) begin
-            assign slh_rev[N*j +: N] = slh[N*(DSR1-j-1) +: N];
-            assign scob_rev[N*j +: N] = scob[N*(DSR1-j-1) +: N];
-        end
-    endgenerate
+    // NB! only tested with DSR < 36
+    localparam RegPropDelay = (DSR2 > (LUT_Delay+1)) ? (2*DSR2 -3) : (DSR2*((LUT_Delay+1)/DSR2) + 2*DSR2 -3);
+    // Register propagation for lookahead recursion is delayed
+    logic regProp, regProp_prev, regProp_temp;
+    Delay #(.size(1), .delay(RegPropDelay)) RegPropagate_Delay (.in(cyclePulse), .clk(clkRecurse), .out(regProp_temp)); 
+    
+    always @(posedge clkRecurse) begin
+        regProp_prev <= regProp_temp;
+        regProp <= regProp_temp || !regProp_prev;
+    end
 
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbr (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Fbr[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFbi (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Fbi[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfr (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Ffr[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function automatic logic signed[SampleWidth-1:0][n_tot:0] GetFfi (int row);
-        logic signed[SampleWidth-1:0][n_tot:0] tempArray;
-        for (int i = 0; i < SampleWidth ; i++) begin
-            tempArray[i][n_tot:0] = Ffi[row][i] >>> (COEFF_BIAS - n_mant);
-        end
-        return tempArray;
-    endfunction
-
-    function logic signed[1:0][n_tot:0] cpow_fixed(logic signed[63:0] r, logic signed[63:0] i, int exp);
-        logic signed[1:0][n_tot:0] result;
-        logic signed[63:0] tempR, tempI;
-        tempR = r;
-        tempI = i;
-        for (int j = 1; j < exp ; j++ ) begin
-            //cmulcc.r = (a.r * b.r) - (a.i * b.i);
-            //cmulcc.i = (a.i * b.r) + (a.r * b.i);
-            logic signed[127:0] tempReal, tempImag;
-            tempReal = (tempR * r) - (tempI * i);
-            tempImag = (tempI * r) + (tempR * i);
-            tempR = tempReal >>> COEFF_BIAS;
-            tempI = tempImag >>> COEFF_BIAS;
-        end
-        result[0][n_tot:0] = tempR >>> (COEFF_BIAS - n_mant);
-        result[1][n_tot:0] = tempI >>> (COEFF_BIAS - n_mant);
-        return result;
-    endfunction
-
-    generate 
-        genvar i;
-        for (i = 0; i < N ; i++ ) begin
-            logic signed[n_tot:0] CF_inR, CF_inI, CB_inR, CB_inI, LH_inR, LH_inI;
-            
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfr = GetFfr(i);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbr = GetFbr(i);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFfi = GetFfi(i);
-            localparam logic signed[SampleWidth-1:0][n_tot:0] tempFbi = GetFbi(i);
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) LH_LUTr (
-                .sel(slh_rev), .clk(clkRecurse), .result(LH_inR)
-                );
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfr), .n_int(n_int), .n_mant(n_mant)) CF_LUTr (
-                .sel(scof), .clk(clkRecurse), .result(CF_inR)
-                );
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbr), .n_int(n_int), .n_mant(n_mant)) CB_LUTr (
-                .sel(scob_rev), .clk(clkRecurse), .result(CB_inR)
-            );
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) LH_LUTi (
-                .sel(slh_rev), .clk(clkRecurse), .result(LH_inI)
-                );
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFfi), .n_int(n_int), .n_mant(n_mant)) CF_LUTi (
-                .sel(scof), .clk(clkRecurse), .result(CF_inI)
-                );
-
-            LUT_Unit_Fxp #(
-                .lut_comb(1), .adders_comb(`COMB_ADDERS), .size(SampleWidth), .lut_size(`MAX_LUT_SIZE), .fact(tempFbi), .n_int(n_int), .n_mant(n_mant)) CB_LUTi (
-                .sel(scob_rev), .clk(clkRecurse), .result(CB_inI)
-            );
-
-            localparam logic signed[1:0][n_tot:0] tempLb = cpow_fixed(Lbr[i], Lbi[i], DSR1);
-            localparam logic signed[1:0][n_tot:0] tempLf = cpow_fixed(Lfr[i], Lfi[i], DSR1);
-
-            logic signed[n_tot:0] LH_resR, LH_resI, CF_outR, CF_outI, CB_outR, CB_outI, WFR, WFI, WBR, WBI;
-            // Lookahead 
-            Recursion_Fxp #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) LHR_ (
-                .inR(LH_inR), .inI(LH_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(0), .resetValI(0), .clk(clkRecurse), .outR(LH_resR), .outI(LH_resI)
-                );
-            // Compute
-            logic signed[n_tot:0] RF_inR, RF_inI, RB_inR, RB_inI;
-            assign RF_inR = validCompute ? CF_inR : 0;
-            assign RB_inR = validCompute ? CB_inR : 0;
-            assign RF_inI = validCompute ? CF_inI : 0;
-            assign RB_inI = validCompute ? CB_inI : 0;
-            Recursion_Fxp #(.factorR(tempLf[0]), .factorI(tempLf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(0), .resetValI(0), .clk(clkRecurse), .outR(CF_outR), .outI(CF_outI)
-                );
-            Recursion_Fxp #(.factorR(tempLb[0]), .factorI(tempLb[1]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
-                .inR(RB_inR), .inI(RB_inI), .rst(regProp[LUT_Delay] & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkRecurse), .outR(CB_outR), .outI(CB_outI)
-                );
-            
-            assign WFR = Wfr[i] >>> (COEFF_BIAS - n_mant);
-            assign WFI = Wfi[i] >>> (COEFF_BIAS - n_mant);
-            assign WBR = Wbr[i] >>> (COEFF_BIAS - n_mant);
-            assign WBI = Wbi[i] >>> (COEFF_BIAS - n_mant);
-
-            // Sync between different clocks
-            logic signed[n_tot:0] SF_outR, SF_outI, SB_outR, SB_outI;
-            always @(posedge clkRecurse) begin
-                SF_outR = CF_outR;
-                SF_outI = CF_outI;
-                SB_outR = CB_outR;
-                SB_outI = CB_outI;
-            end
-
-            // Save in registers to reduce timing requirements
-            logic signed[n_tot:0] F_outR, F_outI, B_outR, B_outI;
-            always @(posedge clkDS) begin
-                F_outR = CF_outR;
-                F_outI = CF_outI;
-                B_outR = CB_outR;
-                B_outI = CB_outI;
-            end
-
-            logic signed[n_tot:0] resFR, resFI, resBR, resBI;
-            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WFR_ (.AR(F_outR), .AI(F_outI), .BR(WFR), .BI(WFI), .clk(clkDS), .resultR(resFR), .resultI(resFI));
-            CFxpPU #(.op(FPU_p::MULT), .n_int(n_int), .n_mant(n_mant)) WBR_ (.AR(B_outR), .AI(B_outI), .BR(WBR), .BI(WBI), .clk(clkDS), .resultR(resBR), .resultI(resBI));
-
-
-
-            // Final add
-            logic signed[n_tot:0] forward, backward;
-            always @(posedge clkDS) begin
-                forward = resFR;
-                backward = resBR;
-            end
-
-            if(i == 0) begin
-                assign partResF[0] = forward;
-                assign partResB[0] = backward;
-            end else begin
-                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDF (.A(partResF[i-1]), .B(forward), .clk(clkDS), .result(partResF[i]));
-                FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FINADDB (.A(partResB[i-1]), .B(backward), .clk(clkDS), .result(partResB[i]));
-            end
-        end
-    endgenerate
+    // Samples must be delayed to work with both clocks
+    // NB! Only tested with DSR < 36
+    logic[SampleWidth-1:0] slh_d, scof_d, scob_d;
+    localparam SampleDelay = (DSR2 > (LUT_Delay+1)) ? (DSR2-LUT_Delay-2) : (LUT_Delay - 2*((LUT_Delay+2-DSR2)/2));
+    Delay #(.size(SampleWidth), .delay(SampleDelay)) slh_Delay (.in(slh), .clk(clkRecurse), .out(slh_d));
+    Delay #(.size(SampleWidth), .delay(SampleDelay)) scof_Delay (.in(scof), .clk(clkRecurse), .out(scof_d));
+    Delay #(.size(SampleWidth), .delay(SampleDelay)) scob_Delay (.in(scob), .clk(clkRecurse), .out(scob_d));
+    
+    // Generate backward recursion
+    LookaheadRecursion #(
+        .N(N), .M(M), .DSR(DSR1), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) AheadRec (
+        .inSample(scob_d), .lookaheadSample(slh_d), .clkSample(clkRecurse), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .propagate(regProp), .result(backwardResult) 
+    );
+    
+    // Generate forward recursion
+    LookbackRecursion #(
+        .N(N), .M(M), .DSR(DSR1), .n_int(n_int), .n_mant(n_mant), .lut_size(`MAX_LUT_SIZE), .lut_comb(1), .adders_comb(`COMB_ADDERS) ) BackRec (
+        .inSample(scof_d), .clkSample(clkRecurse), .clkResult(clkDS), .rst(rst), .validIn(validCompute), .result(forwardResult) 
+    );
 
     // Final final result
     FxpPU #(.op(FPU_p::ADD), .n_int(0), .n_mant(`OUT_WIDTH-1)) FINADD (.A(finF), .B(finB), .clk(clkDS), .result(finResult));
     always @(posedge clkDS) begin
-        out = {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
+        out <= {!finResult[`OUT_WIDTH-1], finResult[`OUT_WIDTH-2:0]};
     end
 endmodule
 

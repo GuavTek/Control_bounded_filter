@@ -86,6 +86,10 @@ if plotResults:
         topName = 'Cumulative'
     elif topModule == 'TB_Hybrid_Fxp':
         topName = 'Hybrid Fixed-point'
+    elif topModule == 'TB_Hybrid_Twostage_Fxp':
+        topName = 'Hybrid two-stage'
+    elif topModule == 'TB_Batch_Twostage_Fxp':
+        topName = 'Batch two-stage'
     # Read results
     res = plot.ReadResultFile('results/' + outfileName, 13)
     if topModule.find('Batch') != -1:
