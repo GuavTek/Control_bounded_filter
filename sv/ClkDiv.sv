@@ -1,6 +1,8 @@
 `ifndef CLKDIV_SV_
 `define CLKDIV_SV_
 
+`include "Delay.sv"
+
 // clkOut is DSR times slower than clkIn
 // cntOut is the internal counter
 // Has asynchronous reset
@@ -21,9 +23,9 @@ module ClkDiv #(
                     cnt <= cnt + 1;
 
                 if ((cnt == DSR/2) || !rst)
-                    clkOut <= 0;
+                    clkOut = 0;
                 if (cnt == 0)
-                    clkOut <= 1;
+                    clkOut = 1;
                 
             end
             assign cntOut = cnt;
