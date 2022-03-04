@@ -33,3 +33,7 @@ spectre_tb/
 *.evcd
 *.vcd
 *.saif
+*.txt
+*.normal_done
+*.db
+*.db.file
