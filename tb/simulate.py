@@ -57,6 +57,10 @@ for arg in sys.argv:
     elif content[0] == '-dsr2':
         DSR *= int(content[1])
         superarg += ' -define DSR2=' + content[1]
+    elif content[0] == '-n':
+        N = int(content[1])
+    elif content[0] == '-m':
+        M = int(content[1])
     elif content[0] == '-top':
         topModule = content[1]
     elif content[0] == '-freq':
