@@ -62,7 +62,7 @@ module TB_Batch_Flp #() ();
     RAM_single #(.depth(2*DownSampleDepth), .d_width(`OUT_WIDTH)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_Flp #(.depth(`DEPTH), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Flp #(.depth(`DEPTH), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -83,5 +83,12 @@ module TB_Batch_Flp #() ();
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind RecursionModule RecursionModule_prop #(.factorR(factorR), .factorI(factorI)) Recprop_i (.*);
     //bind Batch_top Batch_top_prop #(.depth(depth), .DSR(DSR)) batchprop_i (.*);
+
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpports(DUT, "verilog.evcd");
+        end
+    `endif
 
 endmodule

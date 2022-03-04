@@ -62,7 +62,7 @@ module TB_Batch_Fxp #() ();
     RAM_single #(.depth(2*DownResultDepth), .d_width(out_w)) calcF (.clk(resClkF), .rst(rst), .write(resWriteF), .dataIn(resDataInF), .addrIn(resAddrInF),
             .dataOut(resDataOutF), .addrOut(resAddrOutF));
 
-    Batch_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Batch ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
+    Batch_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid),
     .sampleAddrIn(sampleAddrIn), .sampleAddrOut1(sampleAddrOut1), .sampleAddrOut2(sampleAddrOut2), .sampleAddrOut3(sampleAddrOut3),
 	.sampleClk(sampleClk), .sampleWrite(sampleWrite), .sampleDataIn(sampleDataIn),
 	.sampleDataOut1(sampleDataOut1), .sampleDataOut2(sampleDataOut2), .sampleDataOut3(sampleDataOut3),
@@ -75,5 +75,12 @@ module TB_Batch_Fxp #() ();
     bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind FixLUT FixLUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind Batch_Fixed_top Batch_Fixed_prop #(.depth(`DEPTH), .DSR(`DSR), .n_int(n_int), .n_mant(n_mant)) batchprop_i (.*);
+
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpports(DUT, "verilog.evcd");
+        end
+    `endif
 
 endmodule

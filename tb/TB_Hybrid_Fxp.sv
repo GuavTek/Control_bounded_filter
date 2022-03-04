@@ -40,12 +40,19 @@ module TB_Hybrid_Fxp #() ();
     TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
 
     // Instantiate DUT
-    Hybrid_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_HYBRID (
+    Hybrid_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     // Bind Modules to property checkers
     bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind FIR_Fixed_top FIR_Fixed_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
+    
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpports(DUT, "verilog.evcd");
+        end
+    `endif
 
 endmodule

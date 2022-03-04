@@ -42,7 +42,7 @@ module TB_FIR_Fxp #() ();
     
 
     // Instantiate DUTs
-    FIR_Fxp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
+    FIR_Fxp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     
@@ -50,5 +50,13 @@ module TB_FIR_Fxp #() ();
     bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
     //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
     //bind FIR_Fixed_top FIR_Fixed_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
+
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpports(DUT, "verilog.evcd");
+        end
+    `endif
+    
 
 endmodule

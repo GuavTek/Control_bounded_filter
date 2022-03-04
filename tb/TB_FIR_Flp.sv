@@ -51,7 +51,7 @@ module TB_FIR_Flp #() ();
     TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
 
     // Instantiate DUTs
-    FIR_Flp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT_FIR (
+    FIR_Flp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .n_exp(`EXP_W), .n_mant(`MANT_W)) DUT (
             .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
     
     // dummy type (so compiler knows there is a datatype with this name)

@@ -11,6 +11,7 @@ superarg = ''
 # Output file prefix
 outfileName = 'results_batch_mant'
 topModule = 'TB_BATCH'
+convertVCD = 0
 mant = 23
 exp = 8
 DSR = 1
@@ -31,6 +32,7 @@ for arg in sys.argv:
         print("-top=\t\t Name of testbench module")
         print("-verbose=\t Change how much info is printed to screen")
         print("-noplot\t\t Skip plotting of results")
+        print("-dump_port\t\t Dump port waveforms to vcd file")
         sys.exit()
     elif content[0] == '-out':
         outfileName = content[1]
@@ -66,6 +68,9 @@ for arg in sys.argv:
     elif content[0] == '-freq':
         freq = int(content[1]) * 1e6
         superarg += ' -define CLK_FREQ=' + content[1]
+    elif content[0] == '-dump_port':
+        convertVCD = 1
+        superarg += ' -define DUMP_PORT'
     elif content[0].find('.py') != -1:
         # Skip self-reference
         continue
@@ -82,6 +87,9 @@ if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M
 else:
     print("Success! :)")
 
+if convertVCD == 1:
+    os.system('evcd2vcd -f verilog.evcd > verilog.vcd')
+    os.system('vcd2saif -input verilog.vcd -o verilog.saif')
 if plotResults:
     # Set name for label
     if topModule == 'TB_Batch_Flp':
@@ -110,5 +118,7 @@ if plotResults:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
     elif topModule.find('Hybrid') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
-    plot.PlotFigure(res[int(math.ceil(1920/DSR)):int(-1920/DSR)], int(960/DSR), label, outfileName, 240e6/DSR)
-
+    SNR = plot.PlotFigure(res[int(math.ceil(1920/DSR)):int(-1920/DSR)], int(960/DSR), label, outfileName, freq/DSR)
+    
+    f = open('Data/' + outfileName + '_SNR.txt', "w")
+    f.write(str(SNR) + '\n\n')

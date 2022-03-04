@@ -38,7 +38,7 @@ module TB_Cumulative_Fxp #() ();
     localparam out_w = 14;
 
     // Instantiate DUTs
-    Cumulative_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT_Cumul ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
+    Cumulative_Fxp #(.depth(`DEPTH), .DSR(`DSR), .n_mant(`MANT_W), .n_int(`EXP_W)) DUT ( .rst(rst), .clk(clk), .in(inSample), .out(dutResult), .valid(isValid));
     
     
     // Bind Modules to property checkers
