@@ -6,7 +6,6 @@
 // 70dB n_mant 18   depth 180
 
 `include "Util.sv"
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
 `include "Recursion_Fxp.sv"

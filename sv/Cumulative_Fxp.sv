@@ -7,7 +7,6 @@
 // 70dB n_mant 16
 
 `include "Util.sv"
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
 `include "Recursion_Fxp.sv"

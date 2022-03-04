@@ -1,7 +1,6 @@
 `ifndef FIR_FXP_SV_
 `define FIR_FXP_SV_
 
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FxpPU.sv"
 `include "LUT_Fxp.sv"
@@ -24,9 +23,8 @@ module FIR_Fxp #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
-    //import Coefficients_Fx::M;
-    localparam M = N;
-
+    import Coefficients_Fx::M;
+    
     input wire [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;

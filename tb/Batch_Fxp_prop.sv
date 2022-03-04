@@ -2,7 +2,6 @@
 `define BATCH_FXP_PROP_SV_
 
 `include "../sv/Batch_Fxp.sv"
-`include "../sv/Data/Coefficients_Fixedpoint.sv"
 
 module Batch_Fxp_prop #(
     parameter depth = 32,

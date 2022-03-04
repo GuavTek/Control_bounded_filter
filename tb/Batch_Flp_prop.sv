@@ -2,7 +2,6 @@
 `define BATCH_FLP_PROP_SV_
 
 `include "../sv/Batch_Flp.sv"
-`include "../sv/Data/Coefficients.sv"
 
 module Batch_Flp_prop #(
     parameter depth = 32,

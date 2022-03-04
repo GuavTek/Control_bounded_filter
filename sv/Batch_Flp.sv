@@ -9,7 +9,6 @@
     `define MANT_W 12
 `endif  // MANT_W
 */
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FPU.sv"
 `include "CFPU.sv"
@@ -44,8 +43,7 @@ module Batch_Flp #(
 	resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;
-    //import Coefficients_Fx::M;
-    localparam M = N;
+    import Coefficients_Fx::M;
     
     import Coefficients_Fx::COEFF_BIAS;
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);

@@ -14,6 +14,8 @@ topModule = 'TB_BATCH'
 mant = 23
 exp = 8
 DSR = 1
+N = 4
+M = 4
 depth = 100
 plotResults = 1
 for arg in sys.argv:
@@ -66,7 +68,7 @@ for arg in sys.argv:
 superarg += ' -top work.' + topModule + ' ' + topModule + '.sv'
 print(superarg)
 
-if os.system('xrun -faccess +r -SV -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
+if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
     print("Failure... :(")
     #sys.exit(1)
 else:

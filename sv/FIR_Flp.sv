@@ -1,7 +1,6 @@
 `ifndef FIR_FLP_SV_
 `define FIR_FLP_SV_
 
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FPU.sv"
 `include "LUT_Flp.sv"
@@ -24,9 +23,8 @@ module FIR_Flp #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
-    //import Coefficients_Fx::M;
-    localparam M = N;
-
+    import Coefficients_Fx::M;
+    
     typedef struct packed { 
         logic sign; 
         logic[n_exp-1:0] exp;

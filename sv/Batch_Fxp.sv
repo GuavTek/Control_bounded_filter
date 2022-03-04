@@ -5,7 +5,6 @@
 // 60dB n_mant 14
 // 70dB n_mant 16
 
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
@@ -35,9 +34,8 @@ module Batch_Fxp #(
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;
-    //import Coefficients_Fx::M;
-    localparam M = N;
-
+    import Coefficients_Fx::M;
+    
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
     localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;

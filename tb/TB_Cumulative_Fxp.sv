@@ -7,7 +7,6 @@
 //`include "FixLUT_prop.sv"
 //`include "TopBatchFix_prop.sv"
 
-`include "../sv/Data/Coefficients_Fixedpoint.sv"
 `define TestLength 24000
 
 `ifndef DEPTH

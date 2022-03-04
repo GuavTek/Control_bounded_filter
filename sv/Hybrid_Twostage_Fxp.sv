@@ -5,7 +5,6 @@
 // 60dB n_mant 15   depth 72
 // 70dB n_mant 18   depth 180
 
-`include "Data/Coefficients_Fixedpoint.sv"
 `include "Util.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
@@ -31,8 +30,7 @@ module Hybrid_Twostage_Fxp #(
     in, rst, clk, out, valid
 );
     import Coefficients_Fx::N;
-    //import Coefficients_Fx::M;
-    localparam M = N;
+    import Coefficients_Fx::M;
 
     localparam DSR = DSR1 * DSR2;
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);

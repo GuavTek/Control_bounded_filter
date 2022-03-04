@@ -17,7 +17,6 @@
 `include "LUT_Flp_prop.sv"
 //`include "TopFIR_prop.sv"
 
-`include "../sv/Data/Coefficients_Fixedpoint.sv"
 `define TestLength 24000
 
 `ifndef DEPTH

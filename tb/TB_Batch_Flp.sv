@@ -8,7 +8,6 @@
 `include "HardFloat-1/source/addRecFN.v"
 `include "HardFloat-1/source/mulRecFN.v"
 
-`include "../sv/Data/Coefficients_Fixedpoint.sv"
 `include "../sv/RAM.sv"
 `include "../sv/Batch_Flp.sv"
 `include "../sv/Util.sv"
