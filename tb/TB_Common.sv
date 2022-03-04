@@ -1,8 +1,12 @@
 `include "Util_TB.sv"
 
+`ifndef CLK_FREQ
+    `define CLK_FREQ 240e6
+`endif
+
 // Clock period (ns)
 `ifndef T
-    `define T 4.167
+    `define T 1.0e12/`CLK_FREQ
 `endif
 
 `ifndef VERBOSE_LVL

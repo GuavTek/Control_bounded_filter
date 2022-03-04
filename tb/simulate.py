@@ -16,6 +16,7 @@ exp = 8
 DSR = 1
 N = 4
 M = 4
+freq = 240e6
 depth = 100
 plotResults = 1
 for arg in sys.argv:
@@ -58,6 +59,9 @@ for arg in sys.argv:
         superarg += ' -define DSR2=' + content[1]
     elif content[0] == '-top':
         topModule = content[1]
+    elif content[0] == '-freq':
+        freq = int(content[1]) * 1e6
+        superarg += ' -define CLK_FREQ=' + content[1]
     elif content[0].find('.py') != -1:
         # Skip self-reference
         continue
