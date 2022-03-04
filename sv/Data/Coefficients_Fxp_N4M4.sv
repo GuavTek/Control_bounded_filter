@@ -4,6 +4,7 @@
 package Coefficients_Fx;
 
 	localparam N = 4;
+	localparam M = 4;
 	localparam COEFF_BIAS = 48;
 	localparam logic signed[63:0] Lfr[0:3] = {64'd272579065432618, 64'd272579065432618, 64'd264866559397522, 64'd264866559397522};
 
