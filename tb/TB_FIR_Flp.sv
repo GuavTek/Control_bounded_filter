@@ -64,4 +64,12 @@ module TB_FIR_Flp #() ();
     bind LUT_Flp LUT_Flp_prop #(.size(size), .fact(fact), .n_mant(n_mant), .n_int(n_int), .f_exp(f_exp), .f_mant(f_mant), .float_t(float_t)) lutprop_i (.*);
     //bind FIR_top FIR_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
 
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpvars(1, DUT);
+            $dumpfile("verilog.vcd");
+        end
+    `endif
+
 endmodule

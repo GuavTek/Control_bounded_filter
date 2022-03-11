@@ -87,7 +87,8 @@ module TB_Batch_Flp #() ();
     // Dump port waveforms for primetime
     `ifdef DUMP_PORT
         initial begin
-            $dumpports(DUT, "verilog.evcd");
+            $dumpvars(1, DUT);
+            $dumpfile("verilog.vcd");
         end
     `endif
 

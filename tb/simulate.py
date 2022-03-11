@@ -6,7 +6,7 @@ import plot
 import math
 
 # Arguments to pass directly to xcelium script
-superarg = ''
+superarg = '+define'
 
 # Output file prefix
 outfileName = 'results_batch_mant'
@@ -36,29 +36,29 @@ for arg in sys.argv:
         sys.exit()
     elif content[0] == '-out':
         outfileName = content[1]
-        superarg += ' -define OUT_FILE=' + content[1]
+        superarg += '+OUT_FILE=' + content[1]
     elif content[0] == '-mant':
         mant = int(content[1])
-        superarg += ' -define MANT_W=' + content[1]
+        superarg += '+MANT_W=' + content[1]
     elif content[0] == '-exp':
         exp = int(content[1])
-        superarg += ' -define EXP_W=' + content[1]
+        superarg += '+EXP_W=' + content[1]
     elif content[0] == '-noplot':
         plotResults = 0
     elif content[0] == '-verbose':
-        superarg += ' -define VERBOSE_LVL=' + content[1]
+        superarg += '+VERBOSE_LVL=' + content[1]
     elif content[0] == '-depth':
         depth = int(content[1])
-        superarg += ' -define DEPTH=' + content[1]
+        superarg += '+DEPTH=' + content[1]
     elif content[0] == '-dsr':
         DSR = int(content[1])
-        superarg += ' -define DSR=' + content[1]
+        superarg += '+DSR=' + content[1]
     elif content[0] == '-dsr1':
         DSR *= int(content[1])
-        superarg += ' -define DSR1=' + content[1]
+        superarg += '+DSR1=' + content[1]
     elif content[0] == '-dsr2':
         DSR *= int(content[1])
-        superarg += ' -define DSR2=' + content[1]
+        superarg += '+DSR2=' + content[1]
     elif content[0] == '-n':
         N = int(content[1])
     elif content[0] == '-m':
@@ -67,10 +67,10 @@ for arg in sys.argv:
         topModule = content[1]
     elif content[0] == '-freq':
         freq = int(content[1]) * 1e6
-        superarg += ' -define CLK_FREQ=' + content[1]
+        superarg += '+CLK_FREQ=' + content[1]
     elif content[0] == '-dump_port':
         convertVCD = 1
-        superarg += ' -define DUMP_PORT'
+        superarg += '+DUMP_PORT'
     elif content[0].find('.py') != -1:
         # Skip self-reference
         continue
@@ -81,15 +81,22 @@ for arg in sys.argv:
 superarg += ' -top work.' + topModule + ' ' + topModule + '.sv'
 print(superarg)
 
-if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
+#if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
+#os.system('rm -r simv.daidir')
+if os.system(f'vcs -timescale=1ns/1ns -race -full64 -sverilog +incdir+../sv/+../sv/HardFloat-1/source/ ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv ' + superarg):
+    print("Compilation failed!")
+    sys.exit(1)
+
+
+if os.system(f'./simv'):
     print("Failure... :(")
     #sys.exit(1)
 else:
     print("Success! :)")
 
-if convertVCD == 1:
-    os.system('evcd2vcd -f verilog.evcd > verilog.vcd')
-    os.system('vcd2saif -input verilog.vcd -o verilog.saif')
+#if convertVCD == 1:
+    #os.system('evcd2vcd -f verilog.evcd > verilog.vcd')
+    #os.system('vcd2saif -input verilog.vcd -o verilog.saif')
 if plotResults:
     # Set name for label
     if topModule == 'TB_Batch_Flp':
