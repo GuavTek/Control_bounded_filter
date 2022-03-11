@@ -37,3 +37,11 @@ spectre_tb/
 *.normal_done
 *.db
 *.db.file
+*simv
+*simv.daidir*
+*csrc*
+*AN.DB*
+*ucli.key
+*verilog.vpd
+*race.out
+*race.unique.out
