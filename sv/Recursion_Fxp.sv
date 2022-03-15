@@ -7,10 +7,10 @@
 // A general recursive calculation
 // Performs out = in[k] + factor*in[k-1]
 module Recursion_Fxp #(
-    parameter   factorR = 0,
-                factorI = 0,
                 n_int = 8,
-                n_mant = 23
+                n_mant = 23,
+    parameter logic signed[n_int+n_mant:0]  factorR = 0,
+                                            factorI = 0
 ) (
     input logic signed[n_int+n_mant:0] inR, inI,
     input logic signed[n_int+n_mant:0] resetValR, resetValI,
@@ -82,7 +82,7 @@ module LookbackRecursion #(
             assign RF_inR = validIn ? CF_inR : 0;
             assign RF_inI = validIn ? CF_inI : 0;
             Recursion_Fxp #(
-                .factorR(loop_const.Lf[0]), .factorI(loop_const.Lf[1]), .n_int(n_int), .n_mant(n_mant)) CFR_ (
+                .factorR(loop_const.Lfr), .factorI(loop_const.Lfi), .n_int(n_int), .n_mant(n_mant)) CFR_ (
                 .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkSample || !rst), .outR(CF_outR), .outI(CF_outI)
             );
 
@@ -174,7 +174,7 @@ module LookaheadRecursion #(
 
             // Calculate Lookahead 
             logic signed[n_tot:0] LH_resR, LH_resI;
-            Recursion_Fxp #(.factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(n_int), .n_mant(n_mant)) LHR_ (
+            Recursion_Fxp #(.factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(n_int), .n_mant(n_mant)) LHR_ (
                 .inR(LH_inR), .inI(LH_inI), .rst(propagate & rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkSample || !rst), .outR(LH_resR), .outI(LH_resI)
             );
 
@@ -182,7 +182,7 @@ module LookaheadRecursion #(
             logic signed[n_tot:0] RB_inR, RB_inI, CB_outR, CB_outI;
             assign RB_inR = validIn ? CB_inR : 0;
             assign RB_inI = validIn ? CB_inI : 0;
-            Recursion_Fxp #(.factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(n_int), .n_mant(n_mant)) CBR_ (
+            Recursion_Fxp #(.factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(n_int), .n_mant(n_mant)) CBR_ (
                 .inR(RB_inR), .inI(RB_inI), .rst(propagate & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkSample || !rst), .outR(CB_outR), .outI(CB_outI)
             );
 

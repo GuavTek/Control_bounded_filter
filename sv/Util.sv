@@ -97,7 +97,7 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
     endfunction
 
     function automatic logic signed[1:0][n_int+n_mant:0] cpow(logic signed[63:0] r, logic signed[63:0] i, int exp);
-        logic signed[1:0][n_int+n_mant:0] result;
+        logic signed[1:0][n_tot:0] result;
         logic signed[63:0] tempR, tempI;
         tempR = r;
         tempI = i;
@@ -111,8 +111,8 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
             tempR = tempReal >>> COEFF_BIAS;
             tempI = tempImag >>> COEFF_BIAS;
         end
-        result[0][n_int+n_mant:0] = tempR >>> (COEFF_BIAS - n_mant);
-        result[1][n_int+n_mant:0] = tempI >>> (COEFF_BIAS - n_mant);
+        result[0][n_tot:0] = (tempR >>> (COEFF_BIAS - n_mant));
+        result[1][n_tot:0] = (tempI >>> (COEFF_BIAS - n_mant));
         return result;
     endfunction
 
@@ -126,13 +126,17 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
     localparam logic signed[n_int+n_mant:0] Wfr = GetWfr();
     localparam logic signed[n_int+n_mant:0] Wfi = GetWfi();
 
-    localparam tempLfr = Coefficients_Fx::Lfr[row];
-    localparam tempLfi = Coefficients_Fx::Lfi[row];
+    localparam logic signed[63:0] tempLfr = Coefficients_Fx::Lfr[row];
+    localparam logic signed[63:0] tempLfi = Coefficients_Fx::Lfi[row];
     localparam logic signed[1:0][n_tot:0] Lf = cpow(tempLfr, tempLfi, dsr);
-    
-    localparam tempLbr = Coefficients_Fx::Lbr[row];
-    localparam tempLbi = Coefficients_Fx::Lbi[row];
+    localparam logic signed[n_tot:0] Lfr = Lf[0];
+    localparam logic signed[n_tot:0] Lfi = Lf[1];
+
+    localparam logic signed[63:0] tempLbr = Coefficients_Fx::Lbr[row];
+    localparam logic signed[63:0] tempLbi = Coefficients_Fx::Lbi[row];
     localparam logic signed[1:0][n_tot:0] Lb = cpow(tempLbr, tempLbi, dsr);
+    localparam logic signed[n_tot:0] Lbr = Lb[0];
+    localparam logic signed[n_tot:0] Lbi = Lb[1];
 
 endmodule //GetRecConst
 
