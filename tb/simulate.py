@@ -6,7 +6,7 @@ import plot
 import math
 
 # Arguments to pass directly to xcelium script
-superarg = '+define'
+superarg = ''
 
 # Output file prefix
 outfileName = 'results_batch_mant'
@@ -30,35 +30,36 @@ for arg in sys.argv:
         print("-dsr=\t\t Downsampling rate")
         print("-depth\t\t Define the size of filter/batches")
         print("-top=\t\t Name of testbench module")
+        print("-freq=\t\t Set clock frequency")
         print("-verbose=\t Change how much info is printed to screen")
         print("-noplot\t\t Skip plotting of results")
         print("-dump_port\t\t Dump port waveforms to vcd file")
         sys.exit()
     elif content[0] == '-out':
         outfileName = content[1]
-        superarg += '+OUT_FILE=' + content[1]
+        superarg += ' +define+OUT_FILE=' + content[1]
     elif content[0] == '-mant':
         mant = int(content[1])
-        superarg += '+MANT_W=' + content[1]
+        superarg += ' +define+MANT_W=' + content[1]
     elif content[0] == '-exp':
         exp = int(content[1])
-        superarg += '+EXP_W=' + content[1]
+        superarg += ' +define+EXP_W=' + content[1]
     elif content[0] == '-noplot':
         plotResults = 0
     elif content[0] == '-verbose':
-        superarg += '+VERBOSE_LVL=' + content[1]
+        superarg += ' +define+VERBOSE_LVL=' + content[1]
     elif content[0] == '-depth':
         depth = int(content[1])
-        superarg += '+DEPTH=' + content[1]
+        superarg += ' +define+DEPTH=' + content[1]
     elif content[0] == '-dsr':
         DSR = int(content[1])
-        superarg += '+DSR=' + content[1]
+        superarg += ' +define+DSR=' + content[1]
     elif content[0] == '-dsr1':
         DSR *= int(content[1])
-        superarg += '+DSR1=' + content[1]
+        superarg += ' +define+DSR1=' + content[1]
     elif content[0] == '-dsr2':
         DSR *= int(content[1])
-        superarg += '+DSR2=' + content[1]
+        superarg += ' +define+DSR2=' + content[1]
     elif content[0] == '-n':
         N = int(content[1])
     elif content[0] == '-m':
@@ -67,10 +68,10 @@ for arg in sys.argv:
         topModule = content[1]
     elif content[0] == '-freq':
         freq = int(content[1]) * 1e6
-        superarg += '+CLK_FREQ=' + content[1]
+        superarg += ' +define+CLK_FREQ=' + content[1]
     elif content[0] == '-dump_port':
         convertVCD = 1
-        superarg += '+DUMP_PORT'
+        superarg += ' +define+DUMP_PORT'
     elif content[0].find('.py') != -1:
         # Skip self-reference
         continue
