@@ -181,7 +181,7 @@ module Batch_Fxp #(
 
     // Register propagation for lookahead recursion is delayed
     logic regProp;
-    Delay #(.size(1), .delay(LUT_Delay)) RegPropagate_Delay (.in(cyclePulse), .clk(clkDS), .out(regProp)); 
+    Delay #(.size(1), .delay(LUT_Delay+1)) RegPropagate_Delay (.in(cyclePulse), .clk(clkDS), .out(regProp)); 
 
     // Generate backward recursion
     LookaheadRecursion #(
