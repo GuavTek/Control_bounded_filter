@@ -9,42 +9,55 @@ package FPU_p;
     } opcode;
 endpackage
 
-module GetHb #(parameter n_int = 8, n_mant = 23, size = 10);
-    function automatic logic signed[size-1:0][n_int+n_mant:0] Get ();
+module GetHb #(parameter    n_int = 8, 
+                            n_mant = 23, 
+                            size = 10
+                );
+    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+
+    function automatic CArr_t Get ();
         import Coefficients_Fx::COEFF_BIAS;
         import Coefficients_Fx::hb;
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+        CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
             logic signed[n_int+n_mant:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
-            tempArray[i][n_int+n_mant:0] = temp;
+            tempArray[i] = temp;
         end
         return tempArray;
     endfunction
-    localparam logic signed[size-1:0][n_int+n_mant:0] Hb = Get();
+    localparam CArr_t Hb = Get();
 endmodule //GetHb
 
-module GetHf #(parameter n_int = 8, n_mant = 23, size = 10);
-    function automatic logic signed[size-1:0][n_int+n_mant:0] Get ();
+module GetHf #(parameter    n_int = 8, 
+                            n_mant = 23, 
+                            size = 10
+                );
+    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+
+    function automatic CArr_t Get ();
         import Coefficients_Fx::COEFF_BIAS;
         import Coefficients_Fx::hf;
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+        CArr_t tempArray;
         
         for (int i = 0; i < size ; i++) begin
             logic signed[n_int+n_mant:0] temp = hf[i] >>> (COEFF_BIAS - n_mant);
-            tempArray[i][n_int+n_mant:0] = temp;
+            tempArray[i] = temp;
         end
         return tempArray;
     endfunction
-    localparam logic signed[size-1:0][n_int+n_mant:0] Hf = Get();
+    localparam CArr_t Hf = Get();
 endmodule //GetHf
 
 module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr = 1);
     import Coefficients_Fx::COEFF_BIAS;
     localparam n_tot = n_int + n_mant;
+    
+    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+    typedef logic signed[n_int+n_mant:0] Complex_t[1:0];
 
-    function automatic logic signed[size-1:0][n_int+n_mant:0] GetFbr ();
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+    function automatic CArr_t GetFbr ();
+        CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
             tempArray[i] = Coefficients_Fx::Fbr[row][i] >>> (COEFF_BIAS - n_mant);
@@ -52,8 +65,8 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         return tempArray;
     endfunction
 
-    function automatic logic signed[size-1:0][n_int+n_mant:0] GetFbi ();
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+    function automatic CArr_t GetFbi ();
+        CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
             tempArray[i] = Coefficients_Fx::Fbi[row][i] >>> (COEFF_BIAS - n_mant);
@@ -61,8 +74,8 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         return tempArray;
     endfunction
 
-    function automatic logic signed[size-1:0][n_int+n_mant:0] GetFfr ();
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+    function automatic CArr_t GetFfr ();
+        CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
             tempArray[i] = Coefficients_Fx::Ffr[row][i] >>> (COEFF_BIAS - n_mant);
@@ -70,8 +83,8 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         return tempArray;
     endfunction
 
-    function automatic logic signed[size-1:0][n_int+n_mant:0] GetFfi ();
-        logic signed[size-1:0][n_int+n_mant:0] tempArray;
+    function automatic CArr_t GetFfi ();
+        CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
             tempArray[i] = Coefficients_Fx::Ffi[row][i] >>> (COEFF_BIAS - n_mant);
@@ -79,25 +92,24 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         return tempArray;
     endfunction
 
-    function automatic logic signed[n_int+n_mant:0] GetWfr();
-
+    function automatic logic signed[n_tot:0] GetWfr();
         return Coefficients_Fx::Wfr[row] >>> (COEFF_BIAS - n_mant);
     endfunction
 
-    function automatic logic signed[n_int+n_mant:0] GetWfi();
+    function automatic logic signed[n_tot:0] GetWfi();
         return Coefficients_Fx::Wfi[row] >>> (COEFF_BIAS - n_mant);
     endfunction
 
-    function automatic logic signed[n_int+n_mant:0] GetWbr();
+    function automatic logic signed[n_tot:0] GetWbr();
         return Coefficients_Fx::Wbr[row] >>> (COEFF_BIAS - n_mant);
     endfunction
 
-    function automatic logic signed[n_int+n_mant:0] GetWbi();
+    function automatic logic signed[n_tot:0] GetWbi();
         return Coefficients_Fx::Wbi[row] >>> (COEFF_BIAS - n_mant);
     endfunction
 
-    function automatic logic signed[1:0][n_int+n_mant:0] cpow(logic signed[63:0] r, logic signed[63:0] i, int exp);
-        logic signed[1:0][n_tot:0] result;
+    function automatic Complex_t cpow(logic signed[63:0] r, logic signed[63:0] i, int exp);
+        Complex_t result;
         logic signed[63:0] tempR, tempI;
         tempR = r;
         tempI = i;
@@ -111,30 +123,30 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
             tempR = tempReal >>> COEFF_BIAS;
             tempI = tempImag >>> COEFF_BIAS;
         end
-        result[0][n_tot:0] = (tempR >>> (COEFF_BIAS - n_mant));
-        result[1][n_tot:0] = (tempI >>> (COEFF_BIAS - n_mant));
+        result[0] = (tempR >>> (COEFF_BIAS - n_mant));
+        result[1] = (tempI >>> (COEFF_BIAS - n_mant));
         return result;
     endfunction
 
-    localparam logic signed[size-1:0][n_int+n_mant:0] Fbr = GetFbr();
-    localparam logic signed[size-1:0][n_int+n_mant:0] Fbi = GetFbi();
-    localparam logic signed[size-1:0][n_int+n_mant:0] Ffr = GetFfr();
-    localparam logic signed[size-1:0][n_int+n_mant:0] Ffi = GetFfi();
+    localparam CArr_t Fbr = GetFbr();
+    localparam CArr_t Fbi = GetFbi();
+    localparam CArr_t Ffr = GetFfr();
+    localparam CArr_t Ffi = GetFfi();
     
-    localparam logic signed[n_int+n_mant:0] Wbr = GetWbr();
-    localparam logic signed[n_int+n_mant:0] Wbi = GetWbi();
-    localparam logic signed[n_int+n_mant:0] Wfr = GetWfr();
-    localparam logic signed[n_int+n_mant:0] Wfi = GetWfi();
+    localparam logic signed[n_tot:0] Wbr = GetWbr();
+    localparam logic signed[n_tot:0] Wbi = GetWbi();
+    localparam logic signed[n_tot:0] Wfr = GetWfr();
+    localparam logic signed[n_tot:0] Wfi = GetWfi();
 
     localparam logic signed[63:0] tempLfr = Coefficients_Fx::Lfr[row];
     localparam logic signed[63:0] tempLfi = Coefficients_Fx::Lfi[row];
-    localparam logic signed[1:0][n_tot:0] Lf = cpow(tempLfr, tempLfi, dsr);
+    localparam Complex_t Lf = cpow(tempLfr, tempLfi, dsr);
     localparam logic signed[n_tot:0] Lfr = Lf[0];
     localparam logic signed[n_tot:0] Lfi = Lf[1];
 
     localparam logic signed[63:0] tempLbr = Coefficients_Fx::Lbr[row];
     localparam logic signed[63:0] tempLbi = Coefficients_Fx::Lbi[row];
-    localparam logic signed[1:0][n_tot:0] Lb = cpow(tempLbr, tempLbi, dsr);
+    localparam Complex_t Lb = cpow(tempLbr, tempLbi, dsr);
     localparam logic signed[n_tot:0] Lbr = Lb[0];
     localparam logic signed[n_tot:0] Lbi = Lb[1];
 

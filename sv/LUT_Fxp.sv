@@ -9,7 +9,7 @@ module LUT_Fxp #(
     parameter   size = 1,
                 n_int = 8,
                 n_mant = 23,
-    parameter logic signed[size-1:0][n_int+n_mant:0] fact = 'b0
+    parameter logic signed[n_int+n_mant:0] fact[size-1:0] = '{default: 0}
 ) (
     sel,
     result
@@ -52,7 +52,7 @@ module LUT_Unit_Fxp #(
                 n_mant = 23,
                 adders_comb = 0,
                 lut_comb = 0,
-    parameter logic signed[size-1:0][n_int+n_mant:0] fact = 0
+    parameter logic signed[n_int+n_mant:0] fact[size-1:0] = '{default: 0}
 ) (
     sel,
     clk,
@@ -66,8 +66,11 @@ module LUT_Unit_Fxp #(
     localparam int LUTsNum = $ceil((0.0 + size)/lut_size);
 
     localparam int LUTRest = size % lut_size;
-    function logic signed[lut_size-1:0][n_tot:0] GetFact (int startIndex);
-        logic signed[lut_size-1:0][n_tot:0] tempArray;
+    typedef logic signed[n_tot:0] sub_arr_t[lut_size-1:0];
+    typedef logic signed[n_tot:0] rest_arr_t[LUTRest-1:0];
+
+    function sub_arr_t GetFact (int startIndex);
+        sub_arr_t tempArray;
             
         for (int i = 0; i < lut_size ; i++) begin
             tempArray[i] = fact[startIndex + i];
@@ -75,8 +78,8 @@ module LUT_Unit_Fxp #(
         return tempArray;
     endfunction 
 
-    function logic signed[LUTRest-1:0][n_tot:0] GetFactRest (int startIndex);
-        logic signed[LUTRest-1:0][n_tot:0] tempArray;
+    function rest_arr_t GetFactRest (int startIndex);
+        rest_arr_t tempArray;
             
         for (int i = 0; i < LUTRest ; i++) begin
             tempArray[i] = fact[startIndex + i];
@@ -93,11 +96,11 @@ module LUT_Unit_Fxp #(
             localparam offset = i*lut_size;
             localparam lut_rem = size - offset;
             if (i < $floor(size/lut_size)) begin
-                localparam logic signed[lut_size-1:0][n_tot:0] fact_slice = GetFact(offset);
+                localparam sub_arr_t fact_slice = GetFact(offset);
                 LUT_Fxp #(.size(lut_size), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_f (.sel(sel[offset +: lut_size]), .result(tempResult));
             end else begin
                 // Causes internal assertion error in synthesis tool?
-                localparam logic signed[LUTRest-1:0][n_tot:0] fact_slice = GetFactRest(offset);
+                localparam rest_arr_t fact_slice = GetFactRest(offset);
                 LUT_Fxp #(.size(LUTRest), .n_int(n_int), .n_mant(n_mant), .fact(fact_slice)) lut_r (.sel(sel[offset +: LUTRest]), .result(tempResult));
             end
 
