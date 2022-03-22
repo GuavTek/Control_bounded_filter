@@ -45,3 +45,4 @@ spectre_tb/
 *verilog.vpd
 *race.out
 *race.unique.out
+tb/vc_hdrs.h
