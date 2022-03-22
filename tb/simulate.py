@@ -84,7 +84,7 @@ print(superarg)
 
 #if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
 #os.system('rm -r simv.daidir')
-if os.system(f'vcs -timescale=1ns/1ns -race -full64 -sverilog +incdir+../sv/+../sv/HardFloat-1/source/ ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv ' + superarg):
+if os.system(f'vcs -timescale=1ns/1ps -race -full64 -sverilog +incdir+../sv/+../sv/HardFloat-1/source/ ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv ' + superarg):
     print("Compilation failed!")
     sys.exit(1)
 
@@ -95,9 +95,8 @@ if os.system(f'./simv'):
 else:
     print("Success! :)")
 
-#if convertVCD == 1:
-    #os.system('evcd2vcd -f verilog.evcd > verilog.vcd')
-    #os.system('vcd2saif -input verilog.vcd -o verilog.saif')
+if convertVCD == 1:
+    os.system('vcd2saif -input verilog.vcd -output verilog.saif')
 if plotResults:
     # Set name for label
     if topModule == 'TB_Batch_Flp':
