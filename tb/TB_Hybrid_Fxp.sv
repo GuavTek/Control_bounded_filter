@@ -12,16 +12,8 @@
     `define DEPTH 150
 `endif
 
-`ifndef DSR1
-    `define DSR1 2
-`endif
-
-`ifndef DSR2
-    `define DSR2 6
-`endif
-
 `ifndef DSR
-    `define DSR (`DSR1 * `DSR2)
+    `define DSR 6
 `endif
 
 `ifndef OUT_FILE
