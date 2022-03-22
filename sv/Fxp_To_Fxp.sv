@@ -12,7 +12,7 @@ module Fxp_To_Fxp #(
     localparam n_tot_out = n_int_out + n_mant_out;
     input logic signed[n_tot_in:0] in;
     output logic signed[n_tot_out:0] out;
-    logic[n_tot_out+1:0] temp;
+    logic signed[n_tot_out+1:0] temp;
 
     generate
         if (n_mant_out > n_mant_in)
@@ -21,7 +21,7 @@ module Fxp_To_Fxp #(
             assign temp = (in >>> n_mant_in - n_mant_out -1) + 1;
     endgenerate
     
-    assign out = temp[n_tot_out+1:1];
+    assign out = temp >>> 1;
 
 endmodule
 
