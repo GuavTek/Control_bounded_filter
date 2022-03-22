@@ -15,9 +15,15 @@ module ValidCount #(
     always @(posedge validClk, negedge rst) begin
         if(!rst) begin
             cnt <= 'b0;
-            out2 <= 0;
         end else begin
             cnt <= cnt + 1;
+        end
+    end
+
+    always @(posedge validClk, negedge rst) begin
+        if(!rst) begin
+            out2 <= 0;
+        end else begin
             out2 <= (out2 | (cnt == SecondVal));
         end
     end

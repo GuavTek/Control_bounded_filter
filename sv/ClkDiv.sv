@@ -7,7 +7,7 @@
 // cntOut is the internal counter
 // Has asynchronous reset
 module ClkDiv #(
-    parameter DSR = 1
+    parameter bit[31:0] DSR = 1
 ) (
     input logic clkIn, rst,
     output logic clkOut,
@@ -17,16 +17,21 @@ module ClkDiv #(
     generate
         if(DSR > 1) begin
             always @(posedge clkIn) begin
-                if ((!rst) || (cnt == (DSR-1)))
+                if (!rst)
+                    cnt <= 'b0;
+                else if (cnt == (DSR-1))
                     cnt <= 'b0;
                 else
                     cnt <= cnt + 1;
+            end
 
-                if ((cnt == DSR/2) || !rst)
+            always @(posedge clkIn) begin
+                if (cnt == DSR/2) 
                     clkOut = 0;
-                if (cnt == 0)
+                else if (!rst)
+                    clkOut = 0;
+                else if (cnt == 0)
                     clkOut = 1;
-                
             end
             assign cntOut = cnt;
         end else begin
