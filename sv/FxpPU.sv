@@ -41,7 +41,7 @@ module Sum_Fxp #(
                 n_mant = 23,
                 adders_comb = 10
 ) (
-    input logic signed[n_int+n_mant:0] in[size],
+    input logic signed[n_int+n_mant:0] in[size-1:0],
     input logic clk,
     output logic signed[n_int+n_mant:0] out
 );
