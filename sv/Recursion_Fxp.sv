@@ -93,7 +93,7 @@ module LookbackRecursion #(
             assign RF_inI = validIn ? CF_inI : 0;
             Recursion_Fxp #(
                 .factorR(loop_const.Lfr), .factorI(loop_const.Lfi), .n_int(n_int), .n_mant(n_mant)) CFR_ (
-                .inR(RF_inR), .inI(RF_inI), .rst(rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkSample), .outR(CF_outR), .outI(CF_outI)
+                .inR(RF_inR), .inI(RF_inI), .rst(validIn), .load(1'b1), .loadValR(resetZero), .loadValI(resetZero), .clk(clkSample), .outR(CF_outR), .outI(CF_outI)
             );
 
             // Save in registers to reduce timing requirements
@@ -185,7 +185,7 @@ module LookaheadRecursion #(
             // Calculate Lookahead 
             logic signed[n_tot:0] LH_resR, LH_resI;
             Recursion_Fxp #(.factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(n_int), .n_mant(n_mant)) LHR_ (
-                .inR(LH_inR), .inI(LH_inI), .rst(propagate & rst), .resetValR(resetZero), .resetValI(resetZero), .clk(clkSample), .outR(LH_resR), .outI(LH_resI)
+                .inR(LH_inR), .inI(LH_inI), .rst(rst), .load(propagate), .loadValR(resetZero), .loadValI(resetZero), .clk(clkSample), .outR(LH_resR), .outI(LH_resI)
             );
 
             // Compute when data is valid
@@ -193,7 +193,7 @@ module LookaheadRecursion #(
             assign RB_inR = validIn ? CB_inR : 0;
             assign RB_inI = validIn ? CB_inI : 0;
             Recursion_Fxp #(.factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(n_int), .n_mant(n_mant)) CBR_ (
-                .inR(RB_inR), .inI(RB_inI), .rst(propagate & rst), .resetValR(LH_resR), .resetValI(LH_resI), .clk(clkSample), .outR(CB_outR), .outI(CB_outI)
+                .inR(RB_inR), .inI(RB_inI), .rst(validIn), .load(propagate), .loadValR(LH_resR), .loadValI(LH_resI), .clk(clkSample), .outR(CB_outR), .outI(CB_outI)
             );
 
             // Save in registers to reduce timing requirements
