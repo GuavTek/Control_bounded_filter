@@ -23,8 +23,8 @@ module ValidCount #(
     always @(posedge validClk, negedge rst) begin
         if(!rst) begin
             out2 <= 0;
-        end else begin
-            out2 <= (out2 | (cnt == SecondVal));
+        end else if (cnt == SecondVal) begin
+            out2 <= 1;
         end
     end
 
