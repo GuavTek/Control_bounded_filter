@@ -16,7 +16,7 @@ module ClkDiv #(
     logic[$clog2(DSR)-1:0] cnt;      // Prescale counter
     generate
         if(DSR > 1) begin
-            always @(posedge clkIn) begin
+            always @(posedge clkIn, negedge rst) begin
                 if (!rst)
                     cnt <= 'b0;
                 else if (cnt == (DSR-1))
@@ -25,13 +25,12 @@ module ClkDiv #(
                     cnt <= cnt + 1;
             end
 
+            // Sync to master clock
             always @(posedge clkIn) begin
-                if (cnt == DSR/2) 
-                    clkOut = 0;
-                else if (!rst)
-                    clkOut = 0;
+                if (cnt == DSR/2)
+                    clkOut <= 0;
                 else if (cnt == 0)
-                    clkOut = 1;
+                    clkOut <= 1;
             end
             assign cntOut = cnt;
         end else begin
