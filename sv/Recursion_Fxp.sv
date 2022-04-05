@@ -96,7 +96,7 @@ module LookbackRecursion #(
                 .inR(RF_inR), .inI(RF_inI), .rst(validIn), .load(1'b1), .loadValR(resetZero), .loadValI(resetZero), .clk(clkSample), .outR(CF_outR), .outI(CF_outI)
             );
 
-            // Save in registers to reduce timing requirements
+            // Save in registers to synchronize between clock domains
             logic signed[n_tot:0] F_outR, F_outI;
             always @(posedge clkResult) begin
                 F_outR <= CF_outR;
@@ -196,7 +196,7 @@ module LookaheadRecursion #(
                 .inR(RB_inR), .inI(RB_inI), .rst(validIn), .load(propagate), .loadValR(LH_resR), .loadValI(LH_resI), .clk(clkSample), .outR(CB_outR), .outI(CB_outI)
             );
 
-            // Save in registers to reduce timing requirements
+            // Save in registers to synchronize between clock domains
             logic signed[n_tot:0] B_outR, B_outI;
             always @(posedge clkResult) begin
                 B_outR <= CB_outR;
