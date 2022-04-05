@@ -22,7 +22,7 @@
 
 `define MAX_LUT_SIZE 7
 `define COMB_ADDERS 1
-`define OUT_WIDTH 14
+`define OUT_WIDTH 12
 
 module Batch_Flp #(
     parameter depth = 228,

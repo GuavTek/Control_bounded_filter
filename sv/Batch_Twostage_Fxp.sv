@@ -16,8 +16,7 @@
 `include "InputReg.sv"
 
 `define MAX_LUT_SIZE 6
-`define COMB_ADDERS 1
-`define OUT_WIDTH 14
+`define OUT_WIDTH 12
 
 module Batch_Twostage_Fxp #(
     parameter depth = 180,

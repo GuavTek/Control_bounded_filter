@@ -116,7 +116,7 @@ if plotResults:
     elif topModule == 'TB_Batch_Twostage_Fxp':
         topName = 'Batch two-stage'
     # Read results
-    res = plot.ReadResultFile('results/' + outfileName, 13)
+    res = plot.ReadResultFile('results/' + outfileName, 11)
     if topModule.find('Batch') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} batch size, and DSR={DSR}"
     elif topModule.find('FIR') != -1:

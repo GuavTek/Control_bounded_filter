@@ -11,7 +11,7 @@
 
 `define MAX_LUT_SIZE 7
 `define COMB_ADDERS 3
-`define OUT_WIDTH 14
+`define OUT_WIDTH 12
 
 module FIR_Flp #(
     parameter   Lookahead = 240,
