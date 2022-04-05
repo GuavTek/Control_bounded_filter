@@ -36,13 +36,13 @@ module Batch_Fxp #(
     import Coefficients_Fx::N;
     import Coefficients_Fx::M;
     
-    localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
+    localparam logic[63:0] DownSampleDepth = $ceil((0.0 + depth) / DSR);
     localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
     localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 0;
 
-    input wire [M-1:0] in;
+    input logic [M-1:0] in;
     input logic rst, clk;
     output logic[`OUT_WIDTH-1:0] out;
     output logic valid;
@@ -54,8 +54,8 @@ module Batch_Fxp #(
     // Part result memory
     output logic[$clog2(2*DownSampleDepth)-1:0]  resAddrInF, resAddrInB, resAddrOutF, resAddrOutB;
 	output logic resClkF, resClkB, resWriteF, resWriteB;
-	output logic[`OUT_WIDTH-1:0] resDataInF, resDataInB;
-	input logic[`OUT_WIDTH-1:0] resDataOutF, resDataOutB;
+	output logic signed[`OUT_WIDTH-1:0] resDataInF, resDataInB;
+	input logic signed[`OUT_WIDTH-1:0] resDataOutF, resDataOutB;
 
     // Downsampled clock
     logic[$clog2(DSR)-1:0] divCnt;
@@ -68,6 +68,7 @@ module Batch_Fxp #(
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
 
+    // CDC 1: clk -> clkDS
     // Input register
     logic[SampleWidth-1:0] inShift;
     always @(posedge clk) begin
