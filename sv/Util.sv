@@ -13,7 +13,7 @@ module GetHb #(parameter    n_int = 8,
                             n_mant = 23, 
                             size = 10
                 );
-    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+    typedef logic signed[63:0] CArr_t[size-1:0];
 
     function automatic CArr_t Get ();
         import Coefficients_Fx::COEFF_BIAS;
@@ -21,7 +21,7 @@ module GetHb #(parameter    n_int = 8,
         CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
-            logic signed[n_int+n_mant:0] temp = hb[i] >>> (COEFF_BIAS - n_mant);
+            logic signed[63:0] temp = hb[i];// >>> (COEFF_BIAS - n_mant);
             tempArray[i] = temp;
         end
         return tempArray;
@@ -33,7 +33,7 @@ module GetHf #(parameter    n_int = 8,
                             n_mant = 23, 
                             size = 10
                 );
-    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+    typedef logic signed[63:0] CArr_t[size-1:0];
 
     function automatic CArr_t Get ();
         import Coefficients_Fx::COEFF_BIAS;
@@ -41,7 +41,7 @@ module GetHf #(parameter    n_int = 8,
         CArr_t tempArray;
         
         for (int i = 0; i < size ; i++) begin
-            logic signed[n_int+n_mant:0] temp = hf[i] >>> (COEFF_BIAS - n_mant);
+            logic signed[63:0] temp = hf[i];// >>> (COEFF_BIAS - n_mant);
             tempArray[i] = temp;
         end
         return tempArray;
@@ -53,14 +53,14 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
     import Coefficients_Fx::COEFF_BIAS;
     localparam n_tot = n_int + n_mant;
     
-    typedef logic signed[n_int+n_mant:0] CArr_t[size-1:0];
+    typedef logic signed[63:0] CArr_t[size-1:0];
     typedef logic signed[n_int+n_mant:0] Complex_t[1:0];
 
     function automatic CArr_t GetFbr ();
         CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
-            tempArray[i] = Coefficients_Fx::Fbr[row][i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i] = Coefficients_Fx::Fbr[row][i];// >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
@@ -69,7 +69,7 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
-            tempArray[i] = Coefficients_Fx::Fbi[row][i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i] = Coefficients_Fx::Fbi[row][i];// >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
@@ -78,7 +78,7 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
-            tempArray[i] = Coefficients_Fx::Ffr[row][i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i] = Coefficients_Fx::Ffr[row][i];// >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction
@@ -87,7 +87,7 @@ module GetRecConst #(parameter n_int = 8, n_mant = 23, size = 10, row = 0, dsr =
         CArr_t tempArray;
 
         for (int i = 0; i < size ; i++) begin
-            tempArray[i] = Coefficients_Fx::Ffi[row][i] >>> (COEFF_BIAS - n_mant);
+            tempArray[i] = Coefficients_Fx::Ffi[row][i];// >>> (COEFF_BIAS - n_mant);
         end
         return tempArray;
     endfunction

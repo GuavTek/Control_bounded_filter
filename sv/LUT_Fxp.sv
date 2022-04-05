@@ -9,19 +9,22 @@ module LUT_Fxp #(
     parameter   size = 1,
                 n_int = 8,
                 n_mant = 23,
-    parameter logic signed[n_int+n_mant:0] fact[size-1:0] = '{default: 0}
+    parameter logic signed[63:0] fact[size-1:0] = '{default: 0}
 ) (
     sel,
     result
 );
+    import Coefficients_Fx::COEFF_BIAS;
     localparam n_tot = n_int + n_mant;
+
     input logic[size-1:0] sel;
     output logic signed[n_tot:0] result;
     logic signed[n_tot:0] mem[2**size-1:0];
 
     // Generates a sum of factors
     function automatic logic signed[n_tot:0] getVal(logic[size-1:0] in);
-        logic signed[n_tot:0] temp = 0;
+        logic signed[63+size:0] temp = 0;
+        logic signed[n_tot+1:0] tempResult;
         int j;
         for(j = 0; j < size; j++) begin
             if(in[j] == 1) begin
@@ -30,7 +33,9 @@ module LUT_Fxp #(
                 temp -= fact[j];
             end
         end
-        return temp;
+        // Round to closest value
+        tempResult = (temp >>> (COEFF_BIAS - n_mant - 1)) + 1;
+        return (tempResult >>> 1);
     endfunction
 
     // Generate LUT values
@@ -52,7 +57,7 @@ module LUT_Unit_Fxp #(
                 n_mant = 23,
                 adders_comb = 0,
                 lut_comb = 0,
-    parameter logic signed[n_int+n_mant:0] fact[size-1:0] = '{default: 0}
+    parameter logic signed[63:0] fact[size-1:0] = '{default: 0}
 ) (
     sel,
     clk,
@@ -66,8 +71,8 @@ module LUT_Unit_Fxp #(
     localparam int LUTsNum = $ceil((0.0 + size)/lut_size);
 
     localparam int LUTRest = size % lut_size;
-    typedef logic signed[n_tot:0] sub_arr_t[lut_size-1:0];
-    typedef logic signed[n_tot:0] rest_arr_t[LUTRest-1:0];
+    typedef logic signed[63:0] sub_arr_t[lut_size-1:0];
+    typedef logic signed[63:0] rest_arr_t[LUTRest-1:0];
 
     function sub_arr_t GetFact (int startIndex);
         sub_arr_t tempArray;
