@@ -85,6 +85,7 @@ def ReadResultFile(fileName, exp):
 	csvfile = open(fileName + '.csv', newline='')
 	r = csv.reader(csvfile, delimiter=',')
 	temp = []
+	ignored = 0
 	for line in r:
 		for num in line:
 			num = num.replace("[", "")
@@ -92,12 +93,13 @@ def ReadResultFile(fileName, exp):
 			try:
 				temp.append(float(num)/2**exp)
 			except:
-				print("!!! Ignored from result: " + num)
+				#print("!!! Ignored from result: " + num)
+				ignored += 1
 	#	while (len(temp) < self.S_Length):
 	#		temp.append(0.0)
 	temp = np.array(temp)
 
-	print("Read " + str(temp.size) + " samples")
+	print("Read " + str(temp.size) + " samples, ignored " + str(ignored))
 	csvfile.close()
 	return temp
 
