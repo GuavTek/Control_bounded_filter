@@ -40,7 +40,7 @@ module Batch_Fxp #(
     localparam SampleWidth = M*DSR; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
+    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 0;
 
     input wire [M-1:0] in;
     input logic rst, clk;
@@ -70,7 +70,9 @@ module Batch_Fxp #(
 
     // Input register
     logic[SampleWidth-1:0] inShift;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inShift));
+    always @(posedge clk) begin
+        inShift <= {inShift[SampleWidth-M-1:0], in};
+    end
 
     logic[SampleWidth-1:0] inSample;
     always @(posedge clkDS) begin

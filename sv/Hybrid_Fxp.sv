@@ -38,7 +38,7 @@ module Hybrid_Fxp #(
     localparam int LUTahead_Layers = $clog2(int'($ceil((0.0 + M*Lookahead)/`MAX_LUT_SIZE)));
     localparam int LUTahead_Delay = $floor((0.0 + LUTahead_Layers)/`COMB_ADDERS);
     localparam int LUTback_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUTback_Delay = $floor((0.0 + LUTback_Layers)/`COMB_ADDERS) + 1;
+    localparam int LUTback_Delay = $floor((0.0 + LUTback_Layers)/`COMB_ADDERS) + 0;
 
     input wire [M-1:0] in;
     input logic rst, clk;
@@ -52,7 +52,9 @@ module Hybrid_Fxp #(
     
     // Input register
     logic [SampleWidth-1:0] inSample;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+    always @(posedge clk) begin
+        inSample <= {inSample[SampleWidth-M-1:0], in};
+    end
 
     // Input shift register
     logic[M*DownSampleDepth*DSR-1:0] inShift;

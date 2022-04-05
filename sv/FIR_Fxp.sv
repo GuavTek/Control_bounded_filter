@@ -49,7 +49,9 @@ module FIR_Fxp #(
 
     // Input register
     logic [M*DSR-1:0] inSample;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+    always @(posedge clk) begin
+        inSample <= {inSample[M*DSR-M-1:0], in};
+    end
 
     // Sample shift-register
     logic[M*Looktotal-1:0] inShift;
