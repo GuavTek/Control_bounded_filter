@@ -66,7 +66,7 @@ module LookbackRecursion #(
     input logic clkSample, clkResult, rst, validIn;
     output logic signed[n_tot:0] result;
 
-    logic signed[n_tot:0] partResBack[N];
+    logic signed[n_tot:0] partResBack[N-1:0];
     
     generate 
         for (genvar i = 0; i < N ; i++ ) begin
@@ -140,7 +140,7 @@ module LookaheadRecursion #(
     input logic clkSample, clkResult, rst, validIn, propagate;
     output logic signed[n_tot:0] result;
 
-    logic signed[n_tot:0] partResAhead[N];
+    logic signed[n_tot:0] partResAhead[N-1:0];
 
     // Must reverse sample order for LUTs
     wire[SampleWidth-1:0] lookaheadSample_rev, inSample_rev;
