@@ -17,6 +17,7 @@
 `include "InputReg.sv"
 
 `define MAX_LUT_SIZE 6
+`define COMB_ADDERS 3
 `define OUT_WIDTH 12
 
 module Hybrid_Twostage_Fxp #(
@@ -52,16 +53,26 @@ module Hybrid_Twostage_Fxp #(
     // Downsampled clocks
     logic[$clog2(DSR)-1:0] divCnt;
     logic[$clog2(DSR1)-1:0] divCnt1;
-    logic[$clog2(DSR2)-1:0] divCnt2, delayedCnt2, prevCnt2;
+    logic[$clog2(DSR2)-1:0] divCnt2;
     logic clkDS, clkRecurse;
-    assign divCnt = divCnt1 + delayedCnt2 * DSR1;
-    Delay #(.size($clog2(DSR2)), .delay(DSR1-1)) DivDelay (.in(divCnt2), .clk(clk), .out(delayedCnt2));
     ClkDiv #(.DSR(DSR1)) ClkDivider1 (.clkIn(clk), .rst(rst), .clkOut(clkRecurse), .cntOut(divCnt1));
-    ClkDiv #(.DSR(DSR2)) ClkDivider2 (.clkIn(clkRecurse), .rst(rst), .clkOut(clkDS), .cntOut(divCnt2));
-     
+    ClkDiv #(.DSR(DSR)) ClkDivider2 (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCnt));
+
+    // CDC 1: clk -> clkDS
     // Input register
     logic [SampleWidth-1:0] inSample;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inSample));
+    generate
+        if (DSR > 1) begin
+            always @(posedge clk) begin
+                inSample <= {inSample[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inSample <= in;
+            end
+        end
+    endgenerate
+    
 
     // Input shift register
     logic[M*ShiftDepth-1:0] inShift;
@@ -69,19 +80,41 @@ module Hybrid_Twostage_Fxp #(
         inShift <= {inShift[M*ShiftDepth-1-M*DSR:0], inSample};
     end
 
-    // Prepare sample slices for lookback
-    logic[LUTback_Width-1:0] sampleback, slicedSampleBack[DSR2];
+    // CDC 2: clkDS -> clkRecurse
+    // Shift lookback sample
+    logic [SampleWidth-1:0] tempSampleback;
+    logic [LUTback_Width-1:0] sampleback;
     generate
-        for (genvar i = 0; i < DSR2 ; i++ ) begin
-            assign slicedSampleBack[i] = inShift[M*ShiftDepth-1-M*(DSR1*(i + LUTback_Delay)) -: LUTback_Width];
+        if (DSR2 > 1) begin
+            logic clkDS_edge;
+            always @(posedge clkDS) begin
+                if(!rst)
+                    clkDS_edge <= 0;
+                else
+                    clkDS_edge <= !clkDS_edge;
+            end
+
+            logic prevEdge;
+            always @(posedge clkRecurse) begin
+                prevEdge <= clkDS_edge;
+            end
+
+            always @(posedge clkRecurse) begin
+                if (clkDS_edge ^ prevEdge)
+                    tempSampleback <= inShift[M*ShiftDepth-1-M*(DSR1*LUTback_Delay) -: SampleWidth];
+                else
+                    tempSampleback <= (tempSampleback << LUTback_Width);
+            end
+        end else begin
+            always @(posedge clkRecurse) begin
+                tempSampleback <= inShift[M*ShiftDepth-1-M*(DSR1*LUTback_Delay) -: SampleWidth];
+            end
         end
     endgenerate
-
-    // Multiplex sample
+    
     always @(posedge clkRecurse) begin
-        prevCnt2 <= divCnt2;
-        sampleback <= slicedSampleBack[prevCnt2];
-    end 
+        sampleback <= tempSampleback[SampleWidth-1 -: LUTback_Width];
+    end
 
     // Prepare lookahead sample
     logic[M*Lookahead-1:0] sampleahead;
@@ -106,6 +139,7 @@ module Hybrid_Twostage_Fxp #(
         .sel(sampleahead), .clk(clkDS), .result(lookaheadResult)
     );
 
+    // CDC 3: clkRecurse -> clkDS
     // Generate lookback recursion
     logic signed[n_tot:0] lookbackResult;
     LookbackRecursion #(
