@@ -36,6 +36,7 @@ module FIR_Fxp #(
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
     localparam n_tot = n_int + n_mant;
+    localparam SampleWidth = M*DSR;
 
     // Downsampled clock
     logic[$clog2(DSR)-1:0] divCnt;
@@ -49,9 +50,17 @@ module FIR_Fxp #(
 
     // Input register
     logic [M*DSR-1:0] inSample;
-    always @(posedge clk) begin
-        inSample <= {inSample[M*DSR-M-1:0], in};
-    end
+    generate
+        if(DSR > 1) begin
+            always @(posedge clk) begin
+                inSample <= {inSample[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inSample <= in;
+            end
+        end
+    endgenerate
 
     // Sample shift-register
     logic[M*Looktotal-1:0] inShift;

@@ -52,9 +52,17 @@ module Hybrid_Fxp #(
     
     // Input register
     logic [SampleWidth-1:0] inSample;
-    always @(posedge clk) begin
-        inSample <= {inSample[SampleWidth-M-1:0], in};
-    end
+    generate
+        if(DSR > 1) begin
+            always @(posedge clk) begin
+                inSample <= {inSample[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inSample <= in;
+            end
+        end
+    endgenerate
 
     // Input shift register
     logic[M*DownSampleDepth*DSR-1:0] inShift;

@@ -71,9 +71,18 @@ module Batch_Fxp #(
     // CDC 1: clk -> clkDS
     // Input register
     logic[SampleWidth-1:0] inShift;
-    always @(posedge clk) begin
-        inShift <= {inShift[SampleWidth-M-1:0], in};
-    end
+    generate
+        if(DSR > 1) begin
+            always @(posedge clk) begin
+                inShift <= {inShift[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inShift <= in;
+            end
+        end
+    endgenerate
+    
 
     logic[SampleWidth-1:0] inSample;
     always @(posedge clkDS) begin

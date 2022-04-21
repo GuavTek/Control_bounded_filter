@@ -47,7 +47,6 @@ module Sum_Fxp #(
 );
     localparam n_tot = n_int+n_mant;
     localparam AdderLayers = $clog2(size);
-    logic signed[n_tot:0] adderResults[GetFirstReg(AdderLayers):0];
     
     // Calculate number of adders in layer n
     function automatic int GetAdderNum(int n);
@@ -82,6 +81,7 @@ module Sum_Fxp #(
     endfunction
 
     // Generate adders
+    logic signed[n_tot:0] adderResults[GetFirstReg(AdderLayers):0];
     generate
         // Failsafe in case the number of adders is 0 or less
         if (AdderLayers <= 0) begin : No_Adders
