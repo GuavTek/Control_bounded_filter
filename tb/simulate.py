@@ -30,7 +30,7 @@ for arg in sys.argv:
         print("-dsr=\t\t Downsampling rate")
         print("-depth\t\t Define the size of filter/batches")
         print("-top=\t\t Name of testbench module")
-        print("-freq=\t\t Set clock frequency")
+        print("-freq=\t\t Set clock frequency [MHz]")
         print("-verbose=\t Change how much info is printed to screen")
         print("-noplot\t\t Skip plotting of results")
         print("-dump_port\t\t Dump port waveforms to vcd file")
@@ -67,8 +67,8 @@ for arg in sys.argv:
     elif content[0] == '-top':
         topModule = content[1]
     elif content[0] == '-freq':
-        freq = int(content[1]) * 1e6
-        superarg += ' +define+CLK_FREQ=' + content[1]
+        freq = int(content[1])
+        superarg += ' +define+CLK_FREQ=' + str(freq * 1e6)
     elif content[0] == '-dump_port':
         convertVCD = 1
         superarg += ' +define+DUMP_PORT'
@@ -84,7 +84,7 @@ print(superarg)
 
 #if os.system(f'xrun -faccess +r -SV -include ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv -incdir ../sv/ -incdir ../sv/HardFloat-1/source/ ' + superarg):
 #os.system('rm -r simv.daidir')
-if os.system(f'vcs -timescale=1ns/1ps -race -full64 -sverilog +incdir+../sv/+../sv/HardFloat-1/source/ ../sv/Data/Coefficients_Fxp_N{N}M{M}.sv ' + superarg):
+if os.system(f'vcs -timescale=1ns/1ps -race -full64 -sverilog +incdir+../sv/+../sv/HardFloat-1/source/ ../sv/Data/Coefficients_Fxp_{N}N{M}M_F{freq}.sv ' + superarg):
     print("Compilation failed!")
     sys.exit(1)
 
@@ -125,7 +125,7 @@ if plotResults:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
     elif topModule.find('Hybrid') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
-    SNR = plot.PlotFigure(res[int(math.ceil(1920/DSR)):int(-1920/DSR)], int(960/DSR), label, outfileName, freq/DSR)
+    SNR = plot.PlotFigure(res[int(math.ceil(8*freq/DSR)):int(-8*freq/DSR)], int(4*freq/DSR), label, outfileName, freq*1e6/DSR)
     
     f = open('Data/' + outfileName + '_SNR.txt', "w")
     f.write(str(SNR) + '\n\n')

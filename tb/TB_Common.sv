@@ -16,7 +16,7 @@
 module TB_COM #(
     parameter TestLength = 24000,
     parameter DSR = 12,
-    parameter N = 4,
+    parameter N = 4, M = N,
     parameter string OUT_FILE = "results"
 ) (
     sample,
@@ -34,7 +34,10 @@ module TB_COM #(
     // Read stimuli
     initial begin
         // Open input file
-        static int fdi = $fopen("./Data/verilog_signals.csv", "r");
+        static int fdi;
+        automatic string stim_file;
+        $sformat(stim_file, "./Data/verilog_signals_%1dN%1dM_F%0d.csv", N, M, int'(`CLK_FREQ/1e6));
+        fdi = $fopen(stim_file, "r");
         if (!fdi) begin 
             $error("File input was not opened");
             $stop;
