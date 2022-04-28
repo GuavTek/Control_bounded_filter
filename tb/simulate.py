@@ -17,7 +17,7 @@ exp = 8
 DSR = 1
 N = 4
 M = 4
-freq = 240e6
+freq = int(240)
 depth = 100
 plotResults = 1
 for arg in sys.argv:
