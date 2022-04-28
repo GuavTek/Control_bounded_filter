@@ -17,7 +17,7 @@ module Recursion_Fxp #(
     input logic rst, clk, load,
     output logic signed[n_int+n_mant:0] outR, outI
 );
-    logic signed[n_int+n_mant:0] prodR, prodI, sumR, sumI, prevR, prevI, nextR, nextI;
+    logic signed[n_int+n_mant:0] prodR, prodI, sumR, sumI, prevR, prevI;
     assign outR = sumR;
     assign outI = sumI;
 
