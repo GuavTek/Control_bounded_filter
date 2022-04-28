@@ -1,10 +1,6 @@
 `ifndef BATCH_FXP_SV_
 `define BATCH_FXP_SV_
 
-// n_int 9
-// 60dB n_mant 14
-// 70dB n_mant 16
-
 `include "Util.sv"
 `include "FxpPU.sv"
 `include "CFxpPU.sv"
@@ -15,8 +11,8 @@
 `include "ValidCount.sv"
 `include "InputReg.sv"
 
-`define MAX_LUT_SIZE 6
-`define COMB_ADDERS 1
+`define MAX_LUT_SIZE 4
+`define COMB_ADDERS 3
 `define OUT_WIDTH 12
 
 module Batch_Fxp #(
@@ -28,9 +24,11 @@ module Batch_Fxp #(
     in, rst, clk, out, valid,
     // Sample memory
     sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3,
-	sampleClk, sampleWrite,	sampleDataIn, sampleDataOut1, sampleDataOut2, sampleDataOut3,
+	sampleClk, sampleWrite,	
+    sampleDataIn, sampleDataOut1, sampleDataOut2, sampleDataOut3,
     // Part result memory
-    resAddrInF, resAddrInB, resAddrOutF, resAddrOutB, resClkF, resClkB, resWriteF, resWriteB,
+    resAddrInF, resAddrInB, resAddrOutF, resAddrOutB, 
+    resClkF, resClkB, resWriteF, resWriteB,
 	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;

@@ -9,7 +9,7 @@
 `include "ValidCount.sv"
 `include "InputReg.sv"
 
-`define MAX_LUT_SIZE 6
+`define MAX_LUT_SIZE 4
 `define COMB_ADDERS 3
 `define OUT_WIDTH 12
 
@@ -36,7 +36,6 @@ module FIR_Fxp #(
     localparam int AddersNum = LookbackLUTs + LookaheadLUTs;
     localparam AdderLayers = $clog2(AddersNum);
     localparam n_tot = n_int + n_mant;
-    localparam SampleWidth = M*DSR;
 
     // Downsampled clock
     logic[$clog2(DSR)-1:0] divCnt;
@@ -53,7 +52,7 @@ module FIR_Fxp #(
     generate
         if(DSR > 1) begin
             always @(posedge clk) begin
-                inSample <= {inSample[SampleWidth-M-1:0], in};
+                inSample <= {inSample[M*DSR-M-1:0], in};
             end
         end else begin
             always @(posedge clk) begin
