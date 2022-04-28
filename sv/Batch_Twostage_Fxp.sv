@@ -16,6 +16,7 @@
 `include "InputReg.sv"
 
 `define MAX_LUT_SIZE 6
+`define COMB_ADDERS 3
 `define OUT_WIDTH 12
 
 module Batch_Twostage_Fxp #(
@@ -42,8 +43,24 @@ module Batch_Twostage_Fxp #(
     localparam SampleWidth = M*DSR1; 
     localparam n_tot = n_int + n_mant;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUT_Delay = $ceil((0.0 + LUT_Layers)/`COMB_ADDERS);
-    localparam int Recursion_Delay = $floor((0.0 + LUT_Delay + 1)/DSR2);
+    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS);
+    localparam int Recursion_Delay = $ceil((1.0 + LUT_Delay)/DSR2) +4;
+    localparam int InvRec_Delay = $ceil((1.0 + LUT_Delay)/DSR2)*DSR2;
+    
+    // NB! Only tested with DSR < 24
+    localparam SampleDelay = (InvRec_Delay - LUT_Delay) + DSR2 + ((DSR1 == 1) ? ((DSR2 < 3) ? 1 - DSR2 : 1) : DSR2 - 1);
+    localparam RegPropDelay = (InvRec_Delay) + DSR2 + ((DSR1 == 1) ? ((DSR2 < 3) ? 1 - DSR2 : 1) : DSR2 - 1);
+    
+    /*
+    initial begin
+        $info("LUT_Layers = %d", LUT_Layers);
+        $info("LUT_Delay = %d", LUT_Delay);
+        $info("Recursion_Delay = %d", Recursion_Delay);
+        $info("InvRec_Delay = %d", InvRec_Delay);
+        $info("SampleDelay = %d", SampleDelay);
+        $info("RegPropDelay = %d", RegPropDelay);
+    end
+    */
 
     input wire [M-1:0] in;
     input logic rst, clk;
@@ -62,10 +79,10 @@ module Batch_Twostage_Fxp #(
 
     // Downsampled clocks
     logic[$clog2(DSR1)-1:0] divCnt1;
-    logic[$clog2(DSR2)-1:0] divCnt2;
+    logic[$clog2(DSR)-1:0] divCnt;
     logic clkDS, clkRecurse;
     ClkDiv #(.DSR(DSR1)) ClkDivider1 (.clkIn(clk), .rst(rst), .clkOut(clkRecurse), .cntOut(divCnt1));
-    ClkDiv #(.DSR(DSR2)) ClkDivider2 (.clkIn(clkRecurse), .rst(rst), .clkOut(clkDS), .cntOut(divCnt2));
+    ClkDiv #(.DSR(DSR)) ClkDivider2 (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCnt));
 
     // Count valid samples
     localparam validTime = 5*DownResultDepth;
@@ -73,9 +90,20 @@ module Batch_Twostage_Fxp #(
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
 
+    // CDC 1: clk -> clkRecurse
     // Input register
     logic[SampleWidth-1:0] inShift;
-    InputReg #(.M(M), .DSR(DSR1)) inReg (.clk(clk), .pos(divCnt1), .in(in), .out(inShift));
+    generate
+        if(DSR1 > 1) begin
+            always @(posedge clk) begin
+                inShift <= {inShift[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inShift <= in;
+            end
+        end
+    endgenerate
 
     logic[SampleWidth-1:0] inSample;
     always @(posedge clkRecurse) begin
@@ -83,34 +111,31 @@ module Batch_Twostage_Fxp #(
     end
 
     // Counters for batch cycle
-    logic[$clog2(DownSampleDepth)-1:0] batCnt, batCntRev;
-    logic[$clog2(DownResultDepth)-1:0] tempBatCnt, tempBatCntRev;
+    logic[$clog2(DownSampleDepth)-1:0] sampBatCnt, sampBatCntRev;
+    logic[$clog2(DownResultDepth)-1:0] resBatCnt_temp, resBatCntRev_temp;
     logic cyclePulse;
-    always @(posedge clkDS, negedge rst) begin
+    always @(posedge clkRecurse, negedge rst) begin
         if(!rst) begin
-            tempBatCnt <= 'b0;
-            tempBatCntRev <= DownResultDepth-1;
+            sampBatCnt <= 'b0;
+            sampBatCntRev <= DownSampleDepth-1;
         end else if(!cyclePulse) begin
-            tempBatCnt <= 'b0;
-            tempBatCntRev <= DownResultDepth-1;
+            sampBatCnt <= 'b0;
+            sampBatCntRev <= DownSampleDepth-1;
         end else begin
-            tempBatCnt <= tempBatCnt + 1;
-            tempBatCntRev <= tempBatCntRev - 1;
+            sampBatCnt <= sampBatCnt + 1;
+            sampBatCntRev <= sampBatCntRev - 1;
         end
     end
 
-    logic[$clog2(DSR2)-1:0] delayDivCnt2;
-    Delay #(.size($clog2(DSR2)), .delay(1)) DivCnt_Delay (.in(divCnt2), .clk(clkRecurse), .out(delayDivCnt2)); 
-    
-    assign batCnt = DSR2 * tempBatCnt + delayDivCnt2;
-    assign batCntRev = DSR2 * tempBatCntRev + (DSR2 - 1) - delayDivCnt2;
+    assign resBatCnt_temp = sampBatCnt / DSR2;
+    assign resBatCntRev_temp = sampBatCntRev / DSR2;
 
     // Is low when the cycle is ending
-    assign cyclePulse = !(tempBatCnt == (DownResultDepth-1));
+    assign cyclePulse = !(sampBatCnt == (DownSampleDepth-1));
 
     // Counter for cycles
     logic[1:0] cycle, cycleLH, cycleIdle, cycleCalc;
-    always @(posedge clkDS, negedge rst) begin
+    always @(posedge clkRecurse, negedge rst) begin
         if(!rst) begin
             cycle <= 2'b00;
             cycleLH <= 2'b11;
@@ -171,10 +196,10 @@ module Batch_Twostage_Fxp #(
     // Addresses for result memory must be delayed
     logic[$clog2(DownResultDepth)-1:0] resBatCnt, resBatCntRev;
     logic[1:0] resCycle;
-    localparam resDelay = Recursion_Delay + 3;
+    localparam resDelay = Recursion_Delay;
     localparam int AAresDelay = resDelay;
-    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCnt_Delay (.in(tempBatCnt), .clk(clkDS), .out(resBatCnt));
-    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCntRev_Delay (.in(tempBatCntRev), .clk(clkDS), .out(resBatCntRev)); 
+    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCnt_Delay (.in(resBatCnt_temp), .clk(clkDS), .out(resBatCnt));
+    Delay #(.size($clog2(DownResultDepth)), .delay(resDelay)) BatchCntRev_Delay (.in(resBatCntRev_temp), .clk(clkDS), .out(resBatCntRev)); 
     Delay #(.size(2), .delay(resDelay)) Cycle_Delay (.in(cycle), .clk(clkDS), .out(resCycle)); 
 
     always @(posedge clkDS) begin
@@ -190,14 +215,12 @@ module Batch_Twostage_Fxp #(
     Delay #(.size($clog2(2*DownResultDepth)), .delay(1)) test_Delay (.in(addrResOutF_Temp), .clk(clkDS), .out(addrResOutF)); 
 
     always @(posedge clkRecurse) begin
-        addrIn <= {batCnt, cycle};
-        addrLH <= {batCntRev, cycleLH};
-        addrBR <= {batCntRev, cycleCalc};
-        addrFR <= {batCnt, cycleCalc};
+        addrIn <= {sampBatCnt, cycle};
+        addrLH <= {sampBatCntRev, cycleLH};
+        addrBR <= {sampBatCntRev, cycleCalc};
+        addrFR <= {sampBatCnt, cycleCalc};
     end
 
-    // NB! only tested with DSR < 36
-    localparam RegPropDelay = (DSR2 > (LUT_Delay+1)) ? (2*DSR2 -3) : (DSR2*((LUT_Delay+1)/DSR2) + 2*DSR2 -3);
     // Register propagation for lookahead recursion is delayed
     logic regProp, regProp_prev, regProp_temp;
     Delay #(.size(1), .delay(RegPropDelay)) RegPropagate_Delay (.in(cyclePulse), .clk(clkRecurse), .out(regProp_temp)); 
@@ -208,9 +231,8 @@ module Batch_Twostage_Fxp #(
     end
 
     // Samples must be delayed to work with both clocks
-    // NB! Only tested with DSR < 36
+    // NB! Only tested with DSR < 20
     logic[SampleWidth-1:0] slh_d, scof_d, scob_d;
-    localparam SampleDelay = (DSR2 > (LUT_Delay+1)) ? (DSR2-LUT_Delay-2) : (LUT_Delay - 2*((LUT_Delay+2-DSR2)/2));
     Delay #(.size(SampleWidth), .delay(SampleDelay)) slh_Delay (.in(slh), .clk(clkRecurse), .out(slh_d));
     Delay #(.size(SampleWidth), .delay(SampleDelay)) scof_Delay (.in(scof), .clk(clkRecurse), .out(scof_d));
     Delay #(.size(SampleWidth), .delay(SampleDelay)) scob_Delay (.in(scob), .clk(clkRecurse), .out(scob_d));
