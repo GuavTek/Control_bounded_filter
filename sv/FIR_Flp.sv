@@ -14,8 +14,8 @@
 `define OUT_WIDTH 12
 
 module FIR_Flp #(
-    parameter   Lookahead = 240,
-                Lookback = 240,
+    parameter   Lookahead = 96,
+                Lookback = 96,
                 DSR = 12,
                 n_exp = 8,
                 n_mant = 23
@@ -48,18 +48,29 @@ module FIR_Flp #(
     localparam AdderLayers = $clog2(AddersNum);
 
     // Downsampled clock
-    logic[$clog2(DSR)-1:0] dsrCount;      // Prescale counter
+    logic[$clog2(DSR)-1:0] divCount;      // Prescale counter
     logic clkDS;
-    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(dsrCount));
+    ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCount));
     
 
     // Data valid counter
-    localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/`COMB_ADDERS) + 3;
-    ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid));
+    localparam int validTime = $ceil((0.0 + Looktotal)/DSR) + $ceil((0.0 + AdderLayers)/(`COMB_ADDERS + 1)) + 3;
+    logic dummyValid;
+    ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(dummyValid));
 
     // Input register
     logic [M*DSR-1:0] inSample;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(dsrCount), .in(in), .out(inSample));
+    generate
+        if(DSR > 1) begin
+            always @(posedge clk) begin
+                inSample <= {inSample[M*DSR-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inSample <= in;
+            end
+        end
+    endgenerate
 
     // Input shift-register
     logic[M*Looktotal-1:0] inShift;

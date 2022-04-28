@@ -1,14 +1,6 @@
 `ifndef BATCH_FLP_SV_
 `define BATCH_FLP_SV_
 
-/*
-`ifndef EXP_W
-    `define EXP_W 6
-`endif  // EXP_W
-`ifndef MANT_W
-    `define MANT_W 12
-`endif  // MANT_W
-*/
 `include "Util.sv"
 `include "FPU.sv"
 `include "CFPU.sv"
@@ -34,13 +26,11 @@ module Batch_Flp #(
     // Sample memory
     sampleAddrIn, sampleAddrOut1, sampleAddrOut2, sampleAddrOut3,
 	sampleClk, sampleWrite,
-	sampleDataIn,
-	sampleDataOut1, sampleDataOut2, sampleDataOut3,
+	sampleDataIn, sampleDataOut1, sampleDataOut2, sampleDataOut3,
     // Part result memory
     resAddrInF, resAddrInB, resAddrOutF, resAddrOutB,
 	resClkF, resClkB, resWriteF, resWriteB,
-	resDataInF, resDataInB,
-	resDataOutF, resDataOutB
+	resDataInF, resDataInB, resDataOutF, resDataOutB
 );
     import Coefficients_Fx::N;
     import Coefficients_Fx::M;
@@ -49,7 +39,7 @@ module Batch_Flp #(
     localparam int DownSampleDepth = $ceil((0.0 + depth) / DSR);
     localparam SampleWidth = M*DSR;
     localparam int LUT_Layers = $clog2(int'($ceil((0.0 + SampleWidth)/`MAX_LUT_SIZE)));
-    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 1;
+    localparam int LUT_Delay = $floor((0.0 + LUT_Layers)/`COMB_ADDERS) + 0;
 
     input wire [M-1:0] in;
     input logic rst, clk;
@@ -90,8 +80,18 @@ module Batch_Flp #(
 
     // Input register
     logic[SampleWidth-1:0] inShift;
-    InputReg #(.M(M), .DSR(DSR)) inReg (.clk(clk), .pos(divCnt), .in(in), .out(inShift));
-
+    generate
+        if(DSR > 1) begin
+            always @(posedge clk) begin
+                inShift <= {inShift[SampleWidth-M-1:0], in};
+            end
+        end else begin
+            always @(posedge clk) begin
+                inShift <= in;
+            end
+        end
+    endgenerate
+    
     logic[SampleWidth-1:0] inSample;
     always @(posedge clkDS) begin
         inSample <= inShift;
@@ -125,9 +125,9 @@ module Batch_Flp #(
             cycleIdle <= 2'b10;
             cycleCalc <= 2'b01;
         end else if(!cyclePulse) begin
-            cycleCalc <= cycleIdle;
-            cycleIdle <= cycleLH;
-            cycleLH <= cycle;
+            cycleCalc <= cycleCalc + 1;
+            cycleIdle <= cycleIdle + 1;
+            cycleLH <= cycleLH + 1;
             cycle <= cycle + 1;
         end   
     end
@@ -201,7 +201,7 @@ module Batch_Flp #(
 
     // Register propagation for lookahead recursion is delayed
     logic regProp;
-    Delay #(.size(1), .delay(LUT_Delay)) RegPropagate_Delay (.in(cyclePulse), .clk(clkDS), .out(regProp)); 
+    Delay #(.size(1), .delay(LUT_Delay+1)) RegPropagate_Delay (.in(cyclePulse), .clk(clkDS), .out(regProp)); 
 
     // Must reverse sample order for backward recursion LUTs
     logic[SampleWidth-1:0] slh_rev, scob_rev;
@@ -214,7 +214,7 @@ module Batch_Flp #(
     endgenerate
 
     // Generate recursions
-    float_t partResB[N], partResF[N];
+    float_t partResB[N-1:0], partResF[N-1:0];
     generate 
         genvar i;
         for (i = 0; i < N ; i++ ) begin
@@ -259,22 +259,22 @@ module Batch_Flp #(
             // Calculate Lookahead
             complex_t LH_res;
             Recursion_Flp #(
-                .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
-                .in(LH_in), .rst(regProp & rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(LH_res));
+                .factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
+                .in(LH_in), .rst(rst), .load(propagate), .loadVal({FloatZero, FloatZero}), .clk(clkDS), .out(LH_res));
             
             // Calculate forward result
             complex_t CF_out, RF_in;
             assign RF_in = validCompute ? CF_in : {FloatZero, FloatZero};
             Recursion_Flp #(
-                .factorR(loop_const.Lf[0]), .factorI(loop_const.Lf[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CFR_ (
-                .in(RF_in), .rst(rst), .resetVal({FloatZero, FloatZero}), .clk(clkDS || !rst), .out(CF_out));
+                .factorR(loop_const.Lfr), .factorI(loop_const.Lfi), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CFR_ (
+                .in(RF_in), .rst(validCompute), .load(1'b1), .loadVal({FloatZero, FloatZero}), .clk(clkDS), .out(CF_out));
             
             // Calculate backward result
             complex_t CB_out, RB_in;
             assign RB_in = validCompute ? CB_in : {FloatZero, FloatZero};
             Recursion_Flp #(
-                .factorR(loop_const.Lb[0]), .factorI(loop_const.Lb[1]), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
-                .in(RB_in), .rst(regProp & rst), .resetVal(LH_res), .clk(clkDS || !rst), .out(CB_out));
+                .factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
+                .in(RB_in), .rst(validCompute), .load(propagate), .loadVal(LH_res), .clk(clkDS), .out(CB_out));
             
             // Save in registers to reduce timing requirements
             complex_t F_out, B_out;
