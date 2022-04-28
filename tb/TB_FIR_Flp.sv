@@ -13,8 +13,8 @@
 `include "../sv/FPU.sv"
 `include "Util_TB.sv"
 `include "TB_Common.sv"
-`include "FPU_prop.sv"
-`include "LUT_Flp_prop.sv"
+//`include "FPU_prop.sv"
+//`include "LUT_Flp_prop.sv"
 //`include "TopFIR_prop.sv"
 
 `define TestLength 24000
@@ -60,8 +60,8 @@ module TB_FIR_Flp #() ();
     } float_t;
 
     // Bind Modules to property checkers
-    bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);
-    bind LUT_Flp LUT_Flp_prop #(.size(size), .fact(fact), .n_mant(n_mant), .n_int(n_int), .f_exp(f_exp), .f_mant(f_mant), .float_t(float_t)) lutprop_i (.*);
+    //bind FPU FPU_prop #(.op(op), .n_exp(n_exp), .n_mant(n_mant), .float_t(float_t)) flprop_i (.*);
+    //bind LUT_Flp LUT_Flp_prop #(.size(size), .fact(fact), .n_mant(n_mant), .n_int(n_int), .f_exp(f_exp), .f_mant(f_mant), .float_t(float_t)) lutprop_i (.*);
     //bind FIR_top FIR_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
 
     // Dump port waveforms for primetime
