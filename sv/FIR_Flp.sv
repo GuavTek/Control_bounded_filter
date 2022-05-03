@@ -9,7 +9,7 @@
 `include "ValidCount.sv"
 `include "InputReg.sv"
 
-`define MAX_LUT_SIZE 7
+`define MAX_LUT_SIZE 6
 `define COMB_ADDERS 3
 `define OUT_WIDTH 12
 
