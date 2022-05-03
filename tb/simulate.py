@@ -60,6 +60,8 @@ for arg in sys.argv:
     elif content[0] == '-dsr2':
         DSR *= int(content[1])
         superarg += ' +define+DSR2=' + content[1]
+    elif content[0] == '-stagger':
+        superarg += ' +define+STAGGER=' + content[1]
     elif content[0] == '-n':
         N = int(content[1])
     elif content[0] == '-m':
@@ -115,6 +117,8 @@ if plotResults:
         topName = 'Hybrid two-stage'
     elif topModule == 'TB_Batch_Twostage_Fxp':
         topName = 'Batch two-stage'
+    elif topModule == 'TB_FIR_Staggered_Fxp':
+        topName = 'FIR staggered'
     # Read results
     res = plot.ReadResultFile('results/' + outfileName, 11)
     if topModule.find('Batch') != -1:

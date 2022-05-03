@@ -100,8 +100,12 @@ module FIR_Fxp #(
             );
 
     // Calculate final result
-    logic signed[n_tot:0] totResult;
-    FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(totResult)); 
+    logic signed[n_tot:0] totResult, tempResult;
+    FxpPU #(.op(FPU_p::ADD), .n_int(n_int), .n_mant(n_mant)) FinalAdder (.A(lookaheadResult), .B(lookbackResult), .clk(clkDS), .result(tempResult)); 
+
+    always @(posedge clkDS) begin
+        totResult <= tempResult;
+    end
 
     // Format the result
     logic [`OUT_WIDTH-1:0] rectifiedResult;

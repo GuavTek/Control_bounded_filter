@@ -1,0 +1,67 @@
+`include "../sv/FIR_Staggered_Fxp.sv"
+`include "../sv/Util.sv"
+`include "Util_TB.sv"
+`include "TB_Common.sv"
+`include "FxpPU_prop.sv"
+//`include "FPU_prop.sv"
+//`include "LUT_prop.sv"
+//`include "TopFIRFix_prop.sv"
+
+`define TestLength 24000
+
+`ifndef DEPTH
+    `define DEPTH 220
+`endif
+
+`ifndef LOOKAHEAD
+    `define LOOKAHEAD `DEPTH
+`endif
+
+`ifndef LOOKBACK
+    `define LOOKBACK `DEPTH
+`endif
+
+`ifndef DSR
+    `define DSR 1
+`endif
+
+`ifndef STAGGER
+    `define STAGGER 2
+`endif
+
+`ifndef OUT_FILE
+    `define OUT_FILE results_fir_fix
+`endif
+
+module TB_FIR_Staggered_Fxp #() ();
+    logic rst;
+    logic clk;
+    import Coefficients_Fx::*;
+
+    // Instantiate common testbench objects
+    logic[N-1:0] inSample;
+    logic[`OUT_WIDTH-1:0] dutResult;
+    logic isValid;
+    TB_COM #(.N(N), .TestLength(`TestLength), .DSR(`DSR), .OUT_FILE(`STRINGIFY(`OUT_FILE))) com1 (.sample(inSample), .clk(clk), .rst(rst), .result(dutResult), .valid(isValid));
+    
+
+    // Instantiate DUTs
+    FIR_Staggered_Fxp #(.Lookahead(`LOOKAHEAD), .Lookback(`LOOKBACK), .DSR(`DSR), .Stagger(`STAGGER), .n_int(`EXP_W), .n_mant(`MANT_W)) DUT (
+            .in(inSample), .rst(rst), .clk(clk), .out(dutResult), .valid(isValid)); 
+    
+    
+    // Bind Modules to property checkers
+    bind FxpPU FxpPU_prop #(.op(op), .n_int(n_int), .n_mant(n_mant)) flprop_i (.*);
+    //bind LUT LUT_prop #(.size(size), .fact(fact)) lutprop_i (.*);
+    //bind FIR_Fixed_top FIR_Fixed_prop #(.Lookahead(Lookahead), .Lookback(Lookback), .DSR(DSR)) firprop_i (.*);
+
+    // Dump port waveforms for primetime
+    `ifdef DUMP_PORT
+        initial begin
+            $dumpvars(1, DUT);
+            $dumpfile("verilog.vcd");
+        end
+    `endif
+    
+
+endmodule
