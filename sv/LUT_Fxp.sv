@@ -125,6 +125,7 @@ module LUT_Unit_Fxp #(
 endmodule
 
 // A LUT where contributions are summed over several cycles
+/*
 module LUT_Cumulative_Fxp #(
     parameter   size = 1,
                 lut_size = 6,
@@ -322,5 +323,5 @@ module LUT_Cumulative_Fxp #(
     end
     
 endmodule
-
+*/
 `endif
