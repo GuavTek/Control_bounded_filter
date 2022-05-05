@@ -54,25 +54,23 @@ module FIR_Staggered_Fxp #(
 
     // Input register
     logic [StaggerWidth-1:0] inSample;
+    logic [DSR*M-1:0] tempSample;
     generate
-        if(DSR*Stagger > 1) begin
-            if(Stagger > 1) begin
-                logic [DSR*M-1:0] tempSample;
-                always @(posedge clk) begin
-                    tempSample <= {tempSample[0 +: M*DSR-M], in};
-                end
+        if (DSR > 1) begin
+            always @(posedge clk) begin
+                tempSample <= {tempSample[0 +: M*DSR-M], in};
+            end
+        end else begin
+            assign tempSample = in;
+        end
 
-                always @(posedge clkOut) begin
-                    inSample <= {inSample[0 +: StaggerWidth-M*DSR], tempSample};
-                end
-            end else begin
-                always @(posedge clk) begin
-                    inSample <= {inSample[0 +: StaggerWidth-M], in};
-                end
+        if(Stagger > 1) begin        
+            always @(posedge clkOut) begin
+                inSample <= {inSample[0 +: StaggerWidth-M*DSR], tempSample};
             end
         end else begin
             always @(posedge clk) begin
-                inSample <= in;
+                inSample <= tempSample;
             end
         end
     endgenerate
