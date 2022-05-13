@@ -39,17 +39,18 @@ def PlotWave(arr, length):
 	plt.plot(k, arr[:length])
 
 # Plot the PSD and return SNR
-def PlotPSD(arr, freq, sig_leak=1):
-	T = 1.0 / freq
+def PlotPSD(arr, sampfreq, sigfreq, sig_leak=1):
+	T = 1.0 / sigfreq
 	arrLength = arr.size
 	print("Plotting array with length: " + str(arrLength))
 
-	arr_f, freq = plt.psd(arr, NFFT=arrLength, Fs=freq)
+	arr_f, freq = plt.psd(arr, NFFT=arrLength, Fs=sampfreq)
 	plt.xscale('log')
 	plt.grid(True)
 
 	#Find signal position
-	sigpos = max(range(len(arr_f)), key=lambda i: abs(arr_f[i]))
+	sigpos = (np.abs(freq-sigfreq)).argmin()
+	#sigpos = max(range(len(arr_f)), key=lambda i: abs(arr_f[i]))
 
 	#Normalize
 	#arr_f = arr_f/arr_f[sigpos]
@@ -67,7 +68,7 @@ def PlotPSD(arr, freq, sig_leak=1):
 	return SNR
 
 # Makes a figure of wave arr, and returns SNR
-def PlotFigure(arr, plotLength, label, fileName, fs):
+def PlotFigure(arr, plotLength, label, fileName, fs, fsig = 2e6):
 	plt.figure(figsize=(10, 8))
 	plt.rc('font', **{'family' : 'DejaVu Sans', 'weight' : 'normal', 'size' : 12})
 	plt.subplot(2,1,1)
@@ -75,7 +76,7 @@ def PlotFigure(arr, plotLength, label, fileName, fs):
 	PlotWave(arr, plotLength)
 
 	plt.subplot(2,1,2)
-	SNR = PlotPSD(arr, fs, 1)
+	SNR = PlotPSD(arr, fs, fsig, 1)
 	plt.figtext(0.13, 0.42, "SNR = " + ('%.2f' % SNR) + "dB")
 	plt.savefig("plots/" + fileName)
 	plt.close()
