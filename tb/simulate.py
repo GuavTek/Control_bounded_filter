@@ -32,6 +32,8 @@ for arg in sys.argv:
         print("-top=\t\t Name of testbench module")
         print("-freq=\t\t Set clock frequency [MHz]")
         print("-verbose=\t Change how much info is printed to screen")
+        print("-n=\t\t Number of analog states")
+        print("-m=\t\t Number of digital states")
         print("-noplot\t\t Skip plotting of results")
         print("-dump_port\t\t Dump port waveforms to vcd file")
         sys.exit()
