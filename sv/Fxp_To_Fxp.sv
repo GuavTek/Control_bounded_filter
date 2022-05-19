@@ -19,10 +19,14 @@ module Fxp_To_Fxp #(
             assign temp = (in <<< n_mant_out - n_mant_in +1);
         else
             assign temp = (in >>> n_mant_in - n_mant_out -1) + 1;
+        
+        if (n_mant_in == n_mant_out)
+            assign out = in;
+        else
+            assign out = temp >>> 1;
+
     endgenerate
     
-    assign out = temp >>> 1;
-
 endmodule
 
 `endif
