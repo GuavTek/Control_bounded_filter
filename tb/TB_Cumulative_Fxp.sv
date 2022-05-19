@@ -18,7 +18,7 @@
 `endif
 
 `ifndef OUT_FILE
-    `define OUT_FILE results_cumul_fix
+    `define OUT_FILE test
 `endif
 
 module TB_Cumulative_Fxp #() ();

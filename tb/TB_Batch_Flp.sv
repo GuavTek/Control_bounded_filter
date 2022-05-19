@@ -29,7 +29,7 @@
 `endif
 
 `ifndef OUT_FILE
-    `define OUT_FILE results_batch
+    `define OUT_FILE test
 `endif
 
 `define TestLength 24000

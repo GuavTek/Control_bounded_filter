@@ -9,7 +9,7 @@ import math
 superarg = ''
 
 # Output file prefix
-outfileName = 'results_batch_mant'
+outfileName = 'test'
 topModule = 'TB_BATCH'
 convertVCD = 0
 mant = 23
