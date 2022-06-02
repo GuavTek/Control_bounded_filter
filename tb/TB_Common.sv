@@ -6,7 +6,7 @@
 
 // Clock period (ns)
 `ifndef T
-    `define T 1.0e12/`CLK_FREQ
+    `define T 1.0e9/`CLK_FREQ
 `endif
 
 `ifndef VERBOSE_LVL
