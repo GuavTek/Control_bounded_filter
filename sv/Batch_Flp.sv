@@ -73,7 +73,7 @@ module Batch_Flp #(
     ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCnt));
 
     // Count valid samples
-    localparam validTime = 5*DownSampleDepth;
+    localparam validTime = 4*DownSampleDepth + LUT_Delay + 3;
     localparam validComp = 3*DownSampleDepth + LUT_Delay;
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
@@ -260,7 +260,7 @@ module Batch_Flp #(
             complex_t LH_res;
             Recursion_Flp #(
                 .factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) LHR_ (
-                .in(LH_in), .rst(rst), .load(propagate), .loadVal({FloatZero, FloatZero}), .clk(clkDS), .out(LH_res));
+                .in(LH_in), .rst(rst), .load(regProp), .loadVal({FloatZero, FloatZero}), .clk(clkDS), .out(LH_res));
             
             // Calculate forward result
             complex_t CF_out, RF_in;
@@ -274,7 +274,7 @@ module Batch_Flp #(
             assign RB_in = validCompute ? CB_in : {FloatZero, FloatZero};
             Recursion_Flp #(
                 .factorR(loop_const.Lbr), .factorI(loop_const.Lbi), .n_int(63-COEFF_BIAS), .n_mant(COEFF_BIAS), .f_exp(n_exp), .f_mant(n_mant), .float_t(float_t), .complex_t(complex_t)) CBR_ (
-                .in(RB_in), .rst(validCompute), .load(propagate), .loadVal(LH_res), .clk(clkDS), .out(CB_out));
+                .in(RB_in), .rst(validCompute), .load(regProp), .loadVal(LH_res), .clk(clkDS), .out(CB_out));
             
             // Save in registers to reduce timing requirements
             complex_t F_out, B_out;

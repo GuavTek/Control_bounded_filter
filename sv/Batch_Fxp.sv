@@ -61,7 +61,7 @@ module Batch_Fxp #(
     ClkDiv #(.DSR(DSR)) ClkDivider (.clkIn(clk), .rst(rst), .clkOut(clkDS), .cntOut(divCnt));
     
     // Count valid samples
-    localparam validTime = 5*DownSampleDepth;
+    localparam validTime = 4*DownSampleDepth + LUT_Delay + 3;
     localparam validComp = 3*DownSampleDepth + LUT_Delay;
     logic validCompute;
     ValidCount #(.TopVal(validTime), .SecondVal(validComp)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(validCompute));
