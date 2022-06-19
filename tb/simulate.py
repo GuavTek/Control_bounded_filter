@@ -131,7 +131,7 @@ if plotResults:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
     elif topModule.find('Hybrid') != -1:
         label = topName + f" with format {exp}p{mant}, {depth} lookahead length, and DSR={DSR}"
-    SNR = plot.PlotFigure(res[int(math.ceil(8*freq/DSR)):int(-8*freq/DSR)], int(2*freq/DSR), label, outfileName, freq*1e6/DSR, 1e6)
+    SNR = plot.PlotFigure(res[int(math.ceil(4*freq/DSR)):int(-4*freq/DSR)], int(2*freq/DSR), label, outfileName, freq*1e6/DSR, 1e6)
     
     f = open('Data/' + outfileName + '_SNR.txt', "w")
     f.write(str(SNR) + '\n\n')
