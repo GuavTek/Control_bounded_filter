@@ -48,7 +48,7 @@ module FIR_Staggered_Fxp #(
     
 
     // Data valid counter
-    localparam int validTime = $ceil((0.0 + Looktotal)/(DSR*Stagger)) + $ceil((0.0 + AdderLayers)/(`COMB_ADDERS + 1)) + 3;
+    localparam int validTime = $ceil((0.0 + Looktotal)/(DSR)) + $ceil((0.0 + AdderLayers)/(`COMB_ADDERS + 1)) + 2*Stagger;
     logic dummyValid;
     ValidCount #(.TopVal(validTime)) vc1 (.clk(clkDS), .rst(rst), .out(valid), .out2(dummyValid));
 
